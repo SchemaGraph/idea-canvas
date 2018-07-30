@@ -25,6 +25,18 @@ function layerStyles() {
   `;
 }
 
+const DevInfo = styled.div`
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: .5rem;
+  background-color: rgba(255,255,255,0.9);
+  color: rgba(0,0,0,0.9);
+  font-size: 18px;
+`;
+
+
+
 const MainContainer = styled.div`
   position: absolute;
   top: 0;
@@ -32,6 +44,7 @@ const MainContainer = styled.div`
   bottom: 0;
   right: 0;
   border: 0px solid red;
+  overflow: hidden;
 `;
 
 const LinkLayer = styled.svg`
@@ -92,8 +105,11 @@ const CanvasVanilla: React.SFC<Props> = ({ store }) => {
     setZoom({ scale, offsetX: offsetX + deltaX, offsetY: offsetY + deltaY });
 
   return (
-    <DraggableCore onDrag={move} onStart={start} onStop={stop} disabled={false}>
+    <DraggableCore onDrag={move} onStart={start} onStop={stop} disabled={true}>
       <MainContainer onWheel={handleWheel(zoom, setZoom)}>
+        <DevInfo>
+          scale: {scale.toFixed(2)}, x: {offsetX}, y: {offsetY}
+        </DevInfo>
         <LinkLayer style={getScaleStyle(zoom)}>
           <defs>
             <marker
