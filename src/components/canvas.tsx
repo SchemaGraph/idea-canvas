@@ -31,7 +31,7 @@ const MainContainer = styled.div`
   left: 0;
   bottom: 0;
   right: 0;
-  border: 2px solid red;
+  border: 0px solid red;
 `;
 
 const LinkLayer = styled.svg`
@@ -40,7 +40,7 @@ const LinkLayer = styled.svg`
 
 const NodeLayer = styled.div`
   ${layerStyles()};
-  border: 1px solid blue;
+  border: 0px solid blue;
 `;
 
 function getScaleStyle(z: Zoom) {
