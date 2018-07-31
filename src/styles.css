@@ -3,18 +3,17 @@
 From MST box-example
 */
 
-html {
+html, body, #___gatsby {
   height: 100%;
   width: 100%;
   overflow: hidden;
 }
 
 body {
-  height: 100%;
   padding: 0;
-  overflow: auto;
   margin: 0;
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden;
+  /* -webkit-overflow-scrolling: touch; */
   background-color: #2d3e4e;
   font-family: Arial, Helvetica, sans-serif;
 }

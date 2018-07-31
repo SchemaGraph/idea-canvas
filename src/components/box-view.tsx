@@ -44,6 +44,7 @@ const BoxDiv = styled.div`
   overflow: hidden;
   font-family: Arial, Helvetica, sans-serif;
   min-width: 80px;
+  touch-action: none;
 `;
 function getScaleStyle(z: Zoom) {
   const { offsetX, offsetY, scale } = z;
@@ -137,16 +138,25 @@ class BoxViewVanilla extends React.Component<Props, State> {
     // console.log(e.keyCode);
   };
 
-  public start: DraggableEventHandler = _e => {
+  public start: DraggableEventHandler = e => {
+    // console.log('BOX MOVE START');
+    // e.stopPropagation();
+    // e.stopImmediatePropagation();
+    // e.preventDefault();
     this.props.setIsDragging!(this.props.box.id);
   };
   public stop: DraggableEventHandler = _e => {
+    // console.log('BOX MOVE END');
     this.props.setIsDragging!();
   };
 
   public move: DraggableEventHandler = (e, { deltaX, deltaY }) => {
-    e.stopPropagation();
-    this.props.box.move(deltaX, deltaY);
+    // console.log('BOX MOVE');
+    // e.stopPropagation();
+    // e.stopImmediatePropagation();
+    // e.preventDefault();
+    const { scale } = this.props.zoom;
+    this.props.box.move(deltaX / scale, deltaY / scale);
   };
   public select: React.MouseEventHandler = e => {
     const { box } = this.props;

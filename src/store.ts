@@ -30,6 +30,9 @@ export const Store = types
     scale: 1,
     offsetX: 0,
     offsetY: 0,
+    tool: 'none',
+    canvasWidth: -1,
+    canvasHeight: -1,
   })
   .views(self => ({
     get selection() {
@@ -66,6 +69,14 @@ export const Store = types
       self.offsetX = offsetX;
       self.offsetY = offsetY;
     },
+    setTool(tool: string) {
+      console.log(tool.toUpperCase());
+      self.tool = tool;
+    },
+    setCanvasDimensions(w: number, h: number) {
+      self.canvasWidth = w;
+      self.canvasHeight = h;
+    },
     clearSelection(except?: IBox) {
       values(self.boxes).map(
         box =>
@@ -76,8 +87,10 @@ export const Store = types
     },
   }))
   .actions(self => ({
-    createBox(name: string, x: number, y: number) {
-      const box = self.addBox(name, x, y);
+    createBox(name: string, x?: number, y?: number) {
+      const xx = x || (self.canvasWidth / 2 - 37 - self.offsetX) / self.scale;
+      const yy = y || (50 - self.offsetY) / self.scale;
+      const box = self.addBox(name, xx, yy);
       const source = self.selection;
       if (source) {
         self.addArrow(source.id || source, box.id);
@@ -96,13 +109,13 @@ export const store = Store.create({
       id: 'ce9131ee-f528-4952-a012-543780c5e66d',
       name: 'Rotterdam',
       x: 100,
-      y: 100,
+      y: 150,
       selected: false,
     },
     '14194d76-aa31-45c5-a00c-104cc550430f': {
       id: '14194d76-aa31-45c5-a00c-104cc550430f',
       name: 'Bratislava',
-      x: 650,
+      x: 200,
       y: 300,
       selected: false,
     },

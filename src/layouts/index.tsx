@@ -2,8 +2,8 @@ import * as React from 'react';
 import styled, {ThemeProvider} from 'styled-components';
 
 const MainDiv = styled.div`
-  min-height: 100vh;
-  display: flex;
+  height: 100%;
+  /* display: flex; */
   position: relative;
   overflow: hidden;
 `;

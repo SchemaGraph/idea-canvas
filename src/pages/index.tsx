@@ -4,6 +4,7 @@ import { Provider } from 'mobx-react';
 // import { applySnapshot } from 'mobx-state-tree';
 import * as React from 'react';
 import { Canvas } from '../components/canvas';
+import { Toolbar } from '../components/toolbar';
 // import { Info } from '../components/Info';
 import Layout from '../layouts';
 import { store } from '../store';
@@ -34,11 +35,27 @@ import '../styles.css';
 //   });
 // }
 
+class Init extends React.Component {
+  public componentDidMount() {
+    if (document) {
+      console.log('DISABLE PINCHZOOM');
+      document.addEventListener('gesturestart', e => {
+        e.preventDefault();
+      });
+    }
+  }
+  public render() {
+    return null;
+  }
+}
+
 export default () => (
   <Provider store={store}>
     <Layout>
       {/* <Controls /> */}
+      <Toolbar />
       <Canvas />
+      {/* <Init /> */}
       {/* <Info/> */}
       {/* {DevTools && <DevTools />} */}
     </Layout>

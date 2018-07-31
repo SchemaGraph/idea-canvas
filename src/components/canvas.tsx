@@ -1,14 +1,23 @@
+import { select, ValueFn } from 'd3-selection';
+import { zoom as d3Zoom, ZoomBehavior, ZoomTransform } from 'd3-zoom';
 import { values } from 'mobx';
 import { observer } from 'mobx-react';
 import * as React from 'react';
-import { DraggableCore, DraggableEventHandler } from 'react-draggable';
 import styled from 'styled-components';
 
 import { IStore, Zoom } from '../store';
 import { connect } from '../utils';
 import { ArrowView } from './arrow-view';
 import { BoxView } from './box-view';
+import { TOOL_PAN } from './toolbar/constants';
 
+function zoomTransformToZoom(zt: { x: number; y: number; k: number }): Zoom {
+  return {
+    scale: zt.k,
+    offsetX: zt.x,
+    offsetY: zt.y,
+  };
+}
 interface Props {
   store?: IStore;
 }
@@ -29,13 +38,11 @@ const DevInfo = styled.div`
   position: absolute;
   top: 0;
   right: 0;
-  padding: .5rem;
-  background-color: rgba(255,255,255,0.9);
-  color: rgba(0,0,0,0.9);
+  padding: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.9);
+  color: rgba(0, 0, 0, 0.9);
   font-size: 18px;
 `;
-
-
 
 const MainContainer = styled.div`
   position: absolute;
@@ -66,18 +73,98 @@ function getScaleStyle(z: Zoom) {
   };
 }
 
-const CanvasVanilla: React.SFC<Props> = ({ store }) => {
-  const {
-    clearSelection,
-    createBox,
-    boxes,
-    arrows,
-    zoom,
-    setZoom,
-    setDragging,
-  } = store!;
-  const { scale, offsetX, offsetY } = zoom;
-  const handleClick: React.MouseEventHandler = e => {
+interface State {
+  zoomTransform?: ZoomTransform;
+}
+
+class CanvasVanilla extends React.Component<Props, State> {
+  public state: State = {
+    zoomTransform: undefined,
+  };
+  private container = React.createRef<HTMLDivElement>();
+  private readonly zoom: ZoomBehavior<HTMLDivElement, {}>;
+  private zoomTransform?: ZoomTransform;
+
+  constructor(props: Readonly<Props>) {
+    super(props);
+    this.zoom = d3Zoom<HTMLDivElement, {}>()
+      .scaleExtent([0.1, 5])
+      .on('zoom', this.zoomed.bind(this));
+  }
+  attachZoom() {
+    if (this.container.current) {
+      select(this.container.current).call(this.zoom);
+    }
+  }
+  deAttachZoom() {
+    if (this.container.current) {
+      select(this.container.current).on('.zoom', null);
+    }
+  }
+
+  get store() {
+    return this.props.store!;
+  }
+  componentDidMount() {
+    const container = this.container.current;
+    if (container) {
+      // TO PREVENT SCROLLING ON MOBILE
+      container.ontouchmove = () => false;
+      this.store.setCanvasDimensions(container.clientWidth, container.clientHeight);
+      // this.container.current.addEventListener(
+      //   'ontouchmove',
+      //   e => {
+      //     e.preventDefault();
+      //     e.stopPropagation();
+      //     e.stopImmediatePropagation();
+      //   },
+      //   { passive: false }
+      // );
+    }
+
+    const { tool } = this.store;
+    if (tool === TOOL_PAN) {
+      this.attachZoom();
+    } else {
+      this.deAttachZoom();
+    }
+  }
+  componentDidUpdate(_prevProps: Props, _prevState: State) {
+    const { tool } = this.store;
+    if (tool === TOOL_PAN) {
+      this.attachZoom();
+    } else {
+      this.deAttachZoom();
+    }
+    const zoomTransform = this.zoomTransform;
+    const { zoom } = this.store;
+    if (!zoomTransform || !this.container.current) {
+      return;
+    }
+    const { k, x, y } = zoomTransform;
+    const { scale, offsetX, offsetY } = zoom;
+    if (scale !== k || offsetX !== x || offsetY !== y) {
+      // This happens if we update the zoom on the store from outside
+      // the zoom event handler
+      const selection = select(this.container.current);
+      const t = zoomTransform
+        .translate(offsetX - x / k, offsetY - y / k)
+        .scale(scale / k);
+      this.zoom.transform(selection, t);
+    }
+  }
+
+  zoomed: ValueFn<HTMLDivElement, any, void> = () => {
+    const event = require('d3-selection').event;
+    this.zoomTransform = event.transform;
+    // NOTE: could be asynchronous and not in sync with this.zoomTransform
+    this.store.setZoom(zoomTransformToZoom(event.transform));
+  };
+
+  handleClick: React.MouseEventHandler = e => {
+    const { clearSelection, createBox, zoom } = this.store;
+    const { scale, offsetX, offsetY } = zoom;
+
     if (e.ctrlKey === false && e.altKey === false) {
       clearSelection();
     } else {
@@ -89,27 +176,16 @@ const CanvasVanilla: React.SFC<Props> = ({ store }) => {
     }
   };
 
-  const start: DraggableEventHandler = e => {
-    const { target } = e;
-    // console.log('DRAG-CANVAS', e.currentTarget, e.target);
-    const t = target as any;
-    // console.log(t.className);
-    if (t && t.className && t.className.indexOf('NodeLayer') > -1) {
-      return setDragging('CANVAS');
-    }
-    console.log('CANCELED');
-    return false;
-  };
-  const stop = () => setDragging(null);
-  const move: DraggableEventHandler = (_, { deltaX, deltaY }) =>
-    setZoom({ scale, offsetX: offsetX + deltaX, offsetY: offsetY + deltaY });
-
-  return (
-    <DraggableCore onDrag={move} onStart={start} onStop={stop} disabled={true}>
-      <MainContainer onWheel={handleWheel(zoom, setZoom)}>
-        <DevInfo>
-          scale: {scale.toFixed(2)}, x: {offsetX}, y: {offsetY}
-        </DevInfo>
+  public render() {
+    const { boxes, arrows, zoom, tool } = this.store;
+    // const zoom = zoomTransformToZoom(this.state.zoomTransform || { x: 0, y: 0, k: 1 });
+    const { scale, offsetX, offsetY } = zoom;
+    return (
+      <MainContainer innerRef={this.container}>
+        {/* <DevInfo>
+          scale: {scale.toFixed(2)}, x: {offsetX.toFixed(0)}, y:{' '}
+          {offsetY.toFixed(0)}
+        </DevInfo> */}
         <LinkLayer style={getScaleStyle(zoom)}>
           <defs>
             <marker
@@ -128,48 +204,17 @@ const CanvasVanilla: React.SFC<Props> = ({ store }) => {
         </LinkLayer>
         <NodeLayer
           style={getScaleStyle({ scale, offsetX: 0, offsetY: 0 })}
-          onClick={handleClick}
+          onClick={this.handleClick}
         >
           {values(boxes).map(box => (
             <BoxView box={box} key={box.id} zoom={zoom} />
           ))}
         </NodeLayer>
       </MainContainer>
-    </DraggableCore>
-  );
-};
+    );
+  }
+}
 
 export const Canvas = connect<Props>((store, _props) => ({
   store,
 }))(observer(CanvasVanilla));
-
-function handleWheel(
-  currentZoom: Zoom,
-  setZoom: (z: Zoom) => void
-): React.WheelEventHandler<HTMLDivElement> {
-  return event => {
-    event.preventDefault();
-    event.stopPropagation();
-    let scrollDelta = event.deltaY;
-    // check if it is pinch gesture
-    if (event.ctrlKey && scrollDelta % 1 !== 0) {
-      /*Chrome and Firefox sends wheel event with deltaY that
-          have fractional part, also `ctrlKey` prop of the event is true
-          though ctrl isn't pressed
-        */
-      scrollDelta /= 3;
-    } else {
-      scrollDelta /= 60;
-    }
-    const scaleDelta = scrollDelta / 100;
-    const newScale = currentZoom.scale + scaleDelta;
-    if (newScale < 0.1) {
-      return;
-    }
-    return setZoom({
-      scale: newScale,
-      offsetX: currentZoom.offsetX,
-      offsetY: currentZoom.offsetY,
-    });
-  };
-}
