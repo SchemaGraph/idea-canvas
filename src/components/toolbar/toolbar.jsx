@@ -24,12 +24,16 @@ import IconZoomIn from './icon-zoom-in';
 import IconZoomOut from './icon-zoom-out';
 import IconFit from './icon-fit';
 import ToolbarButton from './toolbar-button';
+import { ToolbarDivider } from './toolbar-divider';
+import IconRemove from './icon-remove';
 
 export default function Toolbar({
   tool,
   onFit,
   onChangeTool,
   onAddNode,
+  onRemoveNode,
+  selectedNode,
   position,
   SVGAlignX,
   SVGAlignY,
@@ -48,6 +52,12 @@ export default function Toolbar({
 
   let handleAddNode = event => {
     onAddNode();
+    event.stopPropagation();
+    event.preventDefault();
+  };
+
+  let handleRemoveNode = event => {
+    onRemoveNode();
     event.stopPropagation();
     event.preventDefault();
   };
@@ -94,15 +104,6 @@ export default function Toolbar({
       >
         <IconCursor />
       </ToolbarButton>
-      <ToolbarButton
-        toolbarPosition={position}
-        active={false}
-        name="add-node"
-        title="Add node"
-        onClick={handleAddNode}
-      >
-        <IconPlus />
-      </ToolbarButton>
 
       <ToolbarButton
         toolbarPosition={position}
@@ -113,6 +114,27 @@ export default function Toolbar({
       >
         <IconPan />
       </ToolbarButton>
+      <ToolbarDivider/>
+      <ToolbarButton
+        toolbarPosition={position}
+        active={false}
+        name="add-node"
+        title="Add node"
+        onClick={handleAddNode}
+      >
+        <IconPlus />
+      </ToolbarButton>
+      <ToolbarButton
+        toolbarPosition={position}
+        active={false}
+        name="remove-node"
+        title="Remove node"
+        onClick={handleRemoveNode}
+        disabled={!selectedNode}
+      >
+        <IconRemove />
+      </ToolbarButton>
+      <ToolbarDivider/>
 
       {/* <ToolbarButton
         toolbarPosition={position}
@@ -155,7 +177,9 @@ Toolbar.propTypes = {
   tool: PropTypes.string.isRequired,
   onFit: PropTypes.func.isRequired,
   onAddNode: PropTypes.func.isRequired,
+  onRemoveNode: PropTypes.func.isRequired,
   onChangeTool: PropTypes.func.isRequired,
+  selectedNode: PropTypes.string,
   SVGAlignX: PropTypes.oneOf([ALIGN_CENTER, ALIGN_LEFT, ALIGN_RIGHT]),
   SVGAlignY: PropTypes.oneOf([ALIGN_CENTER, ALIGN_TOP, ALIGN_BOTTOM]),
 };

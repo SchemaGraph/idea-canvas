@@ -35,20 +35,6 @@ import '../styles.css';
 //   });
 // }
 
-class Init extends React.Component {
-  public componentDidMount() {
-    if (document) {
-      console.log('DISABLE PINCHZOOM');
-      document.addEventListener('gesturestart', e => {
-        e.preventDefault();
-      });
-    }
-  }
-  public render() {
-    return null;
-  }
-}
-
 export default () => (
   <Provider store={store}>
     <Layout>

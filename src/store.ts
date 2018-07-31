@@ -1,7 +1,7 @@
 import { values } from 'mobx';
 import { onAction, types } from 'mobx-state-tree';
 import v4 from 'uuid/v4';
-import { arrows, Box, boxes, BoxRef, IBox } from './components/models';
+import { arrows, Box, boxes, BoxRef, IArrow, IBox } from './components/models';
 
 export function randomUuid() {
   return v4();
@@ -41,7 +41,7 @@ export const Store = types
         | undefined;
     },
     get zoom(): Zoom {
-      const {scale, offsetX, offsetY} = self;
+      const { scale, offsetX, offsetY } = self;
       // console.log('getZoom', scale, offsetX, offsetY);
       return {
         scale,
@@ -56,6 +56,18 @@ export const Store = types
       self.boxes.put(box);
       return box;
     },
+    removeBox(box: IBox) {
+      const arrow = self.arrows.find(
+        a => a.to.id === box.id || a.from.id === box.id
+      );
+      if (arrow) {
+        self.arrows.remove(arrow);
+      }
+      self.boxes.delete(box.id);
+    },
+    removeArrow(arrow: IArrow) {
+      self.arrows.remove(arrow);
+    },
     addArrow(from: any, to: any) {
       self.arrows.push({ id: randomUuid(), from, to });
     },
@@ -63,7 +75,7 @@ export const Store = types
       self.dragging = dragging;
     },
     setZoom(z: Zoom) {
-      const {scale, offsetX, offsetY} = z;
+      const { scale, offsetX, offsetY } = z;
       // console.log('setZoom', scale, offsetX, offsetY);
       self.scale = scale;
       self.offsetX = offsetX;
@@ -130,11 +142,11 @@ export const store = Store.create({
 });
 
 onAction(store.boxes, data => {
-  const {name, args, path} = data;
-  if (!name || !args || !path) {
+  const { name, args, path } = data;
+  if (!name || !args || !path) {
     return;
   }
-  if(name === 'setSelected' && args[0] === true) {
+  if (name === 'setSelected' && args[0] === true) {
     const components = path.split('/');
     const box = store.boxes.get(components[1]);
     if (box) {
