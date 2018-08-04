@@ -1,9 +1,9 @@
-import Color from 'color';
 import { observer } from 'mobx-react';
 import * as React from 'react';
 import { DraggableCore, DraggableEventHandler } from 'react-draggable';
 import styled, { OuterStyledProps } from 'styled-components';
 import { Zoom } from '../store';
+import { colors, fadedAlpha } from '../theme/theme';
 import { connect } from '../utils';
 import { IBox } from './models';
 
@@ -16,21 +16,19 @@ interface State {
   label?: string;
   editing: boolean;
   prevEditing: boolean;
+  dragStart: number;
 }
 
 interface BoxDivProps {
   selected: boolean;
 }
-const colors = ['#2d3e4e', '#f99b1d'].map(c =>
-  Color(c)
-    .alpha(0.9)
-    .toString()
-);
 const BoxDiv = styled.div`
   border: 2px solid white;
+  padding: 16px;
   position: absolute;
   border-radius: 8px;
-  background-color: ${({ selected }: BoxDivProps) => colors[+selected]};
+  background-color: ${({ selected }: BoxDivProps) =>
+    (selected ? colors.orange : colors.blue).alpha(fadedAlpha).toString()};
   cursor: pointer;
   color: white;
   white-space: nowrap;
@@ -40,19 +38,19 @@ const BoxDiv = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 60px;
+  /* height: 60px; */
   overflow: hidden;
   font-family: Arial, Helvetica, sans-serif;
-  min-width: 80px;
+  /* min-width: 80px; */
   touch-action: none;
 `;
 function getScaleStyle(z: Zoom) {
-  const { offsetX, offsetY, scale } = z;
-  return {
-    transform: `translate(${offsetX / scale}px,${offsetY / scale}px)`,
-  };
+  return {};
 }
 
+interface LabelProps {
+  editing?: boolean;
+}
 const Label = styled.div`
   display: inline-block;
   text-align: center;
@@ -60,6 +58,7 @@ const Label = styled.div`
   color: rgba(255, 255, 255, 0.85);
   font-weight: 700;
   font-size: 16px;
+  visibility: ${({editing}: LabelProps) => editing ? 'hidden' : 'visible'};
 `;
 
 const LabelInput = (
@@ -68,6 +67,11 @@ const LabelInput = (
   return <Input type="text" {...props} />;
 };
 const Input = styled.input`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: block;
   width: 80%;
   z-index: 1;
   text-align: center;
@@ -81,13 +85,16 @@ const Input = styled.input`
 `;
 
 class BoxViewVanilla extends React.Component<Props, State> {
+
+  private inputRef = React.createRef<HTMLInputElement>();
+  private boxRef = React.createRef<HTMLDivElement>();
+
   public state: State = {
     label: undefined,
     editing: false,
     prevEditing: false,
+    dragStart: 0,
   };
-
-  public input?: HTMLInputElement;
 
   constructor(props: Props) {
     super(props);
@@ -128,53 +135,57 @@ class BoxViewVanilla extends React.Component<Props, State> {
   public onKeyPressHandler: React.KeyboardEventHandler<
     HTMLInputElement
   > = e => {
+    e.stopPropagation();
     if (e.key === 'Enter') {
       this.finishLabelEditing();
     }
-    if (e.keyCode === 8) {
-      e.stopPropagation();
-      // e.preventDefault();
-    }
-    // console.log(e.keyCode);
   };
 
-  public start: DraggableEventHandler = e => {
-    // console.log('BOX MOVE START');
+  public start: DraggableEventHandler = (_e, {x, y}) => {
+    // console.log('BOX MOVE START', this.state.dragStart);
     // e.stopPropagation();
     // e.stopImmediatePropagation();
     // e.preventDefault();
     this.props.setIsDragging!(this.props.box.id);
+    this.setState({
+      ...this.state,
+      dragStart: Math.hypot(x,y),
+    });
   };
-  public stop: DraggableEventHandler = _e => {
-    // console.log('BOX MOVE END');
-    this.props.setIsDragging!();
+  public stop: DraggableEventHandler = (_e, {x, y}) => {
+    const d = Math.abs(this.state.dragStart - Math.hypot(x,y));
+    // console.log('BOX MOVE END', d);
+    if (d < 0.001) {
+      this.select();
+    }
   };
 
-  public move: DraggableEventHandler = (e, { deltaX, deltaY }) => {
-    // console.log('BOX MOVE');
+  public move: DraggableEventHandler = (e, { deltaX, deltaY, x, y, lastX, lastY }) => {
+    // console.log('BOX MOVE', this.state.dragStart, x, y, lastX, lastY);
     // e.stopPropagation();
     // e.stopImmediatePropagation();
     // e.preventDefault();
     const { scale } = this.props.zoom;
     this.props.box.move(deltaX / scale, deltaY / scale);
+    // this.setState({
+    //   ...this.state,
+    //   dragStart: Math.hypot(deltaX, deltaY),
+    // });
   };
-  public select: React.MouseEventHandler = e => {
+
+  select = () => {
     const { box } = this.props;
     if (!box.selected) {
       box.setSelected(true);
     }
-    e.stopPropagation();
-  };
-
-  public refSetter = (input: HTMLInputElement) => {
-    this.input = input;
+    // e.stopPropagation();
   };
 
   public componentDidMount() {
     const { box } = this.props;
     const { editing } = this.state;
-    if (editing && this.input) {
-      this.input.focus();
+    if (editing && this.inputRef.current) {
+      this.inputRef.current.focus();
     }
     if (!editing && box.name === '') {
       this.setState({
@@ -182,12 +193,31 @@ class BoxViewVanilla extends React.Component<Props, State> {
         editing: true,
       });
     }
+    this.measure();
   }
 
   public componentDidUpdate() {
     const { editing, prevEditing } = this.state;
-    if (editing && !prevEditing && this.input) {
-      this.input.focus();
+    if (editing && !prevEditing && this.inputRef.current) {
+      this.inputRef.current.focus();
+    }
+    this.measure();
+  }
+
+  public measure() {
+    const b = this.boxRef.current;
+    const {width, height, setDimensions, setWidth, setHeight} = this.props.box;
+    if (b) {
+      const {clientWidth, clientHeight} = b;
+      const dW = width - clientWidth;
+      const dH = height - clientHeight;
+      if (dW && dH) {
+        setDimensions(clientWidth, clientHeight);
+      } else if (dW) {
+        setWidth(clientWidth);
+      } else if (dH) {
+        setHeight(dH);
+      }
     }
   }
 
@@ -199,30 +229,31 @@ class BoxViewVanilla extends React.Component<Props, State> {
       <LabelInput
         type="text"
         value={label || box.name}
-        innerRef={this.refSetter}
+        innerRef={this.inputRef}
         onChange={this.onChangeHandler}
         onBlur={this.onBlurHandler}
-        onKeyDown={this.onKeyPressHandler}
+        onKeyUp={this.onKeyPressHandler}
       />
     );
 
-    const { width, y: top, x: left, selected, name } = box;
+    const { y: top, x: left, selected, name } = box;
     // const { offsetX, offsetY, scale } = zoom;
 
     return (
       <DraggableCore onDrag={this.move} onStart={this.start} onStop={this.stop}>
         <BoxDiv
+          innerRef={this.boxRef}
           style={{
-            width,
+            // width,
             top,
             left,
             ...getScaleStyle(zoom),
           }}
           selected={selected}
-          onClick={this.select}
           onDoubleClick={this.dblClickHandler}
         >
-          {editing ? input : <Label>{name}</Label>}
+          <Label editing={editing}>{name}</Label>
+          {editing ? input : null}
         </BoxDiv>
       </DraggableCore>
     );
