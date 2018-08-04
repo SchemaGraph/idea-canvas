@@ -1,23 +1,11 @@
 import { observer } from 'mobx-react';
 import * as React from 'react';
-import styled from 'styled-components';
 
 import { IStore } from '../../store';
 import { connect } from '../../utils';
 import {
-  ALIGN_BOTTOM,
   ALIGN_CENTER,
-  ALIGN_LEFT,
-  ALIGN_RIGHT,
-  ALIGN_TOP,
-  POSITION_BOTTOM,
-  POSITION_LEFT,
-  POSITION_RIGHT,
   POSITION_TOP,
-  TOOL_NONE,
-  TOOL_PAN,
-  TOOL_ZOOM_IN,
-  TOOL_ZOOM_OUT,
 } from './constants';
 import TToolbar from './toolbar';
 
