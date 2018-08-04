@@ -8,6 +8,7 @@ export const TOOL_PAN = 'pan';
 export const TOOL_ZOOM_IN = 'zoom-in';
 export const TOOL_ZOOM_OUT = 'zoom-out';
 export const TOOL_ADD_NODE = 'add-node';
+export const TOOL_CONNECT = 'connect';
 
 export const POSITION_NONE = 'none';
 export const POSITION_TOP = 'top';

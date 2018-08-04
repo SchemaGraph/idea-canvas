@@ -15,6 +15,7 @@ import {
   ALIGN_TOP,
   ALIGN_BOTTOM,
   TOOL_ADD_NODE,
+  TOOL_CONNECT,
 } from './constants';
 
 import IconPlus from './icon-plus';
@@ -26,6 +27,7 @@ import IconFit from './icon-fit';
 import ToolbarButton from './toolbar-button';
 import { ToolbarDivider } from './toolbar-divider';
 import IconRemove from './icon-remove';
+import IconConnect from './icon-plus-arrow';
 
 export default function Toolbar({
   tool,
@@ -104,7 +106,6 @@ export default function Toolbar({
       >
         <IconCursor />
       </ToolbarButton>
-
       <ToolbarButton
         toolbarPosition={position}
         active={tool === TOOL_PAN}
@@ -114,7 +115,19 @@ export default function Toolbar({
       >
         <IconPan />
       </ToolbarButton>
+      <ToolbarButton
+        toolbarPosition={position}
+        active={tool === TOOL_CONNECT}
+        name="select-tool-connect"
+        title="Connect"
+        onClick={event => handleChangeTool(event, TOOL_CONNECT)}
+      >
+        <IconConnect />
+      </ToolbarButton>
+
+
       <ToolbarDivider/>
+
       <ToolbarButton
         toolbarPosition={position}
         active={false}

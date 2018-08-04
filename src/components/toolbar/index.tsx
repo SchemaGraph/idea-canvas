@@ -26,7 +26,7 @@ interface Props {
 }
 
 const ToolbarVanilla: React.SFC<Props> = ({ store }) => {
-  const { tool, setTool, setZoom, createBox, removeBox, selection } = store!;
+  const { tool, setTool, setZoom, createBox, removeElement, selection } = store!;
   const onFit = () => {
     setZoom({ scale: 1, offsetX: 0, offsetY: 0 });
   };
@@ -35,7 +35,7 @@ const ToolbarVanilla: React.SFC<Props> = ({ store }) => {
   };
   const onRemoveNode = () => {
     if (selection) {
-      removeBox(selection);
+      removeElement(selection.id);
     }
   };
 

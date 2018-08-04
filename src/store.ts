@@ -1,7 +1,15 @@
 import { values } from 'mobx';
 import { onAction, types } from 'mobx-state-tree';
 import v4 from 'uuid/v4';
-import { arrows, Box, boxes, BoxRef, IArrow, IBox } from './components/models';
+import {
+  Arrow,
+  arrows,
+  Box,
+  boxes,
+  BoxRef,
+  IArrow,
+  IBox,
+} from './components/models';
 
 export function randomUuid() {
   return v4();
@@ -36,8 +44,10 @@ export const Store = types
   })
   .views(self => ({
     get selection() {
-      return values(self.boxes).find(box => box.selected === true) as
+      const all = values(self.boxes).concat(self.arrows);
+      return all.find(box => box.selected === true) as
         | IBox
+        | IArrow
         | undefined;
     },
     get zoom(): Zoom {
@@ -68,9 +78,6 @@ export const Store = types
     removeArrow(arrow: IArrow) {
       self.arrows.remove(arrow);
     },
-    addArrow(from: any, to: any) {
-      self.arrows.push({ id: randomUuid(), from, to });
-    },
     setDragging(dragging: any) {
       self.dragging = dragging;
     },
@@ -89,13 +96,45 @@ export const Store = types
       self.canvasWidth = w;
       self.canvasHeight = h;
     },
-    clearSelection(except?: IBox) {
+    clearSelection(except?: IBox | IArrow) {
       values(self.boxes).map(
         box =>
           box.selected &&
           (!except || except.id !== box.id) &&
           box.setSelected(false)
       );
+      self.arrows.map(
+        arrow =>
+          arrow.selected &&
+          (!except || except.id !== arrow.id) &&
+          arrow.setSelected(false)
+      );
+    },
+  }))
+  .actions(self => ({
+    removeElement(id: string) {
+      const box = self.boxes.get(id);
+      if (box) {
+        self.removeBox(box);
+      }
+      const arrow = self.arrows.find(a => a.id === id);
+      if (arrow) {
+        self.removeArrow(arrow);
+      }
+    },
+    addArrow(from: any, to: any) {
+      const existing = self.arrows.find(a => a.from === from && a.to === to);
+      if (existing) {
+        return;
+      }
+      const arrow = Arrow.create({
+        id: randomUuid(),
+        from,
+        to,
+        selected: false,
+      });
+      self.arrows.push(arrow);
+      self.clearSelection();
     },
   }))
   .actions(self => ({
@@ -148,12 +187,34 @@ onAction(store.boxes, data => {
   }
   if (name === 'setSelected' && args[0] === true) {
     const components = path.split('/');
-    const box = store.boxes.get(components[1]);
+    const { boxes: b, selection, clearSelection, tool, addArrow } = store;
+    const box = b.get(components[1]);
+    const currentBox = selection && b.get(selection.id);
     if (box) {
-      store.clearSelection(box);
+      if (tool === 'connect' && currentBox) {
+        addArrow(currentBox, box);
+      } else {
+        clearSelection(box);
+      }
     }
   }
   // console.log(data);
+});
+
+onAction(store.arrows, data => {
+  const { name, args, path } = data;
+  if (!name || !args || !path) {
+    return;
+  }
+  if (name === 'setSelected' && args[0] === true) {
+    const components = path.split('/');
+    const arrow = store.arrows[Number(components[1])];
+    // const arrow = store.arrows.find(a => a.id === components[1]);
+    if (arrow) {
+      store.clearSelection(arrow);
+    }
+  }
+  console.log(data);
 });
 
 export type IStore = typeof Store.Type;
