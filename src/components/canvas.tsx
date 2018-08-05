@@ -53,6 +53,7 @@ const OuterContainer = styled.div`
 const MainContainer = styled.div`
   ${layerStyles()};
   border: 0px solid blue;
+  transition: transform 0.2s ease-out;
 `;
 
 const SvgLayer = styled.svg`

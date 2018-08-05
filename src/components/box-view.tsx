@@ -43,9 +43,10 @@ const BoxDiv = styled.div`
   font-family: Arial, Helvetica, sans-serif;
   /* min-width: 80px; */
   touch-action: none;
+  /* transition: transform 0.2s ease-out; */
 `;
-function getScaleStyle(z: Zoom) {
-  return {};
+function getScaleStyle(_z: Zoom, top: number, left: number) {
+  return { transform: `translate(${left}px,${top}px)` };
 }
 
 interface LabelProps {
@@ -58,7 +59,7 @@ const Label = styled.div`
   color: rgba(255, 255, 255, 0.85);
   font-weight: 700;
   font-size: 16px;
-  visibility: ${({editing}: LabelProps) => editing ? 'hidden' : 'visible'};
+  visibility: ${({ editing }: LabelProps) => (editing ? 'hidden' : 'visible')};
 `;
 
 const LabelInput = (
@@ -85,7 +86,6 @@ const Input = styled.input`
 `;
 
 class BoxViewVanilla extends React.Component<Props, State> {
-
   private inputRef = React.createRef<HTMLInputElement>();
   private boxRef = React.createRef<HTMLDivElement>();
 
@@ -141,7 +141,7 @@ class BoxViewVanilla extends React.Component<Props, State> {
     }
   };
 
-  public start: DraggableEventHandler = (_e, {x, y}) => {
+  public start: DraggableEventHandler = (_e, { x, y }) => {
     // console.log('BOX MOVE START', this.state.dragStart);
     // e.stopPropagation();
     // e.stopImmediatePropagation();
@@ -149,18 +149,21 @@ class BoxViewVanilla extends React.Component<Props, State> {
     this.props.setIsDragging!(this.props.box.id);
     this.setState({
       ...this.state,
-      dragStart: Math.hypot(x,y),
+      dragStart: Math.hypot(x, y),
     });
   };
-  public stop: DraggableEventHandler = (_e, {x, y}) => {
-    const d = Math.abs(this.state.dragStart - Math.hypot(x,y));
+  public stop: DraggableEventHandler = (_e, { x, y }) => {
+    const d = Math.abs(this.state.dragStart - Math.hypot(x, y));
     // console.log('BOX MOVE END', d);
     if (d < 0.001) {
       this.select();
     }
   };
 
-  public move: DraggableEventHandler = (e, { deltaX, deltaY, x, y, lastX, lastY }) => {
+  public move: DraggableEventHandler = (
+    e,
+    { deltaX, deltaY, x, y, lastX, lastY }
+  ) => {
     // console.log('BOX MOVE', this.state.dragStart, x, y, lastX, lastY);
     // e.stopPropagation();
     // e.stopImmediatePropagation();
@@ -206,9 +209,15 @@ class BoxViewVanilla extends React.Component<Props, State> {
 
   public measure() {
     const b = this.boxRef.current;
-    const {width, height, setDimensions, setWidth, setHeight} = this.props.box;
+    const {
+      width,
+      height,
+      setDimensions,
+      setWidth,
+      setHeight,
+    } = this.props.box;
     if (b) {
-      const {clientWidth, clientHeight} = b;
+      const { clientWidth, clientHeight } = b;
       const dW = width - clientWidth;
       const dH = height - clientHeight;
       if (dW && dH) {
@@ -243,12 +252,7 @@ class BoxViewVanilla extends React.Component<Props, State> {
       <DraggableCore onDrag={this.move} onStart={this.start} onStop={this.stop}>
         <BoxDiv
           innerRef={this.boxRef}
-          style={{
-            // width,
-            top,
-            left,
-            ...getScaleStyle(zoom),
-          }}
+          style={getScaleStyle(zoom, top, left)}
           selected={selected}
           onDoubleClick={this.dblClickHandler}
         >

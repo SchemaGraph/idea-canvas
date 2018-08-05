@@ -1,5 +1,8 @@
+// import { Spring } from 'react-spring';
+import { easeExp } from 'd3-ease';
 import { observer } from 'mobx-react';
 import * as React from 'react';
+import { Animate } from 'react-move';
 import styled from 'styled-components';
 import { colors } from '../theme/theme';
 import { IArrow, IBox } from './models';
@@ -73,36 +76,17 @@ function tweak(from: IBox, to: IBox, endpointMargin = 0, controlMargin = 30) {
   const v = scale(u, l / 2 + endpointMargin); // to the side + offset
   const newEnd = mult(rotation, v);
 
-  // const ll = [cy, cx, cy, cx][side - 1];
   const ll = Math.hypot(cx, cy);
   const vv = scale(u, Math.min(Math.max(ll / 2, l), l + controlMargin)); // to the side + offset
   const control = mult(rotation, vv);
-  // console.log(side, l, w/2, h/2);
+
+  // The point where the line between the midpoints crosses the border
   // const radius =
   //   Math.min(w / 2 / Math.cos(alpha), h / 2 / Math.sin(alpha)) + margin;
   // const fix = scale(normalized, (-1 * radius) / length(normalized));
-  // const vv = normalized; // add(normalized, fix);
-  // const m = scale(vv, 0.5)[1];
-  // const off1 = 30;
-  // const controls: P[] = [
-  //   [0, -h/2 - off1] as P,
-  //   [w/2 + off1, 0] as P,
-  //   [0, h/2 + off1] as P,
-  //   [-w/2 - off1, 0] as P,
-  // ];
-  // const endpoints: P[] = [
-  //   [0, -h/2] as P,
-  //   [w/2, 0] as P,
-  //   [0, h/2] as P,
-  //   [-w/2, 0] as P,
-  // ];
-  // const control: P = a([cx, cy], controls[side - 1]);
-  // const control = [[0, 0], [0, 0.5 * length(vv)]] as V;
-
-  // console.log(side, cx, cy);
-  // if (fix)
 
   return {
+    side,
     start,
     end: a(a(newEnd, m), start),
     control: a(a(control, m), start),
@@ -110,24 +94,10 @@ function tweak(from: IBox, to: IBox, endpointMargin = 0, controlMargin = 30) {
 }
 
 function positionLink(s: P, e: P, c1: P, c2: P) {
-  // const offset = 30;
-
-  // const mx = (s[0] + e[0]) / 2;
-  // const my = (s[1] + e[1]) / 2;
-
-  // const dx = e[0] - s[0];
-  // const dy = e[1] - s[1];
-
-  // const normalise = Math.sqrt(dx * dx + dy * dy);
-
-  // const offSetX = mx + offset * (dy / normalise);
-  // const offSetY = my - offset * (dx / normalise);
-
   return `M ${s[0]} ${s[1]} C ${c1[0]} ${c1[1]}, ${c2[0]} ${c2[1]}, ${e[0]} ${
     e[1]
   }`;
 }
-
 const ArrowViewVanilla: React.SFC<Props> = ({ arrow }) => {
   const { from, to, selected } = arrow;
   if (!from || !to) {
@@ -141,20 +111,42 @@ const ArrowViewVanilla: React.SFC<Props> = ({ arrow }) => {
   // tries to compute the closest point on the *border* of the box
   const { end, control: c2 } = tweak(from, to, 10, 70);
   const { end: start, control: c1 } = tweak(to, from, 0, 30);
-  // const {control: c1} = tweak([middlePoint(to), middlePoint(from)], from.width, from.height);
-  // const c1 = c2;
-  const d = positionLink(start, end, c1, c2);
+
+
+  const data = { d: positionLink(start, end, c1, c2) };
+  return (
+    <Animate
+      start={data}
+      enter={data}
+      update={{
+        d: [data.d],
+        timing: { delay: 0, duration: 70, easing: easeExp },
+      }}
+    >
+      {({ d }) => (
+        <g>
+          <Path d={d as string} selected={selected} />
+          <GhostPath d={d as string} onClick={select} />
+        </g>
+      )}
+    </Animate>
+  );
+};
+
+function debug(from: IBox, to: IBox, c1: P, c2: P) {
   const mStart: P = [from.x + from.width / 2, from.y + from.height / 2];
   const mEnd: P = [to.x + to.width / 2, to.y + to.height / 2];
 
   return (
     <g>
-      <Path d={d} selected={selected} />
-      <GhostPath d={d} onClick={select} />
-      {/* <circle cx={c1[0]} cy={c1[1]} r={3} fill="red" />
+      <circle cx={c1[0]} cy={c1[1]} r={3} fill="red" />
       <circle cx={c2[0]} cy={c2[1]} r={3} fill="red" />
-      <path d={`M ${mStart[0]} ${mStart[1]} L ${mEnd[0]} ${mEnd[1]}`} stroke="blue" fill="none"/> */}
-      {/* <rect
+      <path
+        d={`M ${mStart[0]} ${mStart[1]} L ${mEnd[0]} ${mEnd[1]}`}
+        stroke="blue"
+        fill="none"
+      />
+      <rect
         x={to.x}
         y={to.y}
         width={to.width}
@@ -162,9 +154,9 @@ const ArrowViewVanilla: React.SFC<Props> = ({ arrow }) => {
         fill="none"
         stroke="red"
         strokeWidth="1"
-      /> */}
+      />
     </g>
   );
-};
+}
 
 export const ArrowView = observer(ArrowViewVanilla);
