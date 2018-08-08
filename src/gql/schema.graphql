@@ -1,0 +1,42 @@
+﻿type Graph {
+  id: ID!
+  name: String
+  patches: [Patch]
+}
+
+type Mutation {
+  createGraph(id: ID!, patches: [PatchInput]): Graph!
+  createPatch(graph: ID!, patch: PatchInput): Patch
+  addPatches(graph: ID!, patches: [PatchInput]): [Patch!]
+}
+
+type Patch {
+  graphId: ID!
+  seq: Int!
+  group: Int!
+  path: String!
+  operation: String!
+  value: String!
+  oldvalue: String
+  createdAt: String!
+  id: String!
+}
+
+input PatchInput {
+  seq: Int!
+  group: Int!
+  path: String!
+  operation: String!
+  value: String!
+  oldvalue: String
+}
+
+type Query {
+  getGraph(id: ID!): Graph
+  getPatch(id: ID!): Patch
+}
+
+type Subscription {
+  onAddPatches: [Patch!] @aws_subscribe(mutations: ["addPatches"])
+  onCreateGraph: Graph @aws_subscribe(mutations: ["createGraph"])
+}

@@ -1,6 +1,13 @@
+import { ApolloQueryResult } from 'apollo-client';
 import { values } from 'mobx';
-import { onAction, types } from 'mobx-state-tree';
+import { applyPatch, flow, onAction, onPatch, types } from 'mobx-state-tree';
 import v4 from 'uuid/v4';
+import {
+  getPatches,
+  subscribeToGraphs,
+  subscribeToPatches,
+  toJsonPatches,
+} from './appsync/client';
 import {
   Arrow,
   arrows,
@@ -10,6 +17,8 @@ import {
   IArrow,
   IBox,
 } from './components/models';
+import { getGraph } from './gql/generated/getGraph';
+import { PatchManager } from './patch-manager';
 
 export function randomUuid() {
   return v4();
@@ -149,12 +158,38 @@ export const Store = types
       self.clearSelection();
       box.setSelected(true);
     },
+    init: flow<ApolloQueryResult<getGraph>>(function* init() {
+      const { data, errors }: ApolloQueryResult<getGraph> = yield getPatches();
+      // console.log(result);
+
+      if (!errors && data.getGraph && data.getGraph.patches) {
+        onPatch(self, ({ path, value }) => {
+          const parts = path.split('/');
+          const last = parts.pop();
+          console.log(last, value);
+        });
+        try {
+          const patches = toJsonPatches(data.getGraph.patches);
+          console.log(data.getGraph.patches);
+          const firstAdd = patches.findIndex(p => p.op === 'add');
+          if (firstAdd > -1) {
+            applyPatch(self, patches.slice(firstAdd));
+          }
+
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      // return result;
+      // return undefined;
+    }),
   }));
 
 /*
     The store that holds our domain: boxes and arrows
 */
-export const store = Store.create({
+const dummyData = {
   boxes: {
     'ce9131ee-f528-4952-a012-543780c5e66d': {
       id: 'ce9131ee-f528-4952-a012-543780c5e66d',
@@ -178,7 +213,34 @@ export const store = Store.create({
       to: '14194d76-aa31-45c5-a00c-104cc550430f',
     },
   ],
-});
+};
+
+export const store = Store.create();
+store
+  .init()
+  .then(r => {
+    PatchManager.create({}, { targetStore: store });
+
+
+    subscribeToPatches().subscribe(
+      ({ data }) => {
+        const remotePatches = data.onAddPatches;
+        if (remotePatches) {
+          // const patches = toJsonPatches(data.getGraph.patches);
+          // console.log(data.getGraph.patches);
+          // const newOnes = remotePatches.filter(({id}) => !applied.has(id));
+          applyPatch(store, toJsonPatches(remotePatches));
+        }
+        console.log('SUBSCRIBE RESULT', remotePatches);
+      },
+      e => {
+        console.log('SUBSCRIBE ERROR', e);
+      }
+    );
+
+
+  })
+  .catch(console.log);
 
 onAction(store.boxes, data => {
   const { name, args, path } = data;

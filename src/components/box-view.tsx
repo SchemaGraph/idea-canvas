@@ -161,8 +161,8 @@ class BoxViewVanilla extends React.Component<Props, State> {
   };
 
   public move: DraggableEventHandler = (
-    e,
-    { deltaX, deltaY, x, y, lastX, lastY }
+    _e,
+    { deltaX, deltaY }
   ) => {
     // console.log('BOX MOVE', this.state.dragStart, x, y, lastX, lastY);
     // e.stopPropagation();
