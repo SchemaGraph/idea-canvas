@@ -1,12 +1,10 @@
-import { ApolloQueryResult } from 'apollo-client';
 import { values } from 'mobx';
-import { applyPatch, flow, onAction, onPatch, types } from 'mobx-state-tree';
+import { applyPatch, onAction, types } from 'mobx-state-tree';
 import v4 from 'uuid/v4';
 import {
-  getPatches,
-  subscribeToGraphs,
-  subscribeToPatches,
-  toJsonPatches,
+  combineEntries,
+  deserializeEntries,
+  MyApolloClient,
 } from './appsync/client';
 import {
   Arrow,
@@ -17,14 +15,13 @@ import {
   IArrow,
   IBox,
 } from './components/models';
-import { getGraph } from './gql/generated/getGraph';
 import { PatchManager } from './patch-manager';
 
 export function randomUuid() {
   return v4();
 }
 
-const SelectionType = types.maybeNull(BoxRef);
+const SelectionType = types.maybeNull(types.string);
 
 export type CreateBoxAction = (
   name: string,
@@ -70,7 +67,7 @@ export const Store = types
     },
   }))
   .actions(self => ({
-    addBox(name: string, x: number, y: number) {
+    addBox(x: number, y: number, name?: string) {
       const box = Box.create({ name, x, y, id: randomUuid(), selected: false });
       self.boxes.put(box);
       return box;
@@ -98,7 +95,7 @@ export const Store = types
       self.offsetY = offsetY;
     },
     setTool(tool: string) {
-      console.log(tool.toUpperCase());
+      // console.log(tool.toUpperCase());
       self.tool = tool;
     },
     setCanvasDimensions(w: number, h: number) {
@@ -147,10 +144,10 @@ export const Store = types
     },
   }))
   .actions(self => ({
-    createBox(name: string, x?: number, y?: number) {
+    createBox(name?: string, x?: number, y?: number) {
       const xx = x || (self.canvasWidth / 2 - 37 - self.offsetX) / self.scale;
       const yy = y || (50 - self.offsetY) / self.scale;
-      const box = self.addBox(name, xx, yy);
+      const box = self.addBox(xx, yy, name);
       const source = self.selection;
       if (source) {
         self.addArrow(source.id || source, box.id);
@@ -158,89 +155,87 @@ export const Store = types
       self.clearSelection();
       box.setSelected(true);
     },
-    init: flow<ApolloQueryResult<getGraph>>(function* init() {
-      const { data, errors }: ApolloQueryResult<getGraph> = yield getPatches();
-      // console.log(result);
+    // init: flow<ApolloQueryResult<getGraph>>(function* init() {
+    //   const { data, errors }: ApolloQueryResult<getGraph> = yield getPatches();
+    //   // console.log(result);
 
-      if (!errors && data.getGraph && data.getGraph.patches) {
-        onPatch(self, ({ path, value }) => {
-          const parts = path.split('/');
-          const last = parts.pop();
-          console.log(last, value);
-        });
-        try {
-          const patches = toJsonPatches(data.getGraph.patches);
-          console.log(data.getGraph.patches);
-          const firstAdd = patches.findIndex(p => p.op === 'add');
-          if (firstAdd > -1) {
-            applyPatch(self, patches.slice(firstAdd));
-          }
+    //   // if (!errors && data.getGraph && data.getGraph.patches) {
+    //   //   onPatch(self, ({ path, value }) => {
+    //   //     const parts = path.split('/');
+    //   //     const last = parts.pop();
+    //   //     console.log(last, value);
+    //   //   });
+    //   //   try {
+    //   //     const patches = toJsonPatches(data.getGraph.patches);
+    //   //     const firstAdd = patches.findIndex(p => p.op === 'add');
+    //   //     if (firstAdd > -1) {
+    //   //       applyPatch(self, patches.slice(firstAdd));
+    //   //     }
 
-        } catch (e) {
-          console.error(e);
-        }
-      }
+    //   //   } catch (e) {
+    //   //     console.error(e);
+    //   //   }
+    //   // }
 
-      // return result;
-      // return undefined;
-    }),
+    //   // return result;
+    //   // return undefined;
+    // }),
   }));
 
-/*
-    The store that holds our domain: boxes and arrows
-*/
-const dummyData = {
-  boxes: {
-    'ce9131ee-f528-4952-a012-543780c5e66d': {
-      id: 'ce9131ee-f528-4952-a012-543780c5e66d',
-      name: 'Rotterdam',
-      x: 100,
-      y: 150,
-      selected: false,
-    },
-    '14194d76-aa31-45c5-a00c-104cc550430f': {
-      id: '14194d76-aa31-45c5-a00c-104cc550430f',
-      name: 'Bratislava',
-      x: 200,
-      y: 300,
-      selected: false,
-    },
-  },
-  arrows: [
-    {
-      id: '7b5d33c1-5e12-4278-b1c5-e4ae05c036bd',
-      from: 'ce9131ee-f528-4952-a012-543780c5e66d',
-      to: '14194d76-aa31-45c5-a00c-104cc550430f',
-    },
-  ],
-};
-
 export const store = Store.create();
-store
-  .init()
-  .then(r => {
-    PatchManager.create({}, { targetStore: store });
+export const client = new MyApolloClient();
 
+export async function init(graphId: string) {
+  const {
+    data: { getGraph },
+  } = await client.getGraph(graphId);
+  if (!getGraph) {
+    const r = await client.createGraph(graphId);
+    console.log('INIT CREATE', r);
+  }
+  let initialVersion = 0;
+  if (getGraph && getGraph.patches && getGraph.patches.length > 0) {
+    const { entries, version } = deserializeEntries(getGraph.patches);
+    initialVersion = version;
+    // const patches = combineEntries(entries);
+    applyPatch(store, combineEntries(entries));
+    // console.log('INIT', initialVersion, patches);
+    // patches.map(p => {
+    //   try {
+    //     applyPatch(store, p);
+    //     console.log('APPLIED', p);
+    //   } catch (error) {
+    //     console.log('FAILED TO APPLY', p);
+    //   }
+    //   return 1;
+    // });
+  }
+  return new PatchManager(store, client, graphId, initialVersion);
+}
 
-    subscribeToPatches().subscribe(
-      ({ data }) => {
-        const remotePatches = data.onAddPatches;
-        if (remotePatches) {
-          // const patches = toJsonPatches(data.getGraph.patches);
-          // console.log(data.getGraph.patches);
-          // const newOnes = remotePatches.filter(({id}) => !applied.has(id));
-          applyPatch(store, toJsonPatches(remotePatches));
-        }
-        console.log('SUBSCRIBE RESULT', remotePatches);
-      },
-      e => {
-        console.log('SUBSCRIBE ERROR', e);
-      }
-    );
+// store
+//   .init()
+//   .then(_r => {
+//     // PatchManager.create({}, { targetStore: store });
 
+//     // subscribeToPatches().subscribe(
+//     //   ({ data }) => {
+//     //     const remotePatches = data.onAddPatches;
+//     //     if (remotePatches) {
+//     //       // const patches = toJsonPatches(data.getGraph.patches);
+//     //       // console.log(data.getGraph.patches);
+//     //       // const newOnes = remotePatches.filter(({id}) => !applied.has(id));
+//     //       applyPatch(store, toJsonPatches(remotePatches));
+//     //     }
+//     //     console.log('SUBSCRIBE RESULT', remotePatches);
+//     //   },
+//     //   e => {
+//     //     console.log('SUBSCRIBE ERROR', e);
+//     //   }
+//     // );
 
-  })
-  .catch(console.log);
+//   })
+//   .catch(console.log);
 
 onAction(store.boxes, data => {
   const { name, args, path } = data;

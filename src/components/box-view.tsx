@@ -45,10 +45,19 @@ const BoxDiv = styled.div`
   touch-action: none;
   /* transition: transform 0.2s ease-out; */
 `;
-function getScaleStyle(_z: Zoom, top: number, left: number) {
+function getScaleStyle(top: number, left: number) {
   return { transform: `translate(${left}px,${top}px)` };
 }
 
+function getStyle(box: IBox) {
+  const { y, x, initialized, width } = box;
+  const d = !initialized
+    ? {
+        width,
+      }
+    : {};
+  return { ...getScaleStyle(y, x), ...d };
+}
 interface LabelProps {
   editing?: boolean;
 }
@@ -117,14 +126,19 @@ class BoxViewVanilla extends React.Component<Props, State> {
 
   public finishLabelEditing() {
     const { label } = this.state;
-    const { box } = this.props;
+    const {
+      box: { setName, initialized, initialize },
+    } = this.props;
     this.setState({
       ...this.state,
       editing: false,
       prevEditing: false,
     });
-    if (label) {
-      box.setName(label);
+
+    if (!initialized) {
+      initialize(label);
+    } else if (label) {
+      setName(label);
     }
   }
 
@@ -142,10 +156,6 @@ class BoxViewVanilla extends React.Component<Props, State> {
   };
 
   public start: DraggableEventHandler = (_e, { x, y }) => {
-    // console.log('BOX MOVE START', this.state.dragStart);
-    // e.stopPropagation();
-    // e.stopImmediatePropagation();
-    // e.preventDefault();
     this.props.setIsDragging!(this.props.box.id);
     this.setState({
       ...this.state,
@@ -160,20 +170,9 @@ class BoxViewVanilla extends React.Component<Props, State> {
     }
   };
 
-  public move: DraggableEventHandler = (
-    _e,
-    { deltaX, deltaY }
-  ) => {
-    // console.log('BOX MOVE', this.state.dragStart, x, y, lastX, lastY);
-    // e.stopPropagation();
-    // e.stopImmediatePropagation();
-    // e.preventDefault();
+  public move: DraggableEventHandler = (_e, { deltaX, deltaY }) => {
     const { scale } = this.props.zoom;
     this.props.box.move(deltaX / scale, deltaY / scale);
-    // this.setState({
-    //   ...this.state,
-    //   dragStart: Math.hypot(deltaX, deltaY),
-    // });
   };
 
   select = () => {
@@ -208,16 +207,20 @@ class BoxViewVanilla extends React.Component<Props, State> {
   }
 
   public measure() {
-    const b = this.boxRef.current;
+    const ref = this.boxRef.current;
     const {
       width,
       height,
       setDimensions,
       setWidth,
       setHeight,
+      initialized,
     } = this.props.box;
-    if (b) {
-      const { clientWidth, clientHeight } = b;
+    // console.log('MAYBE MEASURING');
+    if (ref && initialized && !this.state.editing) {
+      // Don't measure if not initialized
+      const { clientWidth, clientHeight } = ref;
+      // console.log('MEASURED', clientWidth, clientHeight);
       const dW = width - clientWidth;
       const dH = height - clientHeight;
       if (dW && dH) {
@@ -245,18 +248,18 @@ class BoxViewVanilla extends React.Component<Props, State> {
       />
     );
 
-    const { y: top, x: left, selected, name } = box;
+    const { selected, name } = box;
     // const { offsetX, offsetY, scale } = zoom;
 
     return (
       <DraggableCore onDrag={this.move} onStart={this.start} onStop={this.stop}>
         <BoxDiv
           innerRef={this.boxRef}
-          style={getScaleStyle(zoom, top, left)}
+          style={getStyle(box)}
           selected={selected}
           onDoubleClick={this.dblClickHandler}
         >
-          <Label editing={editing}>{name}</Label>
+          <Label editing={editing}>{name || `\xa0`}</Label>
           {editing ? input : null}
         </BoxDiv>
       </DraggableCore>

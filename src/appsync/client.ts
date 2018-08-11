@@ -1,59 +1,42 @@
-import { ApolloReducerConfig, InMemoryCache } from 'apollo-cache-inmemory';
+// tslint:disable-next-line:no-implicit-dependencies
+import { ApolloCache } from 'apollo-cache';
+import { InMemoryCache } from 'apollo-cache-inmemory';
 import { ApolloClient } from 'apollo-client';
 import { ApolloLink } from 'apollo-link';
 import { HttpLink } from 'apollo-link-http';
 // tslint:disable-next-line:no-implicit-dependencies
 import { getMainDefinition } from 'apollo-utilities';
-import AWSAppSyncClient, {
-  createAppSyncLink,
-  createAuthLink,
-  createLinkWithCache,
-} from 'aws-appsync';
+import { createAuthLink } from 'aws-appsync';
 import { NonTerminatingHttpLink } from 'aws-appsync/lib/link';
 import { OperationDefinitionNode } from 'graphql';
 import { IJsonPatch } from 'mobx-state-tree';
 import {
-  addPatches,
-  addPatchesVariables,
+  createGraph,
+  createGraphVariables,
+} from '../gql/generated/createGraph';
+import {
+  createPatch,
+  createPatchVariables,
   PatchInput,
-} from '../gql/generated/addPatches';
+} from '../gql/generated/createPatch';
 import {
   getGraph,
   getGraph_getGraph_patches,
   getGraphVariables,
 } from '../gql/generated/getGraph';
-import { onAddPatches } from '../gql/generated/onAddPatches';
 import { onCreateGraph } from '../gql/generated/onCreateGraph';
-import { ADD_PATCHES } from '../gql/MutationAddPatches';
+import {
+  onCreatePatch,
+  onCreatePatchVariables,
+} from '../gql/generated/onCreatePatch';
+import { CREATE_GRAPH } from '../gql/MutationCreateGraph';
+import { CREATE_PATCH } from '../gql/MutationCreatePatch';
 import { GET_GRAPH } from '../gql/QueryGetGraph';
 import { SUBSCRIBE_CREATE_GRAPH } from '../gql/SubscriptionCreateGraph';
-import { SUBSCRIBE_PATCHES } from '../gql/SubscriptionPatches';
+import { SUBSCRIBTION_CREATE_PATCH } from '../gql/SubscriptionCreatePatch';
+import { Entry } from '../patch-manager';
 import asConfig from './AppSync';
 import { SubscriptionHandshakeLink } from './subscription-handshake-link';
-
-// const stateLink = createLinkWithCache(cache => withClientState({
-//   cache,
-//   resolvers: {
-//     Mutation: {
-//       // updateNetworkStatus: (_, { isConnected }, { cache }) => {
-//       //   const data = {
-//       //     networkStatus: {
-//       //       __typename: 'NetworkStatus',
-//       //       isConnected
-//       //     },
-//       //   };
-//       //   cache.writeData({ data });
-//       //   return null
-//       // },
-//     },
-//   },
-//   defaults: {
-//     networkStatus: {
-//       __typename: 'NetworkStatus',
-//       isConnected: false
-//     }
-//   }
-// }));
 
 const createSubscriptionHandshakeLink = (
   urll: string,
@@ -87,99 +70,115 @@ const link = ApolloLink.from([
 
 // const appSyncClient = new AWSAppSyncClient({...asConfig, disableOffline: true});
 // export const client = (appSyncClient as any) as ApolloClient<any>;
-const client = new ApolloClient<any>({
-  link,
-  cache: new InMemoryCache(),
-});
+// export const apolloClient = new ApolloClient<any>();
 
-const TEST_GRAPH_ID = 'baf-graph';
+export class MyApolloClient<T> extends ApolloClient<T> {
+  constructor() {
+    const cache = new InMemoryCache();
+    super({
+      link,
+      cache: (cache as any) as ApolloCache<T>,
+    });
+  }
 
-export function savePatches(
-  patches: ReadonlyArray<IJsonPatch>,
-  inversePatches: ReadonlyArray<IJsonPatch>,
-  actionCounter: number,
-  patchCounter: number
-) {
-  return client.mutate<addPatches, addPatchesVariables>({
-    mutation: ADD_PATCHES,
-    fetchPolicy: 'no-cache',
-    variables: {
-      graphId: TEST_GRAPH_ID,
-      patches: toPatchInputs(
-        patches,
-        inversePatches,
-        actionCounter,
-        patchCounter
-      ),
-    },
-  });
+  public uploadPatches(graphId: string, entry: Entry, version: number) {
+    return this.mutate<createPatch, createPatchVariables>({
+      mutation: CREATE_PATCH,
+      fetchPolicy: 'no-cache',
+      variables: {
+        graphId,
+        patch: toPatchInput(entry, version),
+      },
+    });
+  }
+
+  public createGraph(id: string, name?: string) {
+    return this.mutate<createGraph, createGraphVariables>({
+      mutation: CREATE_GRAPH,
+      fetchPolicy: 'no-cache',
+      variables: {
+        id,
+        name,
+      },
+    });
+  }
+
+  public getGraph(id: string) {
+    return this.query<getGraph, getGraphVariables>({
+      query: GET_GRAPH,
+      fetchPolicy: 'no-cache',
+      variables: {
+        id,
+      },
+    });
+  }
+
+  public subscribeToPatches(graphId: string) {
+    return this.subscribe<{ data: onCreatePatch }, onCreatePatchVariables>({
+      query: SUBSCRIBTION_CREATE_PATCH,
+      variables: {
+        graphId,
+      },
+    });
+  }
+
+  public subscribeToGraphs() {
+    return this.subscribe<{ data: onCreateGraph }>({
+      query: SUBSCRIBE_CREATE_GRAPH,
+    });
+  }
 }
 
-export function getPatches() {
-  return client.query<getGraph, getGraphVariables>({
-    query: GET_GRAPH,
-    fetchPolicy: 'no-cache',
-    variables: {
-      id: TEST_GRAPH_ID,
-    },
-  });
+function toPatchInput(entry: Entry, version: number): PatchInput {
+  return {
+    seq: version + 1,
+    payload: JSON.stringify({
+      patches: entry.patches,
+      inversePatches: entry.inversePatches,
+      action: {
+        name: entry.action.name,
+        id: entry.action.id,
+      },
+    }),
+  };
 }
 
-export function subscribeToPatches() {
-  return client.subscribe<{data: onAddPatches}>({
-    query: SUBSCRIBE_PATCHES,
-  });
+export function deserializeEntry({
+  seq,
+  payload,
+  createdAt,
+  id,
+  graphId,
+}: getGraph_getGraph_patches) {
+  return {
+    seq,
+    createdAt,
+    id,
+    graphId,
+    entry: JSON.parse(payload) as Entry,
+  };
 }
 
-export function subscribeToGraphs() {
-  return client.subscribe<{data: onCreateGraph}>({
-    query: SUBSCRIBE_CREATE_GRAPH,
+export function deserializeEntries(patches: getGraph_getGraph_patches[]) {
+  let seq = 0;
+  const entries = patches.map(p => {
+    seq = p.seq;
+    const d = JSON.parse(p.payload) as Entry;
+    return d;
   });
+  return {
+    version: seq,
+    entries,
+  };
 }
 
-function toPatchInputs(
-  patches: ReadonlyArray<IJsonPatch>,
-  inversePatches: ReadonlyArray<IJsonPatch>,
-  actionCounter: number,
-  patchCounter: number
-): PatchInput[] {
-  return patches.map((p, i) => {
-    const inverse = inversePatches[i];
-    const oldvalue =
-      inverse && inverse.value !== undefined && inverse.value !== ''
-        ? inverse.value
-        : null;
-    return {
-      group: actionCounter + 1,
-      seq: patchCounter + 1 + i,
-      operation: p.op,
-      path: p.path,
-      value: JSON.stringify(p.value === '' ? null : p.value),
-      oldvalue,
-    };
-  });
-}
-
-export function toJsonPatches(
-  patches: Array<{operation: string, value: any, path: string} | null>
-): ReadonlyArray<IJsonPatch> {
-  return patches.filter(p => p !== null).map((p, _i) => {
-    const { operation, value, path } = p!;
-    return {
-      op: operation,
-      value: JSON.parse(value),
-      path,
-    };
-    // const inverse = inversePatches[i];
-    // const oldvalue =
-    //   inverse && inverse.value !== undefined ? inverse.value : null;
-    // return {
-    //   group: actionCounter + 1,
-    //   seq: patchCounter + 1 + i,
-    //   op: p.op as Operation,
-    //   path: p.path,
-    //   value: JSON.stringify(p.value),
-    //   oldvalue,
-    // };
-  }) as ReadonlyArray<IJsonPatch>;
+export function combineEntries(entries: Entry[]): ReadonlyArray<IJsonPatch> {
+  // let patches: ReadonlyArray<IJsonPatch> = [];
+  // for (const entry of entries) {
+  //   patches = patches.concat()
+  // }
+  const copy = entries.map(entry => entry.patches);
+  const first = copy.shift();
+  return first!.concat(...copy);
+  // return entries.fl
 }

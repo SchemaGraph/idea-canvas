@@ -3,20 +3,29 @@ import { types } from 'mobx-state-tree';
 export const Box = types
   .model('Box', {
     id: types.identifier,
-    name: 'hal',
+    name: types.maybe(types.string),
     x: 0,
     y: 0,
     selected: types.optional(types.boolean, false),
-    width: 100,
+    width: 150,
     height: 60,
+    initialized: false
   })
   .actions(self => ({
     move(dx: number, dy: number) {
       self.x += dx;
       self.y += dy;
     },
+    initialize(name?: string) {
+      self.initialized = true;
+      if (name && name.length > 0) {
+        self.name = name;
+      }
+    },
     setName(newName: string) {
-      self.name = newName;
+      if (newName && newName.length > 0) {
+        self.name = newName;
+      }
     },
     setSelected(selected: boolean) {
       self.selected = selected;
