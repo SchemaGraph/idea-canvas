@@ -28,7 +28,13 @@ interface Context {
   actionId: string;
 }
 
-const discard = new Set(['setCanvasDimensions', 'setIsDragging']);
+const discard = new Set([
+  'setCanvasDimensions',
+  'setIsDragging',
+  'setDragging',
+  'setZoom',
+  'setTool',
+]);
 
 export class PatchManager {
   private version = 0;
