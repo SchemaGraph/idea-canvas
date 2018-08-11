@@ -1,5 +1,6 @@
 import { inject } from 'mobx-react';
 import { IJsonPatch, IMiddlewareEvent, IPatchRecorder } from 'mobx-state-tree';
+import short from 'short-uuid';
 import { Entry } from '../patch-manager';
 import { IStore, IStores } from '../store';
 
@@ -28,4 +29,10 @@ export function logEntry({ action, patches }: Entry) {
   const { name, id } = action;
   console.log(id, name);
   patches.forEach(p => logPatch(p));
+}
+
+const uuidGenerator = short(short.constants.flickrBase58);
+
+export function uuid() {
+  return uuidGenerator.new();
 }

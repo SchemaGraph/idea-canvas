@@ -1,6 +1,6 @@
 import { values } from 'mobx';
 import { applyPatch, onAction, types } from 'mobx-state-tree';
-import v4 from 'uuid/v4';
+import { uuid } from 'short-uuid';
 import {
   combineEntries,
   deserializeEntries,
@@ -16,10 +16,6 @@ import {
   IBox,
 } from './components/models';
 import { PatchManager } from './patch-manager';
-
-export function randomUuid() {
-  return v4();
-}
 
 const SelectionType = types.maybeNull(types.string);
 
@@ -68,7 +64,7 @@ export const Store = types
   }))
   .actions(self => ({
     addBox(x: number, y: number, name?: string) {
-      const box = Box.create({ name, x, y, id: randomUuid(), selected: false });
+      const box = Box.create({ name, x, y, id: uuid(), selected: false });
       self.boxes.put(box);
       return box;
     },
@@ -134,7 +130,7 @@ export const Store = types
         return;
       }
       const arrow = Arrow.create({
-        id: randomUuid(),
+        id: uuid(),
         from,
         to,
         selected: false,
