@@ -36,35 +36,46 @@ import '../styles.css';
 // }
 
 // tslint:disable-next-line:no-empty-interface
-interface Props {}
-interface State {
-  initialized: boolean;
-}
-export default class App extends React.Component<Props, State> {
-  state = {
-    initialized: false,
-  };
+// interface Props {}
+// interface State {
+//   initialized: boolean;
+// }
+// export default class App extends React.Component<Props, State> {
+//   state = {
+//     initialized: false,
+//   };
 
-  constructor(props: Props) {
-    super(props);
-  }
+//   constructor(props: Props) {
+//     super(props);
+//   }
 
-  async componentDidMount() {
-    await init('ohlalaa');
-    this.setState({ initialized: true });
-  }
-  render() {
-    return (
-      this.state.initialized && (
-        <Provider store={store}>
-          <Layout>
-            <Toolbar />
-            <Canvas />
-            {/* <Info/> */}
-            {/* <DevTools /> */}
-          </Layout>
-        </Provider>
-      )
-    );
-  }
-}
+//   async componentDidMount() {
+//     await init('ohlalaa');
+//     this.setState({ initialized: true });
+//   }
+//   render() {
+//     return (
+//       this.state.initialized && (
+//         <Provider store={store}>
+//           <Layout>
+//             <Toolbar />
+//             <Canvas />
+//             {/* <Info/> */}
+//             {/* <DevTools /> */}
+//           </Layout>
+//         </Provider>
+//       )
+//     );
+//   }
+// }
+init('ohlalaa');
+export default () => (
+  <Provider store={store}>
+    <Layout>
+      <Toolbar />
+      <Canvas />
+      {/* <Info/> */}
+      {/* <DevTools /> */}
+    </Layout>
+  </Provider>
+);

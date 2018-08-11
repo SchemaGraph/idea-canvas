@@ -14,6 +14,7 @@ import { Observable, Observer, Subject, Subscription } from 'rxjs';
 import { mergeMap, tap } from 'rxjs/operators';
 import { deserializeEntry, MyApolloClient } from './appsync/client';
 import { setupPatchStream } from './event-stream';
+import { onCreatePatch_onCreatePatch } from './gql/generated/onCreatePatch';
 import { IStore } from './store';
 import { logEntry } from './utils';
 
@@ -60,6 +61,9 @@ export class PatchManager {
     initialVersion: number,
     dev = true
   ) {
+    // NOTE: [plugin-transform-typescript] constructor auto-assign not
+    // working with plugin-transform-classes #7074
+    // https://github.com/babel/babel/issues/7074
     this.dev = dev;
     this.graphId = graphId;
     this.version = initialVersion;
@@ -234,26 +238,9 @@ export class PatchManager {
 
   private subscribeToRemotePatches() {
     return this.client.subscribeToPatches(this.graphId).subscribe(
-      ({ data: { onCreatePatch } }) => {
-        if (onCreatePatch) {
-          const entry = deserializeEntry(onCreatePatch);
-          if (entry.seq === this.version + 1) {
-            try {
-              this.log('SUBSCRIBE RESULT', entry.entry.patches);
-              this.patchingInProgress = true;
-              applyPatch(this.store, entry.entry.patches);
-              this.version++;
-              this.patchingInProgress = false;
-            } catch (error) {
-              this.log('SUBSCRIBE RESULT FAILED APPLYING PATCHES');
-            }
-          } else {
-            this.log(
-              'SUBSCRIBE RESULT INCORRECT VERSION, GOT %d IS %d',
-              entry.seq,
-              this.version
-            );
-          }
+      ({ data: { onCreatePatch: patch } }) => {
+        if (patch) {
+          this.applyRemotePatch(patch);
         } else {
           this.log('SUBSCRIBE RESULT EMPTY');
         }
@@ -262,5 +249,27 @@ export class PatchManager {
         this.log('SUBSCRIBE ERROR', e);
       }
     );
+  }
+
+  private applyRemotePatch(patch: onCreatePatch_onCreatePatch) {
+    const {seq, entry: {patches}} = deserializeEntry(patch);
+    if (seq === this.version + 1) {
+      try {
+        this.log('SUBSCRIBE RESULT', patches);
+        this.patchingInProgress = true;
+        applyPatch(this.store, patches);
+        this.version++;
+        this.patchingInProgress = false;
+      } catch (error) {
+        this.log('SUBSCRIBE RESULT FAILED APPLYING PATCHES');
+      }
+    } else {
+      this.log(
+        'SUBSCRIBE RESULT INCORRECT VERSION, GOT %d IS %d',
+        seq,
+        this.version
+      );
+    }
+
   }
 }
