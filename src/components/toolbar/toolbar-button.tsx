@@ -1,14 +1,19 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { POSITION_TOP, POSITION_BOTTOM } from './constants';
+import { POSITION_BOTTOM, POSITION_TOP } from './constants';
 
-export default class ToolbarButton extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { hover: false };
-  }
+interface Props {
+  disabled?: boolean;
+  title: string;
+  name: string;
+  toolbarPosition: string;
+  onClick: React.MouseEventHandler;
+  active: boolean;
+}
+export default class ToolbarButton extends React.Component<Props> {
 
-  change(event) {
+  state = { hover: false };
+
+  change(event: React.SyntheticEvent<HTMLButtonElement>) {
     event.preventDefault();
     event.stopPropagation();
     switch (event.type) {
@@ -25,7 +30,7 @@ export default class ToolbarButton extends React.Component {
   }
 
   render() {
-    let style = {
+    const style: React.CSSProperties = {
       display: 'block',
       width: '24px',
       height: '24px',
@@ -43,19 +48,21 @@ export default class ToolbarButton extends React.Component {
       cursor: 'pointer',
     };
 
+    const touchHandler = (e:any) => {
+      this.change(e);
+      if (this.props.disabled) {
+        return;
+      }
+      this.props.onClick(e);
+    };
+
     return (
       <button
-        onMouseEnter={e => this.change(e)}
-        onMouseLeave={e => this.change(e)}
-        onTouchStart={e => {
-          this.change(e);
-          if (this.props.disabled) {
-            return;
-          }
-          this.props.onClick(e);
-        }}
-        onTouchEnd={e => this.change(e)}
-        onTouchCancel={e => this.change(e)}
+        onMouseEnter={this.change}
+        onMouseLeave={this.change}
+        onTouchStart={touchHandler}
+        onTouchEnd={this.change}
+        onTouchCancel={this.change}
         onClick={this.props.onClick}
         style={style}
         title={this.props.title}
@@ -68,12 +75,3 @@ export default class ToolbarButton extends React.Component {
     );
   }
 }
-
-ToolbarButton.propTypes = {
-  title: PropTypes.string.isRequired,
-  name: PropTypes.string.isRequired,
-  toolbarPosition: PropTypes.string.isRequired,
-  onClick: PropTypes.func.isRequired,
-  active: PropTypes.bool.isRequired,
-  disabled: PropTypes.bool,
-};

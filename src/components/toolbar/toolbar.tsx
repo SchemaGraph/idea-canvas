@@ -1,35 +1,35 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import {
-  TOOL_NONE,
-  TOOL_PAN,
-  TOOL_ZOOM_IN,
-  TOOL_ZOOM_OUT,
-  POSITION_TOP,
-  POSITION_RIGHT,
   POSITION_BOTTOM,
   POSITION_LEFT,
-  ALIGN_CENTER,
-  ALIGN_LEFT,
-  ALIGN_RIGHT,
-  ALIGN_TOP,
-  ALIGN_BOTTOM,
-  TOOL_ADD_NODE,
+  POSITION_RIGHT,
+  POSITION_TOP,
   TOOL_CONNECT,
+  TOOL_NONE,
+  TOOL_PAN,
 } from './constants';
 
-import IconPlus from './icon-plus';
+
 import IconCursor from './icon-cursor';
-import IconPan from './icon-pan';
-import IconZoomIn from './icon-zoom-in';
-import IconZoomOut from './icon-zoom-out';
 import IconFit from './icon-fit';
+import IconPan from './icon-pan';
+import IconPlus from './icon-plus';
+import IconConnect from './icon-plus-arrow';
+import IconRemove from './icon-remove';
 import ToolbarButton from './toolbar-button';
 import { ToolbarDivider } from './toolbar-divider';
-import IconRemove from './icon-remove';
-import IconConnect from './icon-plus-arrow';
 
-export default function Toolbar({
+interface Props {
+  tool: string;
+  onFit: () => void;
+  onChangeTool: (tool: string) => void;
+  onAddNode: () => void;
+  onRemoveNode: () => void;
+  selectedNode: any;
+  position: string;
+}
+
+export const Toolbar: React.SFC<Props> = ({
   tool,
   onFit,
   onChangeTool,
@@ -37,37 +37,35 @@ export default function Toolbar({
   onRemoveNode,
   selectedNode,
   position,
-  SVGAlignX,
-  SVGAlignY,
-}) {
-  let handleChangeTool = (event, tool) => {
-    onChangeTool(tool);
+}) => {
+  const handleChangeTool = (newTool: string) => (event: any) => {
+    onChangeTool(newTool);
     event.stopPropagation();
     event.preventDefault();
   };
 
-  let handleFit = event => {
+  const handleFit = (event: any) => {
     onFit();
     event.stopPropagation();
     event.preventDefault();
   };
 
-  let handleAddNode = event => {
+  const handleAddNode = (event: any) => {
     onAddNode();
     event.stopPropagation();
     event.preventDefault();
   };
 
-  let handleRemoveNode = event => {
+  const handleRemoveNode = (event: any) => {
     onRemoveNode();
     event.stopPropagation();
     event.preventDefault();
   };
 
-  let isHorizontal = [POSITION_TOP, POSITION_BOTTOM].indexOf(position) >= 0;
+  const isHorizontal = [POSITION_TOP, POSITION_BOTTOM].indexOf(position) >= 0;
 
-  let style = {
-    //position
+  const style: React.CSSProperties = {
+    // position
     position: 'absolute',
     transform:
       [POSITION_TOP, POSITION_BOTTOM].indexOf(position) >= 0
@@ -87,7 +85,7 @@ export default function Toolbar({
     bottom: [POSITION_BOTTOM].indexOf(position) >= 0 ? '5px' : 'unset',
     zIndex: 10,
 
-    //inner styling
+    // inner styling
     backgroundColor: 'rgba(19, 20, 22, 0.90)',
     borderRadius: '2px',
     display: 'flex',
@@ -102,7 +100,7 @@ export default function Toolbar({
         active={tool === TOOL_NONE}
         name="unselect-tools"
         title="Selection"
-        onClick={event => handleChangeTool(event, TOOL_NONE)}
+        onClick={handleChangeTool(TOOL_NONE)}
       >
         <IconCursor />
       </ToolbarButton>
@@ -111,7 +109,7 @@ export default function Toolbar({
         active={tool === TOOL_PAN}
         name="select-tool-pan"
         title="Pan"
-        onClick={event => handleChangeTool(event, TOOL_PAN)}
+        onClick={handleChangeTool(TOOL_PAN)}
       >
         <IconPan />
       </ToolbarButton>
@@ -120,7 +118,7 @@ export default function Toolbar({
         active={tool === TOOL_CONNECT}
         name="select-tool-connect"
         title="Connect"
-        onClick={event => handleChangeTool(event, TOOL_CONNECT)}
+        onClick={handleChangeTool(TOOL_CONNECT)}
       >
         <IconConnect />
       </ToolbarButton>
@@ -172,32 +170,10 @@ export default function Toolbar({
         active={false}
         name="fit-to-viewer"
         title="Fit to viewer"
-        onClick={event => handleFit(event)}
+        onClick={handleFit}
       >
         <IconFit />
       </ToolbarButton>
     </div>
   );
-}
-
-Toolbar.propTypes = {
-  position: PropTypes.oneOf([
-    POSITION_TOP,
-    POSITION_RIGHT,
-    POSITION_BOTTOM,
-    POSITION_LEFT,
-  ]).isRequired,
-  tool: PropTypes.string.isRequired,
-  onFit: PropTypes.func.isRequired,
-  onAddNode: PropTypes.func.isRequired,
-  onRemoveNode: PropTypes.func.isRequired,
-  onChangeTool: PropTypes.func.isRequired,
-  selectedNode: PropTypes.string,
-  SVGAlignX: PropTypes.oneOf([ALIGN_CENTER, ALIGN_LEFT, ALIGN_RIGHT]),
-  SVGAlignY: PropTypes.oneOf([ALIGN_CENTER, ALIGN_TOP, ALIGN_BOTTOM]),
-};
-
-Toolbar.defaultProps = {
-  SVGAlignX: ALIGN_LEFT,
-  SVGAlignY: ALIGN_TOP,
 };
