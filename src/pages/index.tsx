@@ -14,61 +14,8 @@ import { init, store } from '../store';
 import '../normalize.css';
 import '../styles.css';
 
-// function initializeHistory() {
-//   const history = createHashHistory();
-//   const initialLocation = history.location;
-//   const initialPath = initialLocation.pathname;
-//   if (initialPath && initialPath.length > 3) {
-//     applySnapshot(store, decodeSnapshot(initialLocation));
-//   }
-
-//   let snapshotListenerDisposer = attach(store, history);
-//   history.listen((location, action) => {
-//     if (action === 'POP') {
-//       const snapshot = decodeSnapshot(location);
-//       if (snapshot) {
-//         snapshotListenerDisposer();
-//         applySnapshot(store, snapshot);
-//         snapshotListenerDisposer = attach(store, history);
-//       }
-//     }
-//   });
-// }
-
-// tslint:disable-next-line:no-empty-interface
-// interface Props {}
-// interface State {
-//   initialized: boolean;
-// }
-// export default class App extends React.Component<Props, State> {
-//   state = {
-//     initialized: false,
-//   };
-
-//   constructor(props: Props) {
-//     super(props);
-//   }
-
-//   async componentDidMount() {
-//     await init('ohlalaa');
-//     this.setState({ initialized: true });
-//   }
-//   render() {
-//     return (
-//       this.state.initialized && (
-//         <Provider store={store}>
-//           <Layout>
-//             <Toolbar />
-//             <Canvas />
-//             {/* <Info/> */}
-//             {/* <DevTools /> */}
-//           </Layout>
-//         </Provider>
-//       )
-//     );
-//   }
-// }
-init('yebba4');
+const dev = process.env.NODE_ENV !== 'production';
+init('yebba4', dev);
 
 export default () => (
   <Provider store={store}>
@@ -76,7 +23,7 @@ export default () => (
       <Toolbar />
       <Canvas />
       {/* <Info/> */}
-      {/* <DevTools /> */}
+      {dev && <DevTools />}
     </Layout>
   </Provider>
 );

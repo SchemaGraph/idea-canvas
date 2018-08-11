@@ -156,7 +156,7 @@ export const Store = types
 export const store = Store.create();
 export const client = new MyApolloClient();
 
-export async function init(graphId: string) {
+export async function init(graphId: string, dev = true) {
   const {
     data: { getGraph },
   } = await client.getGraph(graphId);
@@ -169,7 +169,7 @@ export async function init(graphId: string) {
     initialVersion = version;
     applyPatch(store, flattenPatches(patches.map(p => p.payload)));
   }
-  return new PatchManager(store, client, graphId, initialVersion);
+  return new PatchManager(store, client, graphId, initialVersion, dev);
 }
 
 onAction(store.boxes, data => {
