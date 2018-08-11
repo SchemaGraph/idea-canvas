@@ -4,19 +4,22 @@
 // This file was automatically generated and should not be edited.
 
 // ====================================================
-// GraphQL subscription operation: onAddPatches
+// GraphQL query operation: getPatches
 // ====================================================
 
-export interface onAddPatches_onAddPatches {
-  graphId: string;
+export interface getPatches_getPatches {
   seq: number;
-  createdAt: string;
-  id: string;
   payload: string;
+  client: string;
 }
 
-export interface onAddPatches {
-  onAddPatches: onAddPatches_onAddPatches[];
+export interface getPatches {
+  getPatches: getPatches_getPatches[] | null;
+}
+
+export interface getPatchesVariables {
+  graphId: string;
+  since: number;
 }
 
 /* tslint:disable */

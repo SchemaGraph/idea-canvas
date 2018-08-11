@@ -33,7 +33,6 @@ export function setupPatchStream($stream: Observable<Entry>) {
         take(1)
       );
 
-
       // see if we get another soon
       return $stream.pipe(
         filter(isBoxMoveAction),
@@ -57,13 +56,30 @@ export function setupPatchStream($stream: Observable<Entry>) {
 function moveActionShaper(first: Entry): (y: XY) => Entry {
   return lastXY => {
     const { action, patches: originalPatches } = first;
-    const pathParts = originalPatches[0].path.split('/');
+    const firstPatch = originalPatches[0];
+    const pathParts = firstPatch.path.split('/');
     pathParts.pop();
     // console.log(action);
     // const id = (action.context as any).id;
     // const lastPatch = lastt.patches[lastt.patches.length - 1];
+    const originalXY: XY = {
+      x: 0,
+      y: 0,
+    };
+    for (const k in lastXY) {
+      if (k === 'x' || k === 'y') {
+        pathParts.push(k);
+        const path = pathParts.join('/');
+        pathParts.pop();
+        const originalK = originalPatches.find(p => p.path === path);
+        if (originalK) {
+          originalXY[k] = originalK.value;
+        }
+      }
+    }
 
     const patches: IJsonPatch[] = [];
+    const inversePatches: IJsonPatch[] = [];
     for (const k in lastXY) {
       if (k === 'x' || k === 'y') {
         pathParts.push(k);
@@ -75,12 +91,17 @@ function moveActionShaper(first: Entry): (y: XY) => Entry {
           path,
           value: lastXY[k],
         });
+        inversePatches.push({
+          op: 'replace',
+          path,
+          value: originalXY[k],
+        });
       }
     }
     return {
       action,
       patches,
-      inversePatches: first.inversePatches,
+      inversePatches,
     };
   };
 }

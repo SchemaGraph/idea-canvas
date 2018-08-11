@@ -5,10 +5,8 @@ export const GET_GRAPH = gql`
     getGraph(id: $id) {
       id
       patches {
-        graphId
         seq
-        createdAt
-        id
+        client
         payload
       }
     }

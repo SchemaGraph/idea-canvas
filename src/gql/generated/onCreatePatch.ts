@@ -11,8 +11,7 @@ export interface onCreatePatch_onCreatePatch {
   __typename: "Patch";
   graphId: string;
   seq: number;
-  createdAt: string;
-  id: string;
+  client: string;
   payload: string;
 }
 
@@ -37,6 +36,8 @@ export interface onCreatePatchVariables {
 export interface PatchInput {
   seq: number;
   payload: string;
+  client: string;
+  action?: string | null;
 }
 
 //==============================================================

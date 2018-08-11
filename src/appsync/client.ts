@@ -24,6 +24,7 @@ import {
   getGraph_getGraph_patches,
   getGraphVariables,
 } from '../gql/generated/getGraph';
+import { getPatches, getPatchesVariables } from '../gql/generated/getPatches';
 import { onCreateGraph } from '../gql/generated/onCreateGraph';
 import {
   onCreatePatch,
@@ -32,9 +33,11 @@ import {
 import { CREATE_GRAPH } from '../gql/MutationCreateGraph';
 import { CREATE_PATCH } from '../gql/MutationCreatePatch';
 import { GET_GRAPH } from '../gql/QueryGetGraph';
+import { GET_PATCHES } from '../gql/QueryGetPatches';
 import { SUBSCRIBE_CREATE_GRAPH } from '../gql/SubscriptionCreateGraph';
 import { SUBSCRIBTION_CREATE_PATCH } from '../gql/SubscriptionCreatePatch';
 import { Entry } from '../patch-manager';
+import { uuid } from '../utils';
 import asConfig from './AppSync';
 import { SubscriptionHandshakeLink } from './subscription-handshake-link';
 
@@ -73,12 +76,15 @@ const link = ApolloLink.from([
 // export const apolloClient = new ApolloClient<any>();
 
 export class MyApolloClient<T> extends ApolloClient<T> {
+  public readonly id: string;
+
   constructor() {
     const cache = new InMemoryCache();
     super({
       link,
       cache: (cache as any) as ApolloCache<T>,
     });
+    this.id = uuid();
   }
 
   public uploadPatches(graphId: string, entry: Entry, version: number) {
@@ -87,7 +93,7 @@ export class MyApolloClient<T> extends ApolloClient<T> {
       fetchPolicy: 'no-cache',
       variables: {
         graphId,
-        patch: toPatchInput(entry, version),
+        patch: toPatchInput(entry, version, this.id),
       },
     });
   }
@@ -113,6 +119,17 @@ export class MyApolloClient<T> extends ApolloClient<T> {
     });
   }
 
+  public getPatches(graphId: string, since: number) {
+    return this.query<getPatches, getPatchesVariables>({
+      query: GET_PATCHES,
+      fetchPolicy: 'no-cache',
+      variables: {
+        graphId,
+        since,
+      },
+    });
+  }
+
   public subscribeToPatches(graphId: string) {
     return this.subscribe<{ data: onCreatePatch }, onCreatePatchVariables>({
       query: SUBSCRIBTION_CREATE_PATCH,
@@ -129,56 +146,80 @@ export class MyApolloClient<T> extends ApolloClient<T> {
   }
 }
 
-function toPatchInput(entry: Entry, version: number): PatchInput {
+export function revert({
+  op,
+  path,
+  value,
+  oldvalue,
+}: CombinedPatch): CombinedPatch {
+  return {
+    op: op === 'replace' ? 'replace' : op === 'add' ? 'remove' : 'add',
+    path,
+    value: oldvalue,
+    oldvalue: value,
+  };
+}
+
+export function toCombinedPatches(
+  patches: ReadonlyArray<IJsonPatch>,
+  inversePatches: ReadonlyArray<IJsonPatch>
+): CombinedPatch[] {
+  if (patches.length !== inversePatches.length) {
+    throw new Error('Invalid patch array lengths');
+  }
+  return patches.map((p, i) => ({
+    ...p,
+    oldvalue: inversePatches[i].value,
+  }));
+}
+
+interface CombinedPatch extends IJsonPatch {
+  oldvalue?: any;
+}
+
+function toPatchInput(
+  { patches, inversePatches, action }: Entry,
+  version: number,
+  client: string,
+): PatchInput {
   return {
     seq: version + 1,
-    payload: JSON.stringify({
-      patches: entry.patches,
-      inversePatches: entry.inversePatches,
-      action: {
-        name: entry.action.name,
-        id: entry.action.id,
-      },
-    }),
+    payload: JSON.stringify(toCombinedPatches(patches, inversePatches)),
+    action: action.name,
+    client,
   };
 }
 
-export function deserializeEntry({
-  seq,
-  payload,
-  createdAt,
-  id,
-  graphId,
-}: getGraph_getGraph_patches) {
-  return {
-    seq,
-    createdAt,
-    id,
-    graphId,
-    entry: JSON.parse(payload) as Entry,
+export function deserializeRemotePatch(p: getGraph_getGraph_patches, clientCheck?: string) {
+  const patch = {
+    ...p,
+    payload: JSON.parse(p.payload) as CombinedPatch[],
   };
+  if (clientCheck && patch.client === clientCheck) {
+    throw new Error('Deserializing self-submitted patches');
+  }
+  return patch;
 }
 
-export function deserializeEntries(patches: getGraph_getGraph_patches[]) {
+export function deserializeRemotePatches(
+  remotePatches: getGraph_getGraph_patches[],
+  clientCheck?: string
+) {
   let seq = 0;
-  const entries = patches.map(p => {
+  const patches = remotePatches.map(p => {
     seq = p.seq;
-    const d = JSON.parse(p.payload) as Entry;
-    return d;
+    return deserializeRemotePatch(p, clientCheck);
   });
   return {
     version: seq,
-    entries,
+    patches,
   };
 }
 
-export function combineEntries(entries: Entry[]): ReadonlyArray<IJsonPatch> {
-  // let patches: ReadonlyArray<IJsonPatch> = [];
-  // for (const entry of entries) {
-  //   patches = patches.concat()
-  // }
-  const copy = entries.map(entry => entry.patches);
+export function flattenPatches(
+  patches: CombinedPatch[][]
+): ReadonlyArray<IJsonPatch> {
+  const copy = patches.slice();
   const first = copy.shift();
   return first!.concat(...copy);
-  // return entries.fl
 }

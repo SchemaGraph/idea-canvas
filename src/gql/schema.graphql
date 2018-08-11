@@ -4,28 +4,32 @@
   patches: [Patch!]
 }
 
-type Mutation {
-  createGraph(id: ID!, name: String, patches: [PatchInput]): Graph!
-  createPatch(graphId: ID!, patch: PatchInput!): Patch!
-  addPatches(graph: ID!, patches: [PatchInput]): [Patch!]!
-}
-
 type Patch {
   graphId: ID!
   seq: Int!
   id: String!
   createdAt: String!
   payload: String!
+  client: String!
+  action: String
 }
 
 input PatchInput {
   seq: Int!
   payload: String!
+  client: String!
+  action: String
 }
 
 type Query {
   getGraph(id: ID!): Graph
   getPatch(id: ID!): Patch
+  getPatches(graphId: ID!, since: Int!): [Patch!]
+}
+type Mutation {
+  createGraph(id: ID!, name: String, patches: [PatchInput]): Graph!
+  createPatch(graphId: ID!, patch: PatchInput!): Patch!
+  addPatches(graph: ID!, patches: [PatchInput]): [Patch!]!
 }
 
 type Subscription {

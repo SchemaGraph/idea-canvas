@@ -1,27 +1,47 @@
-import ApolloClient from 'apollo-client';
-import { FetchResult } from 'apollo-link';
+import { GraphQLError } from 'graphql';
 import {
   addMiddleware,
+  applyAction,
   applyPatch,
   createActionTrackingMiddleware,
+  getPath,
   IJsonPatch,
   IMiddlewareEvent,
   IPatchRecorder,
+  ISerializedActionCall,
   recordPatches,
 } from 'mobx-state-tree';
 import { IDisposer } from 'mobx-state-tree/dist/utils';
 import { Observable, Observer, Subject, Subscription } from 'rxjs';
-import { mergeMap, tap } from 'rxjs/operators';
-import { deserializeEntry, MyApolloClient } from './appsync/client';
+import { mergeMap } from 'rxjs/operators';
+import {
+  deserializeRemotePatch,
+  deserializeRemotePatches,
+  flattenPatches,
+  MyApolloClient,
+} from './appsync/client';
 import { setupPatchStream } from './event-stream';
+import { createPatch_createPatch } from './gql/generated/createPatch';
+import { getPatches_getPatches } from './gql/generated/getPatches';
 import { onCreatePatch_onCreatePatch } from './gql/generated/onCreatePatch';
 import { IStore } from './store';
-import { logEntry } from './utils';
+import { logPatch } from './utils';
+
+// interface IMiddlewareEvent = {
+//   type: IMiddlewareEventType;
+//   name: string;
+//   id: number;
+//   parentId: number;
+//   rootId: number;
+//   context: IAnyStateTreeNode;
+//   tree: IAnyStateTreeNode;
+//   args: any[];
+// };
 
 export interface Entry {
   patches: ReadonlyArray<IJsonPatch>;
   inversePatches: ReadonlyArray<IJsonPatch>;
-  action: { name: string; id: number };
+  action: ISerializedActionCall;
 }
 
 interface Context {
@@ -53,6 +73,7 @@ export class PatchManager {
   private readonly graphId: string;
   private readonly remoteSubscription: ZenObservable.Subscription;
   private readonly dev: boolean;
+  updateInProgress: any;
 
   constructor(
     store: IStore,
@@ -95,6 +116,11 @@ export class PatchManager {
       console.log(msg, ...args);
     }
   }
+  private logPatches(patches: ReadonlyArray<IJsonPatch>) {
+    if (this.dev) {
+      patches.map(logPatch);
+    }
+  }
 
   private logError(error: any) {
     if (this.dev) {
@@ -109,57 +135,125 @@ export class PatchManager {
         mergeMap(this.tryUpload, 1)
       )
       .subscribe(
-        ({ result, entry }) => {
-          if (!result.errors) {
-            this.log('UPLOADED', this.version);
-            logEntry(entry);
+        ({ errors, entry, updateWith }) => {
+          if (!errors || !errors.length) {
+            // this.log('UPLOADED', this.version);
+            // logEntry(entry);
             this.version++;
+            this.log('mutation committed, new version is %d', this.version);
+          } else if (updateWith) {
+            this.rebaseWith(entry, updateWith);
+            this.log('mutation conflict, updated to version %d', this.version);
           } else {
             this.undo(entry);
+            this.log('mutation conflict, reverting back to version %d', this.version);
           }
+          this.logPatches(entry.patches);
         },
         error => {
-          this.log('SUBSCRIPTION FAILED');
+          this.log('LOCAL SUBSCRIPTION FAILED');
           this.logError(error);
         },
         () => {
-          this.log('SUBSCRIPTION COMPLETED');
+          this.log('LOCAL SUBSCRIPTION COMPLETED');
         }
       );
   }
 
-  public tryUpload = async (x: Entry) => {
+  public tryUpload = async (
+    x: Entry
+  ): Promise<{
+    entry: Entry;
+    errors?: GraphQLError[];
+    updateWith?: createPatch_createPatch;
+  }> => {
     const version = this.version;
 
     try {
-      const result = await this.client.uploadPatches(this.graphId, x, version);
+      const { data, errors } = await this.client.uploadPatches(
+        this.graphId,
+        x,
+        version
+      );
+      // this.log('MUTATION RESULT', data);
       return {
         entry: x,
-        result: {
-          errors: result.errors ? 1 : 0,
-        },
+        errors,
       };
     } catch (error) {
       // Most probably a condition exception
       if (error.graphQLErrors && error.graphQLErrors.length > 0) {
-        const { errorType } = error.graphQLErrors[0];
+        const err = error.graphQLErrors[0];
+        const { errorType } = err;
         if (errorType === 'DynamoDB:ConditionalCheckFailedException') {
-          this.log(
-            `OUT-OF-DATE, tried %d`,
-            version + 1,
-            error.graphQLErrors[0].data
-          );
+          // this.log(`OUT-OF-DATE, tried %d`, version + 1, err.data);
           return {
             entry: x,
-            result: {
-              errors: 1,
-            },
+            errors: err.graphQLErrors,
+            updateWith: err.data,
           };
         }
       }
       throw error;
     }
   };
+
+  private tryUpdate = async () => {
+    this.updateInProgress = true;
+    const version = this.version;
+    this.log('UPDATING TO THE NEWEST VERSION');
+
+    try {
+      const {
+        data: { getPatches },
+      } = await this.client.getPatches(this.graphId, version);
+      if (getPatches && getPatches && getPatches.length > 0) {
+        return this.applyRemotePatches(getPatches);
+      } else {
+        this.log('ALREADY AT THE NEWEST VERSION');
+      }
+    } catch (error) {
+      this.logError(error);
+    } finally {
+      this.updateInProgress = false;
+    }
+    return 0;
+  };
+
+  private applyRemotePatches(remotePatches: getPatches_getPatches[]) {
+    const version = this.version;
+    const { patches, version: newVersion } = deserializeRemotePatches(
+      remotePatches
+    );
+    if (newVersion !== version + patches.length) {
+      throw new Error(
+        `Won't apply incompatible patches, ${newVersion} !== ${version} + ${
+          patches.length
+        }`
+      );
+    }
+    this.log('TRYING TO UPDATE', patches);
+    this.patchingInProgress = true;
+    applyPatch(this.store, flattenPatches(patches.map(p => p.payload)));
+    this.patchingInProgress = false;
+    this.version = newVersion;
+    return newVersion - version;
+  }
+
+  private async rebase(entry: Entry) {
+    this.undo(entry);
+    const forwarded = await this.tryUpdate();
+    if (!forwarded) {
+      throw new Error('REBASE: Already at the newest version');
+    }
+    applyAction(this.store, entry.action);
+  }
+
+  public rebaseWith(entry: Entry, patch: createPatch_createPatch) {
+    this.undo(entry);
+    this.applyRemotePatches([patch]);
+    applyAction(this.store, entry.action);
+  }
 
   public undo({ inversePatches, action }: Entry) {
     this.patchingInProgress = true;
@@ -183,7 +277,7 @@ export class PatchManager {
       !this.patchingInProgress &&
       context !== this; // don't undo / redo undo redo :)
     if (!verdict) {
-      this.log('FILTERED', name);
+      // this.log('FILTERED', name);
     }
     return verdict;
   };
@@ -218,7 +312,11 @@ export class PatchManager {
       this.observer.next({
         patches: recorder.patches,
         inversePatches: recorder.inversePatches,
-        action,
+        action: {
+          name: action.name,
+          args: action.args,
+          path: getPath(action.context),
+        },
       });
     } else {
       // this.log(recorder.patches.length, this.observer);
@@ -240,7 +338,7 @@ export class PatchManager {
     return this.client.subscribeToPatches(this.graphId).subscribe(
       ({ data: { onCreatePatch: patch } }) => {
         if (patch) {
-          this.applyRemotePatch(patch);
+          this.applyRealtimePatch(patch);
         } else {
           this.log('SUBSCRIBE RESULT EMPTY');
         }
@@ -251,25 +349,37 @@ export class PatchManager {
     );
   }
 
-  private applyRemotePatch(patch: onCreatePatch_onCreatePatch) {
-    const {seq, entry: {patches}} = deserializeEntry(patch);
-    if (seq === this.version + 1) {
+  private applyRealtimePatch(patch: onCreatePatch_onCreatePatch) {
+    if (this.updateInProgress) {
+      return;
+    }
+    const remote = deserializeRemotePatch(patch);
+    const { seq, payload, client } = remote;
+    if (seq === this.version + 1 && client !== this.client.id) {
       try {
-        this.log('SUBSCRIBE RESULT', patches);
         this.patchingInProgress = true;
-        applyPatch(this.store, patches);
+        applyPatch(this.store, payload);
         this.version++;
         this.patchingInProgress = false;
+        this.log('remote patch committed, new version is %d', this.version);
       } catch (error) {
         this.log('SUBSCRIBE RESULT FAILED APPLYING PATCHES');
       }
+      this.logPatches(remote.payload);
     } else {
-      this.log(
-        'SUBSCRIBE RESULT INCORRECT VERSION, GOT %d IS %d',
-        seq,
-        this.version
-      );
+      if (client === this.client.id) {
+        // this.log('SUBSCRIBE: IGNORED SELF MUTATION');
+      } else {
+        this.log(
+          'SUBSCRIBE RESULT INCORRECT VERSION, GOT %d IS %d',
+          seq,
+          this.version
+        );
+        this.logPatches(remote.payload);
+        if (seq >= this.version) {
+          this.tryUpdate();
+        }
+      }
     }
-
   }
 }

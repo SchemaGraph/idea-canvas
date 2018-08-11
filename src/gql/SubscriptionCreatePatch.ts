@@ -6,8 +6,7 @@ export const SUBSCRIBTION_CREATE_PATCH = gql`
       __typename
       graphId
       seq
-      createdAt
-      id
+      client
       payload
     }
   }

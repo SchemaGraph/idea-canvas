@@ -42,6 +42,8 @@ export interface createGraphVariables {
 export interface PatchInput {
   seq: number;
   payload: string;
+  client: string;
+  action?: string | null;
 }
 
 //==============================================================

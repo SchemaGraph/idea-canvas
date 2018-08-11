@@ -129,6 +129,14 @@ async function getResolvers(APPSYNC_API_ID: string): Promise<Resolver[]> {
       requestMappingTemplate: templateGetItem(),
       responseMappingTemplate: `$util.toJson($context.result)`,
     },
+    {
+      apiId: APPSYNC_API_ID,
+      typeName: 'Query',
+      fieldName: 'getPatches',
+      dataSourceName: 'IdeaCanvas_PatchTable',
+      requestMappingTemplate: await readTemplate('QueryGetPatchesRequest'),
+      responseMappingTemplate: `$util.toJson($context.result.items)`,
+    },
   ];
 }
 

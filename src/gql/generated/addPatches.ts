@@ -10,8 +10,6 @@
 export interface addPatches_addPatches {
   graphId: string;
   seq: number;
-  createdAt: string;
-  id: string;
   payload: string;
 }
 
@@ -37,6 +35,8 @@ export interface addPatchesVariables {
 export interface PatchInput {
   seq: number;
   payload: string;
+  client: string;
+  action?: string | null;
 }
 
 //==============================================================

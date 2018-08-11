@@ -1,9 +1,8 @@
 import { values } from 'mobx';
 import { applyPatch, onAction, types } from 'mobx-state-tree';
-import { uuid } from 'short-uuid';
 import {
-  combineEntries,
-  deserializeEntries,
+  deserializeRemotePatches,
+  flattenPatches,
   MyApolloClient,
 } from './appsync/client';
 import {
@@ -16,6 +15,7 @@ import {
   IBox,
 } from './components/models';
 import { PatchManager } from './patch-manager';
+import { uuid } from './utils';
 
 const SelectionType = types.maybeNull(types.string);
 
@@ -162,17 +162,15 @@ export async function init(graphId: string) {
   } = await client.getGraph(graphId);
   if (!getGraph) {
     const r = await client.createGraph(graphId);
-    console.log('INIT CREATE', r);
   }
   let initialVersion = 0;
   if (getGraph && getGraph.patches && getGraph.patches.length > 0) {
-    const { entries, version } = deserializeEntries(getGraph.patches);
+    const { patches, version } = deserializeRemotePatches(getGraph.patches);
     initialVersion = version;
-    applyPatch(store, combineEntries(entries));
+    applyPatch(store, flattenPatches(patches.map(p => p.payload)));
   }
   return new PatchManager(store, client, graphId, initialVersion);
 }
-
 
 onAction(store.boxes, data => {
   const { name, args, path } = data;

@@ -5,8 +5,7 @@ export const CREATE_PATCH = gql`
     createPatch(graphId: $graphId, patch: $patch) {
       graphId
       seq
-      createdAt
-      id
+      client
       payload
     }
   }

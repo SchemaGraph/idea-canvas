@@ -11,16 +11,19 @@
 ##   - Comparators: >, <. >=, <= can be used for the "expression" key inside a filter
 ##     - For example, "expression" : "#age > :age" would work on an attribute of type number
 ## Read more: https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-filter
+
 {
   "version": "2017-02-28",
   "operation": "Query",
   "query": {
-    "expression": "#graphId = :graphId",
+    "expression": "#graphId = :graphId and #seq > :since",
     "expressionNames": {
-      "#graphId": "graphId"
+      "#graphId": "graphId",
+      "#seq": "seq"
     },
     "expressionValues": {
-      ":graphId": $util.dynamodb.toDynamoDBJson($ctx.source.id)
+      ":graphId": $util.dynamodb.toDynamoDBJson($ctx.args.graphId),
+      ":since": $util.dynamodb.toDynamoDBJson($ctx.args.since)
     }
   }
 }

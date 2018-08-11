@@ -49,14 +49,19 @@ function getScaleStyle(top: number, left: number) {
   return { transform: `translate(${left}px,${top}px)` };
 }
 
-function getStyle(box: IBox) {
+function getStyle(
+  box: IBox,
+  prevX?: number,
+  prevY?: number,
+  isDragging?: boolean
+): React.CSSProperties {
   const { y, x, initialized, width } = box;
-  const d = !initialized
-    ? {
-        width,
-      }
-    : {};
-  return { ...getScaleStyle(y, x), ...d };
+  const delta = prevX && prevY && Math.hypot(x - prevX, y - prevY);
+  return {
+    ...getScaleStyle(y, x),
+    width: !initialized ? width : undefined,
+    transition: !isDragging ? 'transform 0.2s ease-out' : undefined,
+  };
 }
 interface LabelProps {
   editing?: boolean;
@@ -97,6 +102,9 @@ const Input = styled.input`
 class BoxViewVanilla extends React.Component<Props, State> {
   private inputRef = React.createRef<HTMLInputElement>();
   private boxRef = React.createRef<HTMLDivElement>();
+  prevX?: number;
+  prevY?: number;
+  dragStart?: number;
 
   public state: State = {
     label: undefined,
@@ -157,16 +165,21 @@ class BoxViewVanilla extends React.Component<Props, State> {
 
   public start: DraggableEventHandler = (_e, { x, y }) => {
     this.props.setIsDragging!(this.props.box.id);
-    this.setState({
-      ...this.state,
-      dragStart: Math.hypot(x, y),
-    });
+    this.dragStart = Math.hypot(x, y);
+    // this.setState({
+    //   ...this.state,
+    //   dragStart: Math.hypot(x, y),
+    // });
   };
   public stop: DraggableEventHandler = (_e, { x, y }) => {
-    const d = Math.abs(this.state.dragStart - Math.hypot(x, y));
-    // console.log('BOX MOVE END', d);
-    if (d < 0.001) {
-      this.select();
+    this.props.setIsDragging!();
+    if (this.dragStart) {
+      const d = Math.abs(this.dragStart - Math.hypot(x, y));
+      // console.log('BOX MOVE END', d);
+      if (d < 0.001) {
+        this.select();
+      }
+      this.dragStart = undefined;
     }
   };
 
@@ -215,6 +228,8 @@ class BoxViewVanilla extends React.Component<Props, State> {
       setWidth,
       setHeight,
       initialized,
+      x,
+      y,
     } = this.props.box;
     // console.log('MAYBE MEASURING');
     if (ref && initialized && !this.state.editing) {
@@ -231,6 +246,8 @@ class BoxViewVanilla extends React.Component<Props, State> {
         setHeight(dH);
       }
     }
+    this.prevX = x;
+    this.prevY = y;
   }
 
   public render() {
@@ -255,11 +272,11 @@ class BoxViewVanilla extends React.Component<Props, State> {
       <DraggableCore onDrag={this.move} onStart={this.start} onStop={this.stop}>
         <BoxDiv
           innerRef={this.boxRef}
-          style={getStyle(box)}
+          style={getStyle(box, this.prevX, this.prevY, !!this.dragStart)}
           selected={selected}
           onDoubleClick={this.dblClickHandler}
         >
-          <Label editing={editing}>{name || `\xa0`}</Label>
+          <Label editing={editing}>{name || `\xa0`}</Label>
           {editing ? input : null}
         </BoxDiv>
       </DraggableCore>

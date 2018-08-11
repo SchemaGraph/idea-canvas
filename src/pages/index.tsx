@@ -68,7 +68,8 @@ import '../styles.css';
 //     );
 //   }
 // }
-init('ohlalaa');
+init('yebba4');
+
 export default () => (
   <Provider store={store}>
     <Layout>
