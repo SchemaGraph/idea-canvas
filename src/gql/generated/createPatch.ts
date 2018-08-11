@@ -4,15 +4,24 @@
 // This file was automatically generated and should not be edited.
 
 // ====================================================
-// GraphQL subscription operation: onCreateGraph
+// GraphQL mutation operation: createPatch
 // ====================================================
 
-export interface onCreateGraph_onCreateGraph {
+export interface createPatch_createPatch {
+  graphId: string;
+  seq: number;
+  createdAt: string;
   id: string;
+  payload: string;
 }
 
-export interface onCreateGraph {
-  onCreateGraph: onCreateGraph_onCreateGraph;
+export interface createPatch {
+  createPatch: createPatch_createPatch;
+}
+
+export interface createPatchVariables {
+  graphId: string;
+  patch: PatchInput;
 }
 
 /* tslint:disable */

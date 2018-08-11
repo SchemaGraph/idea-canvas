@@ -1,8 +1,8 @@
 import gql from 'graphql-tag';
 
-export const GET_GRAPH = gql`
-  query getGraph($id: ID!) {
-    getGraph(id: $id) {
+export const CREATE_GRAPH = gql`
+  mutation createGraph($id: ID!, $name: String) {
+    createGraph(id: $id, name: $name) {
       id
       patches {
         graphId

@@ -8,17 +8,16 @@
 // ====================================================
 
 export interface getGraph_getGraph_patches {
-  createdAt: string;
-  group: number;
-  operation: string;
-  path: string;
+  graphId: string;
   seq: number;
-  value: string;
+  createdAt: string;
+  id: string;
+  payload: string;
 }
 
 export interface getGraph_getGraph {
   id: string;
-  patches: (getGraph_getGraph_patches | null)[] | null;
+  patches: getGraph_getGraph_patches[] | null;
 }
 
 export interface getGraph {
@@ -41,11 +40,7 @@ export interface getGraphVariables {
  */
 export interface PatchInput {
   seq: number;
-  group: number;
-  path: string;
-  operation: string;
-  value: string;
-  oldvalue?: string | null;
+  payload: string;
 }
 
 //==============================================================

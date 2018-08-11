@@ -8,14 +8,15 @@
 // ====================================================
 
 export interface onAddPatches_onAddPatches {
+  graphId: string;
+  seq: number;
+  createdAt: string;
   id: string;
-  operation: string;
-  path: string;
-  value: string;
+  payload: string;
 }
 
 export interface onAddPatches {
-  onAddPatches: onAddPatches_onAddPatches[] | null;
+  onAddPatches: onAddPatches_onAddPatches[];
 }
 
 /* tslint:disable */
@@ -30,11 +31,7 @@ export interface onAddPatches {
  */
 export interface PatchInput {
   seq: number;
-  group: number;
-  path: string;
-  operation: string;
-  value: string;
-  oldvalue?: string | null;
+  payload: string;
 }
 
 //==============================================================

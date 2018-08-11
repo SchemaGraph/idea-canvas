@@ -1,0 +1,9 @@
+## Batch results are available in $context.result.data as name of the table (TABLENAME below)
+## If there was an error with invocation there may be partial results in $ctx.error object
+## You can append an error for that field in GraphQL response along with successful data
+## Read more: https://docs.aws.amazon.com/appsync/latest/devguide/tutorial-dynamodb-batch.html
+
+#if($ctx.error)
+    $utils.appendError($ctx.error.message, $ctx.error.message)
+#end
+$utils.toJson($ctx.result.data.PatchTable)

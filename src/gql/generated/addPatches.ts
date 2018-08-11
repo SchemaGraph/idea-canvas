@@ -10,17 +10,13 @@
 export interface addPatches_addPatches {
   graphId: string;
   seq: number;
-  group: number;
-  path: string;
-  operation: string;
-  value: string;
-  oldvalue: string | null;
   createdAt: string;
   id: string;
+  payload: string;
 }
 
 export interface addPatches {
-  addPatches: addPatches_addPatches[] | null;
+  addPatches: addPatches_addPatches[];
 }
 
 export interface addPatchesVariables {
@@ -40,11 +36,7 @@ export interface addPatchesVariables {
  */
 export interface PatchInput {
   seq: number;
-  group: number;
-  path: string;
-  operation: string;
-  value: string;
-  oldvalue?: string | null;
+  payload: string;
 }
 
 //==============================================================

@@ -5,13 +5,9 @@ export const ADD_PATCHES = gql`
     addPatches(graph: $graphId, patches: $patches) {
       graphId
       seq
-      group
-      path
-      operation
-      value
-      oldvalue
       createdAt
       id
+      payload
     }
   }
 `;
