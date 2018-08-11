@@ -13,7 +13,7 @@ export default class ToolbarButton extends React.Component<Props> {
 
   state = { hover: false };
 
-  change(event: React.SyntheticEvent<HTMLButtonElement>) {
+  change = (event: React.SyntheticEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
     switch (event.type) {
