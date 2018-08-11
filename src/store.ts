@@ -155,31 +155,6 @@ export const Store = types
       self.clearSelection();
       box.setSelected(true);
     },
-    // init: flow<ApolloQueryResult<getGraph>>(function* init() {
-    //   const { data, errors }: ApolloQueryResult<getGraph> = yield getPatches();
-    //   // console.log(result);
-
-    //   // if (!errors && data.getGraph && data.getGraph.patches) {
-    //   //   onPatch(self, ({ path, value }) => {
-    //   //     const parts = path.split('/');
-    //   //     const last = parts.pop();
-    //   //     console.log(last, value);
-    //   //   });
-    //   //   try {
-    //   //     const patches = toJsonPatches(data.getGraph.patches);
-    //   //     const firstAdd = patches.findIndex(p => p.op === 'add');
-    //   //     if (firstAdd > -1) {
-    //   //       applyPatch(self, patches.slice(firstAdd));
-    //   //     }
-
-    //   //   } catch (e) {
-    //   //     console.error(e);
-    //   //   }
-    //   // }
-
-    //   // return result;
-    //   // return undefined;
-    // }),
   }));
 
 export const store = Store.create();
@@ -197,45 +172,11 @@ export async function init(graphId: string) {
   if (getGraph && getGraph.patches && getGraph.patches.length > 0) {
     const { entries, version } = deserializeEntries(getGraph.patches);
     initialVersion = version;
-    // const patches = combineEntries(entries);
     applyPatch(store, combineEntries(entries));
-    // console.log('INIT', initialVersion, patches);
-    // patches.map(p => {
-    //   try {
-    //     applyPatch(store, p);
-    //     console.log('APPLIED', p);
-    //   } catch (error) {
-    //     console.log('FAILED TO APPLY', p);
-    //   }
-    //   return 1;
-    // });
   }
   return new PatchManager(store, client, graphId, initialVersion);
 }
 
-// store
-//   .init()
-//   .then(_r => {
-//     // PatchManager.create({}, { targetStore: store });
-
-//     // subscribeToPatches().subscribe(
-//     //   ({ data }) => {
-//     //     const remotePatches = data.onAddPatches;
-//     //     if (remotePatches) {
-//     //       // const patches = toJsonPatches(data.getGraph.patches);
-//     //       // console.log(data.getGraph.patches);
-//     //       // const newOnes = remotePatches.filter(({id}) => !applied.has(id));
-//     //       applyPatch(store, toJsonPatches(remotePatches));
-//     //     }
-//     //     console.log('SUBSCRIBE RESULT', remotePatches);
-//     //   },
-//     //   e => {
-//     //     console.log('SUBSCRIBE ERROR', e);
-//     //   }
-//     // );
-
-//   })
-//   .catch(console.log);
 
 onAction(store.boxes, data => {
   const { name, args, path } = data;
@@ -255,7 +196,6 @@ onAction(store.boxes, data => {
       }
     }
   }
-  // console.log(data);
 });
 
 onAction(store.arrows, data => {
@@ -271,7 +211,6 @@ onAction(store.arrows, data => {
       store.clearSelection(arrow);
     }
   }
-  console.log(data);
 });
 
 export type IStore = typeof Store.Type;
