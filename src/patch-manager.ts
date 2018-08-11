@@ -13,13 +13,9 @@ import { IDisposer } from 'mobx-state-tree/dist/utils';
 import { Observable, Observer, Subject, Subscription } from 'rxjs';
 import { mergeMap, tap } from 'rxjs/operators';
 import { deserializeEntry, MyApolloClient } from './appsync/client';
-import {
-  logAction,
-  logEntry,
-  logPatch,
-  setupPatchStream,
-} from './event-stream';
+import { setupPatchStream } from './event-stream';
 import { IStore } from './store';
+import { logEntry } from './utils';
 
 export interface Entry {
   patches: ReadonlyArray<IJsonPatch>;
@@ -49,13 +45,16 @@ export class PatchManager {
   private readonly $patchStream: Observable<Entry>;
   private readonly graphId: string;
   private readonly remoteSubscription: ZenObservable.Subscription;
+  private readonly dev: boolean;
 
   constructor(
     store: IStore,
     client: MyApolloClient<any>,
     graphId: string,
-    initialVersion: number
+    initialVersion: number,
+    dev = true
   ) {
+    this.dev = dev;
     this.graphId = graphId;
     this.version = initialVersion;
     this.initialVersion = initialVersion;
@@ -74,11 +73,23 @@ export class PatchManager {
     this.$patchStream = subject;
     this.observer = subject;
     this.client = client;
-    // console.log('CLIENT', client, this.client, this);
+    // this.log('CLIENT', client, this.client, this);
     this.localSubscription = this.subscribeToLocalPatches(
       setupPatchStream(subject)
     );
     this.remoteSubscription = this.subscribeToRemotePatches();
+  }
+
+  private log(msg: string, ...args: any[]) {
+    if (this.dev) {
+      console.log(msg, ...args);
+    }
+  }
+
+  private logError(error: any) {
+    if (this.dev) {
+      console.error(error);
+    }
   }
 
   private subscribeToLocalPatches($stream: Observable<Entry>) {
@@ -90,7 +101,7 @@ export class PatchManager {
       .subscribe(
         ({ result, entry }) => {
           if (!result.errors) {
-            console.log('UPLOADED', this.version);
+            this.log('UPLOADED', this.version);
             logEntry(entry);
             this.version++;
           } else {
@@ -98,11 +109,11 @@ export class PatchManager {
           }
         },
         error => {
-          console.log('SUBSCRIPTION FAILED');
-          console.error(error);
+          this.log('SUBSCRIPTION FAILED');
+          this.logError(error);
         },
         () => {
-          console.log('SUBSCRIPTION COMPLETED');
+          this.log('SUBSCRIPTION COMPLETED');
         }
       );
   }
@@ -123,7 +134,11 @@ export class PatchManager {
       if (error.graphQLErrors && error.graphQLErrors.length > 0) {
         const { errorType } = error.graphQLErrors[0];
         if (errorType === 'DynamoDB:ConditionalCheckFailedException') {
-          console.log(`OUT-OF-DATE, tried %d`, version + 1, error.graphQLErrors[0].data);
+          this.log(
+            `OUT-OF-DATE, tried %d`,
+            version + 1,
+            error.graphQLErrors[0].data
+          );
           return {
             entry: x,
             result: {
@@ -139,12 +154,12 @@ export class PatchManager {
   public undo({ inversePatches, action }: Entry) {
     this.patchingInProgress = true;
     const patches = inversePatches.slice().reverse();
-    console.log('UNDOING', action.name);
+    this.log('UNDOING', action.name);
     patches.map(p => {
       try {
         applyPatch(this.store, p);
       } catch (error) {
-        console.log('FAILED TO APPLY', p);
+        this.log('FAILED TO APPLY', p);
       }
       return 1;
     });
@@ -158,14 +173,14 @@ export class PatchManager {
       !this.patchingInProgress &&
       context !== this; // don't undo / redo undo redo :)
     if (!verdict) {
-      console.log('FILTERED', name);
+      this.log('FILTERED', name);
     }
     return verdict;
   };
   private onStart = (call: IMiddlewareEvent) => {
     const { id, name } = call;
-    // console.log(id, name, 'ONSTART');
-    // console.log(call);
+    // this.log(id, name, 'ONSTART');
+    // this.log(call);
     this.currentRecorder = recordPatches(call.tree);
     return {
       recorder: this.currentRecorder,
@@ -173,22 +188,22 @@ export class PatchManager {
     };
   };
 
-  private onResume = (call: IMiddlewareEvent, { actionId }: Context) => {
-    // console.log('ONRESUME', actionId);
+  private onResume = (_call: IMiddlewareEvent, _c: Context) => {
+    // this.log('ONRESUME', actionId);
   };
-  private onSuspend = (call: IMiddlewareEvent, { actionId }: Context) => {
-    // console.log('ONSUSPEND', actionId);
+  private onSuspend = (_call: IMiddlewareEvent, _c: Context) => {
+    // this.log('ONSUSPEND', actionId);
   };
 
   private onSuccess = (action: IMiddlewareEvent, { recorder }: Context) => {
-    // console.log('ONSUSPEND', actionId);
+    // this.log('ONSUSPEND', actionId);
     if (
       recorder &&
       recorder.patches.length > 0 &&
       this.observer &&
       !this.patchingInProgress
     ) {
-      // console.log('ONSUCCESS', actionId);
+      // this.log('ONSUCCESS', actionId);
       // logAction(recorder, action);
       this.observer.next({
         patches: recorder.patches,
@@ -196,7 +211,7 @@ export class PatchManager {
         action,
       });
     } else {
-      // console.log(recorder.patches.length, this.observer);
+      // this.log(recorder.patches.length, this.observer);
     }
     this.currentRecorder = undefined;
   };
@@ -205,7 +220,7 @@ export class PatchManager {
     { recorder, actionId }: Context
   ) => {
     if (recorder) {
-      console.log('ONFAIL', actionId);
+      this.log('ONFAIL', actionId);
       recorder.undo();
       this.currentRecorder = undefined;
     }
@@ -218,27 +233,27 @@ export class PatchManager {
           const entry = deserializeEntry(onCreatePatch);
           if (entry.seq === this.version + 1) {
             try {
-              console.log('SUBSCRIBE RESULT', entry.entry.patches);
+              this.log('SUBSCRIBE RESULT', entry.entry.patches);
               this.patchingInProgress = true;
               applyPatch(this.store, entry.entry.patches);
               this.version++;
               this.patchingInProgress = false;
             } catch (error) {
-              console.log('SUBSCRIBE RESULT FAILED APPLYING PATCHES');
+              this.log('SUBSCRIBE RESULT FAILED APPLYING PATCHES');
             }
           } else {
-            console.log(
+            this.log(
               'SUBSCRIBE RESULT INCORRECT VERSION, GOT %d IS %d',
               entry.seq,
               this.version
             );
           }
         } else {
-          console.log('SUBSCRIBE RESULT EMPTY');
+          this.log('SUBSCRIBE RESULT EMPTY');
         }
       },
       e => {
-        console.log('SUBSCRIBE ERROR', e);
+        this.log('SUBSCRIBE ERROR', e);
       }
     );
   }

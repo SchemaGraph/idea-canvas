@@ -1,18 +1,14 @@
-import { IJsonPatch, IMiddlewareEvent, IPatchRecorder } from 'mobx-state-tree';
+import { IJsonPatch } from 'mobx-state-tree';
 import { merge, Observable, of } from 'rxjs';
 import {
-  buffer,
-  bufferTime,
   debounceTime,
   defaultIfEmpty,
   exhaustMap,
   filter,
   map,
-  mergeMap,
   reduce,
   take,
   takeUntil,
-  tap,
 } from 'rxjs/operators';
 import { Entry } from './patch-manager';
 
@@ -37,7 +33,6 @@ export function setupPatchStream($stream: Observable<Entry>) {
         take(1)
       );
 
-      // const $fast = concat($current, $notaboxmoveaction);
 
       // see if we get another soon
       return $stream.pipe(
@@ -57,24 +52,6 @@ export function setupPatchStream($stream: Observable<Entry>) {
   // return $optimized.pipe(
   //   buffer($optimized.pipe(debounceTime(100))),
   // );
-}
-
-export function logPatch({ path, value, op }: IJsonPatch) {
-  // const parts = path.split('/');
-  // const lastt = parts.pop();
-  console.log(op, path, value);
-}
-
-export function logAction(recorder: IPatchRecorder, event: IMiddlewareEvent) {
-  const { name, id } = event;
-  console.log(id, name);
-  recorder.patches.forEach(p => logPatch(p));
-}
-
-export function logEntry({ action, patches }: Entry) {
-  const { name, id } = action;
-  console.log(id, name);
-  patches.forEach(p => logPatch(p));
 }
 
 function moveActionShaper(first: Entry): (y: XY) => Entry {
