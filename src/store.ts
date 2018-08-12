@@ -153,28 +153,29 @@ export const Store = types
     },
   }));
 
-export async function init(client: MyApolloClient<any>, graphId: string, dev = true) {
+export async function load(
+  store: IStore,
+  graphId: string,
+  client: MyApolloClient<any>,
+  dev = true
+) {
+  let initialVersion = 0;
   const {
     data: { getGraph },
   } = await client.getGraph(graphId);
   if (!getGraph) {
     const r = await client.createGraph(graphId);
   }
-  const store = Store.create();
-  initStore(store);
-  let initialVersion = 0;
   if (getGraph && getGraph.patches && getGraph.patches.length > 0) {
     const { patches, version } = deserializeRemotePatches(getGraph.patches);
     initialVersion = version;
     applyPatch(store, flattenPatches(patches.map(p => p.payload)));
   }
-  return {
-    patchmanager: new PatchManager(store, client, graphId, initialVersion, dev),
-    store,
-  };
+  return new PatchManager(store, client, graphId, initialVersion, dev);
 }
 
-function initStore(store: IStore) {
+export function initStore() {
+  const store = Store.create();
   onAction(store.boxes, data => {
     const { name, args, path } = data;
     if (!name || !args || !path) {
@@ -209,9 +210,8 @@ function initStore(store: IStore) {
       }
     }
   });
-
+  return store;
 }
-
 
 export type IStore = typeof Store.Type;
 export type IStoreSnapshot = typeof Store.SnapshotType;

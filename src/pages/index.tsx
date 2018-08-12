@@ -11,7 +11,7 @@ import { Toolbar } from '../components/toolbar';
 import Layout from '../layouts';
 // tslint:disable-next-line:no-submodule-imports
 import '../normalize.css';
-import { init, IStore } from '../store';
+import { initStore, IStore, load } from '../store';
 import '../styles.css';
 import { getCognitoAuth, getToken } from '../utils/auth';
 
@@ -22,10 +22,23 @@ interface State {
   store?: IStore;
   auth?: CognitoAuth;
 }
+function getQueryParameterByName(name: string, url?: string) {
+  if (!url) {
+    url = window.location.href;
+  }
+  name = name.replace(/[\[\]]/g, '\\$&');
+  const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)');
+  const results = regex.exec(url);
+  if (!results) {
+    return null;
+  }
+  if (!results[2]) {
+    return '';
+  }
+  return decodeURIComponent(results[2].replace(/\+/g, ' '));
+}
 export default class App extends React.Component<{}, State> {
-
-  state: State = {
-  };
+  state: State = {};
 
   async componentDidMount() {
     const auth = getCognitoAuth();
@@ -37,19 +50,23 @@ export default class App extends React.Component<{}, State> {
       auth.getSession();
       return;
     }
-    // console.log('JWT', token);
+    const graphId = getQueryParameterByName('graphId');
+    if (!graphId || graphId === '' || graphId.length < 3) {
+      this.setState({ store: initStore(), auth });
+      return;
+    }
+    const store = initStore();
     const { url, region, auth: authOptions } = AppSyncConf({
       type: AUTH_TYPE.AMAZON_COGNITO_USER_POOLS,
       jwtToken: () => token,
     });
     const client = getApolloClient(url, region, authOptions);
-    const {store} = await init(client, 'yebba4', dev);
-    this.setState({store, auth});
+    await load(store, graphId, client, dev);
+    this.setState({ store, auth });
   }
 
-
   handleSignout = () => {
-    const {auth} = this.state;
+    const { auth } = this.state;
     if (auth) {
       // also redirects
       auth.signOut();
@@ -57,14 +74,14 @@ export default class App extends React.Component<{}, State> {
   };
 
   render() {
-    const {store} = this.state;
+    const { store } = this.state;
     if (!store) {
-      return <Layout/>;
+      return <Layout />;
     }
     return (
       <Provider store={store}>
         <Layout>
-          <Toolbar onSignOut={this.handleSignout}/>
+          <Toolbar onSignOut={this.handleSignout} />
           <Canvas />
           {/* <Info/> */}
           {dev && <DevTools />}
