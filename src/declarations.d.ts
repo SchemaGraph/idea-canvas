@@ -17,20 +17,6 @@ declare module 'lz-string' {
   function decompress(compressed: string): string;
 }
 
-declare module 'aws-amplify-react' {
-  function withAuthenticator<P, S>(wrapped: React.ComponentClass<P, S>): React.ComponentClass<P, S>;
-  interface AWProps {
-    children: (auth: boolean) => React.ReactNode;
-    [k: string]: any;
-  }
-  class AuthenticatorWrapper extends React.Component<AWProps> {
-
-  }
-  class Authenticator extends React.Component<any> {
-
-  }
-}
-
 declare module 'amazon-cognito-auth-js' {
   class CognitoAuth {
     constructor(p: any);
@@ -42,6 +28,7 @@ declare module 'amazon-cognito-auth-js' {
     public getSession(): any;
     public signOut(): void;
     public isUserSignedIn(): boolean;
+    public getSignInUserSession(): any;
   }
 }
 
