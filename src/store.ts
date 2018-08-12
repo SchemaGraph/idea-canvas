@@ -154,9 +154,8 @@ export const Store = types
   }));
 
 export const store = Store.create();
-export const client = new MyApolloClient();
 
-export async function init(graphId: string, dev = true) {
+export async function init(client: MyApolloClient<any>, graphId: string, dev = true) {
   const {
     data: { getGraph },
   } = await client.getGraph(graphId);

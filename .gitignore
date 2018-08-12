@@ -137,6 +137,7 @@ $RECYCLE.BIN/
 ### Gatsby ###
 public
 .cache
+.env.*
 
 ## AppSync ###
 AppSync.ts

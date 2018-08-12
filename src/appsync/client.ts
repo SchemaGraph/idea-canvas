@@ -8,6 +8,7 @@ import { HttpLink } from 'apollo-link-http';
 import { getMainDefinition } from 'apollo-utilities';
 import { createAuthLink } from 'aws-appsync';
 import { NonTerminatingHttpLink } from 'aws-appsync/lib/link';
+import { AuthOptions } from 'aws-appsync/lib/link/auth-link';
 import { OperationDefinitionNode } from 'graphql';
 import { IJsonPatch } from 'mobx-state-tree';
 import {
@@ -38,7 +39,6 @@ import { SUBSCRIBE_CREATE_GRAPH } from '../gql/SubscriptionCreateGraph';
 import { SUBSCRIBTION_CREATE_PATCH } from '../gql/SubscriptionCreatePatch';
 import { Entry } from '../patch-manager';
 import { uuid } from '../utils';
-import asConfig from './AppSync';
 import { SubscriptionHandshakeLink } from './subscription-handshake-link';
 
 const createSubscriptionHandshakeLink = (
@@ -65,11 +65,18 @@ const createSubscriptionHandshakeLink = (
 };
 
 // const appSyncLink = createAppSyncLink(asConfig as any);
-const { url, auth, region } = asConfig;
-const link = ApolloLink.from([
-  createAuthLink({ url, region, auth }),
-  createSubscriptionHandshakeLink(url, new HttpLink({ uri: url })),
-]);
+// const { url, auth, region } = asConfig;
+
+export function createAwsLink(url: string, region: string, auth: AuthOptions) {
+  return ApolloLink.from([
+    createAuthLink({ url, region, auth }),
+    createSubscriptionHandshakeLink(url, new HttpLink({ uri: url })),
+  ]);
+}
+
+export function getApolloClient<T>(url: string, region: string, auth: AuthOptions) {
+  return new MyApolloClient<T>(createAwsLink(url, region, auth));
+}
 
 // const appSyncClient = new AWSAppSyncClient({...asConfig, disableOffline: true});
 // export const client = (appSyncClient as any) as ApolloClient<any>;
@@ -78,7 +85,7 @@ const link = ApolloLink.from([
 export class MyApolloClient<T> extends ApolloClient<T> {
   public readonly id: string;
 
-  constructor() {
+  constructor(link: ApolloLink) {
     const cache = new InMemoryCache();
     super({
       link,

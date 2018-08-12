@@ -7,10 +7,11 @@ import { POSITION_TOP } from './constants';
 import { Toolbar as TToolbar } from './toolbar';
 
 interface Props {
+  onSignOut?: () => void;
   store?: IStore;
 }
 
-const ToolbarVanilla: React.SFC<Props> = ({ store }) => {
+const ToolbarVanilla: React.SFC<Props> = ({ store, onSignOut }) => {
   const {
     tool,
     setTool,
@@ -40,6 +41,7 @@ const ToolbarVanilla: React.SFC<Props> = ({ store }) => {
       onRemoveNode={onRemoveNode}
       selectedNode={selection && selection.id}
       position={POSITION_TOP}
+      onSignOut={onSignOut}
     />
   );
 };

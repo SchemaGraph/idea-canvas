@@ -27,6 +27,7 @@ interface Props {
   onRemoveNode: () => void;
   selectedNode: any;
   position: string;
+  onSignOut?: () => void;
 }
 
 export const Toolbar: React.SFC<Props> = ({
@@ -37,6 +38,7 @@ export const Toolbar: React.SFC<Props> = ({
   onRemoveNode,
   selectedNode,
   position,
+  onSignOut,
 }) => {
   const handleChangeTool = (newTool: string) => (event: any) => {
     onChangeTool(newTool);
@@ -61,6 +63,15 @@ export const Toolbar: React.SFC<Props> = ({
     event.stopPropagation();
     event.preventDefault();
   };
+
+  const handleSignout = (event: any) => {
+    if (onSignOut) {
+      onSignOut();
+    }
+    event.stopPropagation();
+    event.preventDefault();
+  };
+
 
   const isHorizontal = [POSITION_TOP, POSITION_BOTTOM].indexOf(position) >= 0;
 
@@ -174,6 +185,17 @@ export const Toolbar: React.SFC<Props> = ({
       >
         <IconFit />
       </ToolbarButton>
+
+      <ToolbarButton
+        toolbarPosition={position}
+        active={false}
+        name="logout"
+        title="Logout"
+        onClick={handleSignout}
+      >
+        <IconRemove />
+      </ToolbarButton>
+
     </div>
   );
 };
