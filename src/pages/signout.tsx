@@ -14,6 +14,11 @@ export default class Signout extends React.Component<{}, State> {
     this.setState({
       signedin: auth.isUserSignedIn(),
     });
+    if (!auth.isUserSignedIn()) {
+      // Redirect to login
+      auth.getSession();
+      return;
+    }
   }
 
   render() {

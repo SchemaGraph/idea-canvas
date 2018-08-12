@@ -153,8 +153,6 @@ export const Store = types
     },
   }));
 
-export const store = Store.create();
-
 export async function init(client: MyApolloClient<any>, graphId: string, dev = true) {
   const {
     data: { getGraph },
@@ -162,49 +160,58 @@ export async function init(client: MyApolloClient<any>, graphId: string, dev = t
   if (!getGraph) {
     const r = await client.createGraph(graphId);
   }
+  const store = Store.create();
+  initStore(store);
   let initialVersion = 0;
   if (getGraph && getGraph.patches && getGraph.patches.length > 0) {
     const { patches, version } = deserializeRemotePatches(getGraph.patches);
     initialVersion = version;
     applyPatch(store, flattenPatches(patches.map(p => p.payload)));
   }
-  return new PatchManager(store, client, graphId, initialVersion, dev);
+  return {
+    patchmanager: new PatchManager(store, client, graphId, initialVersion, dev),
+    store,
+  };
 }
 
-onAction(store.boxes, data => {
-  const { name, args, path } = data;
-  if (!name || !args || !path) {
-    return;
-  }
-  if (name === 'setSelected' && args[0] === true) {
-    const components = path.split('/');
-    const { boxes: b, selection, clearSelection, tool, addArrow } = store;
-    const box = b.get(components[1]);
-    const currentBox = selection && b.get(selection.id);
-    if (box) {
-      if (tool === 'connect' && currentBox) {
-        addArrow(currentBox, box);
-      } else {
-        clearSelection(box);
+function initStore(store: IStore) {
+  onAction(store.boxes, data => {
+    const { name, args, path } = data;
+    if (!name || !args || !path) {
+      return;
+    }
+    if (name === 'setSelected' && args[0] === true) {
+      const components = path.split('/');
+      const { boxes: b, selection, clearSelection, tool, addArrow } = store;
+      const box = b.get(components[1]);
+      const currentBox = selection && b.get(selection.id);
+      if (box) {
+        if (tool === 'connect' && currentBox) {
+          addArrow(currentBox, box);
+        } else {
+          clearSelection(box);
+        }
       }
     }
-  }
-});
+  });
 
-onAction(store.arrows, data => {
-  const { name, args, path } = data;
-  if (!name || !args || !path) {
-    return;
-  }
-  if (name === 'setSelected' && args[0] === true) {
-    const components = path.split('/');
-    const arrow = store.arrows[Number(components[1])];
-    // const arrow = store.arrows.find(a => a.id === components[1]);
-    if (arrow) {
-      store.clearSelection(arrow);
+  onAction(store.arrows, data => {
+    const { name, args, path } = data;
+    if (!name || !args || !path) {
+      return;
     }
-  }
-});
+    if (name === 'setSelected' && args[0] === true) {
+      const components = path.split('/');
+      const arrow = store.arrows[Number(components[1])];
+      // const arrow = store.arrows.find(a => a.id === components[1]);
+      if (arrow) {
+        store.clearSelection(arrow);
+      }
+    }
+  });
+
+}
+
 
 export type IStore = typeof Store.Type;
 export type IStoreSnapshot = typeof Store.SnapshotType;

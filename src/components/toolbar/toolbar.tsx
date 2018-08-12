@@ -16,6 +16,7 @@ import IconPan from './icon-pan';
 import IconPlus from './icon-plus';
 import IconConnect from './icon-plus-arrow';
 import IconRemove from './icon-remove';
+import IconSignout from './icon-signout';
 import ToolbarButton from './toolbar-button';
 import { ToolbarDivider } from './toolbar-divider';
 
@@ -193,7 +194,7 @@ export const Toolbar: React.SFC<Props> = ({
         title="Logout"
         onClick={handleSignout}
       >
-        <IconRemove />
+        <IconSignout />
       </ToolbarButton>
 
     </div>

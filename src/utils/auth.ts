@@ -28,3 +28,17 @@ function getCognitoAuthOptions() {
 export function getCognitoAuth() {
   return new CognitoAuth(getCognitoAuthOptions());
 }
+
+export function getToken(a: CognitoAuth) {
+  const session = a.getSignInUserSession();
+  if (!session.isValid()) {
+    return undefined;
+  }
+  const aToken = session.getAccessToken().jwtToken;
+  const iToken = session.getIdToken().jwtToken;
+  return aToken && aToken !== ''
+    ? aToken
+    : iToken && iToken !== ''
+      ? iToken
+      : undefined;
+}
