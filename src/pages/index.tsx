@@ -38,7 +38,7 @@ const SigninCallback = () => {
   const state = session.getState();
   if (auth.isUserSignedIn() && state && state !== '') {
     replaceState(`/${state}`);
-    return <ConnectedApp auth={auth} graphId={state} />;
+    return <ConnectedApp auth={auth} graphId={state} token={getToken(auth)} />;
   }
   replaceState('/');
   return <LocalApp auth={auth} />;
@@ -67,33 +67,46 @@ const LocalApp: React.SFC<{ auth?: CognitoAuth }> = ({ auth }) => (
 
 export default () => (
   <Router>
-    <ConnectedApp path="/:graphId" />
+    <RenderOrRedirectToLogin path="/:graphId" />
     <LocalApp path="/" />
     <SigninCallback path="/callback/signin" />
     <SignoutCallback path="/callback/signout" />
     <SignoutAction path="/action/signout" />
   </Router>
 );
+
+const RenderOrRedirectToLogin: React.SFC<{ graphId: string }> = ({
+  graphId,
+}) => {
+  const auth = getCognitoAuth();
+  // This is only available (from localStorage) if we have logged in previously
+  const token = getToken(auth);
+  if (!token) {
+    // redirects to the login page as a side-effect :/
+    (auth as any).setState(graphId);
+    auth.getSession();
+    return null;
+  }
+  // return React.cloneElement(children as any, { auth, graphId, token });
+  return <ConnectedApp {...{ auth, graphId, token }} />;
+};
+
 interface Props {
-  graphId?: string;
-  auth?: CognitoAuth;
+  graphId: string;
+  auth: CognitoAuth;
+  token: string;
 }
 
 // tslint:disable-next-line:max-classes-per-file
 class ConnectedApp extends React.Component<Props, State> {
+  constructor(p: Readonly<Props>) {
+    super(p);
+    console.log('CONSTRUCTOR');
+  }
   state: State = {};
 
   async componentDidMount() {
-    const { graphId } = this.props;
-    const auth = getCognitoAuth();
-    // This is only available (from localStorage) if we have logged in previously
-    const token = getToken(auth);
-    if (!token) {
-      // redirects to the login page as a side-effect :/
-      (auth as any).setState(graphId);
-      auth.getSession();
-      return;
-    }
+    const { graphId, auth, token } = this.props;
     const store = initStore();
     const { url, region, auth: authOptions } = AppSyncConf({
       type: AUTH_TYPE.AMAZON_COGNITO_USER_POOLS,
