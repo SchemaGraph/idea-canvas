@@ -14,8 +14,8 @@ function getCognitoAuthOptions() {
     throw new Error('Required auth variables missing');
   }
   const [cognitoDomain, cognitoUserPoolClientId, externalBaseUrl] = values;
-  const signinRedirectUrl = `${externalBaseUrl}/signin`;
-  const signoutRedirectUrl = `${externalBaseUrl}/signout`;
+  const signinRedirectUrl = `${externalBaseUrl}/callback/signin`;
+  const signoutRedirectUrl = `${externalBaseUrl}/callback/signout`;
   const responseType = 'token';
 
   return {

@@ -9,7 +9,6 @@ import {
   TOOL_PAN,
 } from './constants';
 
-
 import IconCursor from './icon-cursor';
 import IconFit from './icon-fit';
 import IconPan from './icon-pan';
@@ -29,6 +28,7 @@ interface Props {
   selectedNode: any;
   position: string;
   onSignOut?: () => void;
+  signedIn?: boolean;
 }
 
 export const Toolbar: React.SFC<Props> = ({
@@ -40,6 +40,7 @@ export const Toolbar: React.SFC<Props> = ({
   selectedNode,
   position,
   onSignOut,
+  signedIn,
 }) => {
   const handleChangeTool = (newTool: string) => (event: any) => {
     onChangeTool(newTool);
@@ -72,7 +73,6 @@ export const Toolbar: React.SFC<Props> = ({
     event.stopPropagation();
     event.preventDefault();
   };
-
 
   const isHorizontal = [POSITION_TOP, POSITION_BOTTOM].indexOf(position) >= 0;
 
@@ -135,8 +135,7 @@ export const Toolbar: React.SFC<Props> = ({
         <IconConnect />
       </ToolbarButton>
 
-
-      <ToolbarDivider/>
+      <ToolbarDivider />
 
       <ToolbarButton
         toolbarPosition={position}
@@ -157,7 +156,7 @@ export const Toolbar: React.SFC<Props> = ({
       >
         <IconRemove />
       </ToolbarButton>
-      <ToolbarDivider/>
+      <ToolbarDivider />
 
       {/* <ToolbarButton
         toolbarPosition={position}
@@ -190,13 +189,13 @@ export const Toolbar: React.SFC<Props> = ({
       <ToolbarButton
         toolbarPosition={position}
         active={false}
+        disabled={!signedIn}
         name="logout"
         title="Logout"
         onClick={handleSignout}
       >
         <IconSignout />
       </ToolbarButton>
-
     </div>
   );
 };

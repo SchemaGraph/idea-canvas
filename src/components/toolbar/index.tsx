@@ -8,10 +8,11 @@ import { Toolbar as TToolbar } from './toolbar';
 
 interface Props {
   onSignOut?: () => void;
+  signedIn?: boolean;
   store?: IStore;
 }
 
-const ToolbarVanilla: React.SFC<Props> = ({ store, onSignOut }) => {
+const ToolbarVanilla: React.SFC<Props> = ({ store, onSignOut, signedIn }) => {
   const {
     tool,
     setTool,
@@ -42,6 +43,7 @@ const ToolbarVanilla: React.SFC<Props> = ({ store, onSignOut }) => {
       selectedNode={selection && selection.id}
       position={POSITION_TOP}
       onSignOut={onSignOut}
+      signedIn={signedIn}
     />
   );
 };

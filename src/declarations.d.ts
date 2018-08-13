@@ -32,3 +32,17 @@ declare module 'amazon-cognito-auth-js' {
   }
 }
 
+declare module "@reach/router" {
+  class Router extends React.Component<any> {
+
+  }
+  class Link extends React.Component<any> {
+
+  }
+  class Redirect extends React.Component<any> {
+
+  }
+
+  function navigate(to: string, options?: {state?: any, replace?: boolean});
+}
+

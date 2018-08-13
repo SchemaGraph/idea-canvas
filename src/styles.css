@@ -3,7 +3,7 @@
 From MST box-example
 */
 
-html, body, #___gatsby, #___gatsby > div {
+html, body, #___gatsby, #___gatsby > div, #___gatsby > div > div {
   height: 100%;
   width: 100%;
   overflow: hidden;
