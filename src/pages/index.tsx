@@ -6,7 +6,6 @@ import * as React from 'react';
 import { getApolloClient } from '../appsync/client';
 import { AppSyncConf } from '../appsync/config';
 import { App } from '../components/app';
-import Layout from '../layouts';
 import { initStore, IStore, load } from '../store';
 import { getCognitoAuth, getToken } from '../utils/auth';
 
@@ -98,7 +97,7 @@ class ConnectedApp extends React.Component<Props, State> {
     }
     console.log('STORE', store);
     if (!store) {
-      return <Layout />;
+      return null;
     }
     return (<App store={store} auth={auth}/>);
   }
