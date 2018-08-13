@@ -21,10 +21,8 @@ export const Box = types
         self.name = name;
       }
     },
-    setName(newName: string) {
-      if (newName && newName.length > 0) {
-        self.name = newName;
-      }
+    setName(newName?: string) {
+      self.name = newName;
     },
     setDimensions(w: number, h: number) {
       self.width = w;

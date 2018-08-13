@@ -128,23 +128,24 @@ class BoxViewVanilla extends React.Component<Props, State> {
     this.setState({ label: e.target.value });
   };
 
-  public finishLabelEditing() {
+  public finishLabelEditing = () => {
     const { label } = this.state;
     const {
       onEditing,
-      box: { setName, initialized, initialize },
+      box: { name, setName, initialized, initialize },
     } = this.props;
     onEditing!(null);
 
     if (!initialized) {
       initialize(label);
-    } else if (label) {
+    } else if (label !== name) {
       setName(label);
     }
-  }
+  };
 
   public onBlurHandler: React.FocusEventHandler<HTMLInputElement> = _e => {
-    this.finishLabelEditing();
+    // we want to let the click-handlers run first
+    setTimeout(this.finishLabelEditing, 100);
   };
 
   public onKeyPressHandler: React.KeyboardEventHandler<
@@ -190,9 +191,12 @@ class BoxViewVanilla extends React.Component<Props, State> {
   };
 
   public componentDidMount() {
-    const { editing } = this.props;
+    const { editing, box } = this.props;
+    this.setState({
+      label: box.name,
+    });
     if (editing && this.inputRef.current) {
-      this.inputRef.current.focus();
+      return this.inputRef.current.focus();
     }
     this.measure();
   }
@@ -200,12 +204,13 @@ class BoxViewVanilla extends React.Component<Props, State> {
   public componentDidUpdate() {
     const { editing } = this.props;
     if (editing && this.inputRef.current) {
-      this.inputRef.current.focus();
+      return this.inputRef.current.focus();
     }
     this.measure();
   }
 
   public measure() {
+    // console.log('measure');
     const ref = this.boxRef.current;
     const {
       width,
@@ -243,7 +248,7 @@ class BoxViewVanilla extends React.Component<Props, State> {
     const input = (
       <LabelInput
         type="text"
-        value={label || box.name || ''}
+        value={label || ''}
         innerRef={this.inputRef}
         onChange={this.onChangeHandler}
         onBlur={this.onBlurHandler}
@@ -278,4 +283,4 @@ export const BoxView = connect<Props>((store, { box, zoom }) => ({
   selected: store.selection === box.id,
   editing: store.editing === box.id,
   setIsDragging: store.setDragging,
-}))(observer(BoxViewVanilla));
+}))(observer(BoxViewVanilla as any));

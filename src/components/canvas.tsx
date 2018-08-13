@@ -22,6 +22,7 @@ function zoomTransformToZoom(zt: { x: number; y: number; k: number }): Zoom {
 interface Props {
   store?: IStore;
   tool?: string;
+  editing: string | null;
 }
 
 function layerStyles() {
@@ -175,7 +176,7 @@ class CanvasVanilla extends React.Component<Props, State> {
   };
 
   handleClick: React.MouseEventHandler = e => {
-    const { clearSelection, createBox, zoom, tool } = this.store;
+    const { clearSelection, createBox, zoom, tool, editing } = this.store;
     const { scale, offsetX, offsetY } = zoom;
     // console.log(e.target);
     // only handle clicks that actually originate from the canvas
@@ -190,7 +191,7 @@ class CanvasVanilla extends React.Component<Props, State> {
     ) {
       return;
     }
-    if (tool === TOOL_ADD_NODE) {
+    if (tool === TOOL_ADD_NODE && !editing) {
       createBox!(
         undefined,
         (e.clientX - offsetX) / scale,
@@ -264,7 +265,9 @@ class CanvasVanilla extends React.Component<Props, State> {
                 />
               </marker>
             </defs>
-            {arrows.map(arrow => <ArrowView arrow={arrow} key={arrow.id} />)}
+            {arrows.map(arrow => (
+              <ArrowView arrow={arrow} key={arrow.id} />
+            ))}
           </SvgLayer>
           {values(boxes).map(box => (
             <BoxView box={box} key={box.id} zoom={zoom} />
@@ -278,4 +281,5 @@ class CanvasVanilla extends React.Component<Props, State> {
 export const Canvas = connect<Props>((store, _props) => ({
   store,
   tool: store.tool,
+  editing: store.editing,
 }))(observer(CanvasVanilla));
