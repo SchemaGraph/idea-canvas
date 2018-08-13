@@ -35,7 +35,8 @@ const SigninCallback = () => {
     },
   };
   auth.parseCognitoWebResponse(location.href);
-  return <Redirect to="/" auth={auth} replace={true} />;
+  const session = auth.getSignInUserSession();
+  return <Redirect to={`/${session.getState()}`} auth={auth} replace={true} />;
 };
 
 const SignoutCallback = () => {
@@ -74,6 +75,7 @@ class ConnectedApp extends React.Component<Props, State> {
     const token = getToken(auth);
     if (!token) {
       // redirects to the login page as a side-effect :/
+      (auth as any).setState(graphId);
       auth.getSession();
       return;
     }
