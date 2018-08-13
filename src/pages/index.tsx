@@ -1,25 +1,15 @@
-// import { Authenticator, withAuthenticator } from 'aws-amplify-react';
-import { Redirect, Router } from '@reach/router';
+import { Router } from '@reach/router';
 import { CognitoAuth } from 'amazon-cognito-auth-js';
-import { AUTH_TYPE } from 'aws-appsync';
 import * as React from 'react';
-import { getApolloClient } from '../appsync/client';
-import { AppSyncConf } from '../appsync/config';
 import { App } from '../components/app';
-import { initStore, IStore, load } from '../store';
+import { ConnectedApp } from '../components/ConnectedApp';
+import { initStore } from '../store';
 import { getCognitoAuth, getToken } from '../utils/auth';
 
 // tslint:disable-next-line:no-submodule-imports
 import '../normalize.css';
 import '../styles.css';
 
-const dev = process.env.NODE_ENV !== 'production';
-// init('yebba4', dev);
-
-interface State {
-  store?: IStore;
-  auth?: CognitoAuth;
-}
 
 const SigninCallback = () => {
   const auth = getCognitoAuth();
@@ -90,44 +80,3 @@ const RenderOrRedirectToLogin: React.SFC<{ graphId: string }> = ({
   // return React.cloneElement(children as any, { auth, graphId, token });
   return <ConnectedApp {...{ auth, graphId, token }} />;
 };
-
-interface Props {
-  graphId: string;
-  auth: CognitoAuth;
-  token: string;
-}
-
-// tslint:disable-next-line:max-classes-per-file
-class ConnectedApp extends React.Component<Props, State> {
-  constructor(p: Readonly<Props>) {
-    super(p);
-    console.log('CONSTRUCTOR');
-  }
-  state: State = {};
-
-  async componentDidMount() {
-    const { graphId, auth, token } = this.props;
-    const store = initStore();
-    const { url, region, auth: authOptions } = AppSyncConf({
-      type: AUTH_TYPE.AMAZON_COGNITO_USER_POOLS,
-      jwtToken: () => token,
-    });
-    const client = getApolloClient(url, region, authOptions);
-    await load(store, graphId!, client, dev);
-    this.setState({ store, auth });
-  }
-  render() {
-    let { store } = this.state;
-    const auth = this.state.auth || getCognitoAuth();
-    const { graphId } = this.props;
-    console.log('GRAPH', graphId);
-    if (!store && !graphId) {
-      store = initStore();
-    }
-    console.log('STORE', store);
-    if (!store) {
-      return null;
-    }
-    return <App store={store} auth={auth} />;
-  }
-}
