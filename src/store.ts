@@ -15,6 +15,11 @@ import {
   IArrow,
   IBox,
 } from './components/models';
+import {
+  TOOL_ADD_NODE,
+  TOOL_CONNECT,
+  TOOL_PAN,
+} from './components/toolbar/constants';
 import { PatchManager } from './patch-manager';
 import { uuid } from './utils';
 
@@ -86,10 +91,6 @@ export const Store = types
       self.offsetX = offsetX;
       self.offsetY = offsetY;
     },
-    setTool(tool: string) {
-      // console.log(tool.toUpperCase());
-      self.tool = tool;
-    },
     setCanvasDimensions(w: number, h: number) {
       self.canvasWidth = w;
       self.canvasHeight = h;
@@ -97,14 +98,18 @@ export const Store = types
     clearSelection() {
       self.selection = null;
     },
-    select(target: string | null) {
-      self.selection = target;
-    },
-    setEditing(target: string | null) {
+    setEditing(target: string | null) {
       self.editing = target;
     },
   }))
   .actions(self => ({
+    setTool(tool: string) {
+      console.log(tool.toUpperCase());
+      self.tool = tool;
+      if (tool === TOOL_ADD_NODE) {
+        self.clearSelection();
+      }
+    },
     removeElement(id: string) {
       const box = self.boxes.get(id);
       if (box) {
@@ -126,7 +131,6 @@ export const Store = types
         to,
       });
       self.arrows.push(arrow);
-      self.clearSelection();
     },
   }))
   .actions(self => ({
@@ -141,6 +145,22 @@ export const Store = types
       // }
       // self.clearSelection();
       // box.setSelected(true);
+    },
+    select(target: string | null) {
+      const tool = self.tool;
+      const selection = self.selection;
+      if (tool !== TOOL_ADD_NODE && tool !== TOOL_PAN) {
+        if (tool === TOOL_CONNECT) {
+          if (selection && target !== selection) {
+            self.addArrow(self.selection, target);
+          }
+          if (!selection && target) {
+            self.selection = target;
+          }
+        } else {
+          self.selection = target;
+        }
+      }
     },
   }));
 
@@ -167,40 +187,6 @@ export async function load(
 
 export function initStore() {
   const store = Store.create();
-  // onAction(store.boxes, data => {
-  //   const { name, args, path } = data;
-  //   if (!name || !args || !path) {
-  //     return;
-  //   }
-  //   if (name === 'setSelected' && args[0] === true) {
-  //     const components = path.split('/');
-  //     const { boxes: b, selection, clearSelection, tool, addArrow } = store;
-  //     const box = b.get(components[1]);
-  //     const currentBox = selection && b.get(selection.id);
-  //     if (box) {
-  //       if (tool === 'connect' && currentBox) {
-  //         addArrow(currentBox, box);
-  //       } else {
-  //         clearSelection(box);
-  //       }
-  //     }
-  //   }
-  // });
-
-  // onAction(store.arrows, data => {
-  //   const { name, args, path } = data;
-  //   if (!name || !args || !path) {
-  //     return;
-  //   }
-  //   if (name === 'setSelected' && args[0] === true) {
-  //     const components = path.split('/');
-  //     const arrow = store.arrows[Number(components[1])];
-  //     // const arrow = store.arrows.find(a => a.id === components[1]);
-  //     if (arrow) {
-  //       store.clearSelection(arrow);
-  //     }
-  //   }
-  // });
   return store;
 }
 

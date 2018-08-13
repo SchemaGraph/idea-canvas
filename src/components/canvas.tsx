@@ -21,6 +21,7 @@ function zoomTransformToZoom(zt: { x: number; y: number; k: number }): Zoom {
 }
 interface Props {
   store?: IStore;
+  tool?: string;
 }
 
 function layerStyles() {
@@ -96,12 +97,14 @@ class CanvasVanilla extends React.Component<Props, State> {
       .on('zoom', this.zoomed.bind(this));
   }
   attachZoom() {
+    // console.log('attachZoom');
     if (this.container.current) {
       // Error appeared with updated typings
       select(this.container.current).call(this.zoom);
     }
   }
   deAttachZoom() {
+    // console.log('deAttachZoom');
     if (this.container.current) {
       select(this.container.current).on('.zoom', null);
     }
@@ -131,8 +134,7 @@ class CanvasVanilla extends React.Component<Props, State> {
       document.addEventListener('keyup', this.onKeyPressHandler);
     }
 
-    const { tool } = this.store;
-    if (tool === TOOL_PAN) {
+    if (this.store.tool === TOOL_PAN) {
       this.attachZoom();
     } else {
       this.deAttachZoom();
@@ -165,6 +167,7 @@ class CanvasVanilla extends React.Component<Props, State> {
   }
 
   zoomed: ValueFn<HTMLDivElement, any, void> = () => {
+    // console.log('zoomed');
     const event = require('d3-selection').event;
     this.zoomTransform = event.transform;
     // NOTE: could be asynchronous and not in sync with this.zoomTransform
@@ -274,4 +277,5 @@ class CanvasVanilla extends React.Component<Props, State> {
 
 export const Canvas = connect<Props>((store, _props) => ({
   store,
+  tool: store.tool,
 }))(observer(CanvasVanilla));

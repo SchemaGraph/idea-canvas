@@ -13,11 +13,11 @@ interface Props {
   setIsDragging?: (boxId?: string) => void;
   onSelect?: (id: string) => void;
   selected?: boolean;
+  onEditing?: (id: string | null) => void;
+  editing?: boolean;
 }
 interface State {
   label?: string;
-  editing: boolean;
-  prevEditing: boolean;
   dragStart: number;
 }
 
@@ -58,7 +58,6 @@ function getStyle(
   isDragging?: boolean
 ): React.CSSProperties {
   const { y, x, initialized, width } = box;
-  const delta = prevX && prevY && Math.hypot(x - prevX, y - prevY);
   return {
     ...getScaleStyle(y, x),
     width: !initialized ? width : undefined,
@@ -110,8 +109,6 @@ class BoxViewVanilla extends React.Component<Props, State> {
 
   public state: State = {
     label: undefined,
-    editing: false,
-    prevEditing: false,
     dragStart: 0,
   };
 
@@ -120,30 +117,24 @@ class BoxViewVanilla extends React.Component<Props, State> {
   }
 
   public dblClickHandler: React.MouseEventHandler<HTMLDivElement> = _e => {
-    this.setState({
-      ...this.state,
-      editing: true,
-    });
+    const {
+      onEditing,
+      box: { id },
+    } = this.props;
+    onEditing!(id);
   };
 
   public onChangeHandler: React.ChangeEventHandler<HTMLInputElement> = e => {
-    this.setState({
-      ...this.state,
-      label: e.target.value,
-      prevEditing: true,
-    });
+    this.setState({ label: e.target.value });
   };
 
   public finishLabelEditing() {
     const { label } = this.state;
     const {
+      onEditing,
       box: { setName, initialized, initialize },
     } = this.props;
-    this.setState({
-      ...this.state,
-      editing: false,
-      prevEditing: false,
-    });
+    onEditing!(null);
 
     if (!initialized) {
       initialize(label);
@@ -160,7 +151,7 @@ class BoxViewVanilla extends React.Component<Props, State> {
     HTMLInputElement
   > = e => {
     e.stopPropagation();
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' || e.key === 'Esc') {
       this.finishLabelEditing();
     }
   };
@@ -168,10 +159,6 @@ class BoxViewVanilla extends React.Component<Props, State> {
   public start: DraggableEventHandler = (_e, { x, y }) => {
     this.props.setIsDragging!(this.props.box.id);
     this.dragStart = Math.hypot(x, y);
-    // this.setState({
-    //   ...this.state,
-    //   dragStart: Math.hypot(x, y),
-    // });
   };
   public stop: DraggableEventHandler = (_e, { x, y }) => {
     this.props.setIsDragging!();
@@ -203,23 +190,16 @@ class BoxViewVanilla extends React.Component<Props, State> {
   };
 
   public componentDidMount() {
-    const { box } = this.props;
-    const { editing } = this.state;
+    const { editing } = this.props;
     if (editing && this.inputRef.current) {
       this.inputRef.current.focus();
-    }
-    if (!editing && box.name === '') {
-      this.setState({
-        ...this.state,
-        editing: true,
-      });
     }
     this.measure();
   }
 
   public componentDidUpdate() {
-    const { editing, prevEditing } = this.state;
-    if (editing && !prevEditing && this.inputRef.current) {
+    const { editing } = this.props;
+    if (editing && this.inputRef.current) {
       this.inputRef.current.focus();
     }
     this.measure();
@@ -238,7 +218,7 @@ class BoxViewVanilla extends React.Component<Props, State> {
       y,
     } = this.props.box;
     // console.log('MAYBE MEASURING');
-    if (ref && initialized && !this.state.editing) {
+    if (ref && initialized && !this.props.editing) {
       // Don't measure if not initialized
       const { clientWidth, clientHeight } = ref;
       // console.log('MEASURED', clientWidth, clientHeight);
@@ -257,13 +237,13 @@ class BoxViewVanilla extends React.Component<Props, State> {
   }
 
   public render() {
-    const { box, zoom, selected } = this.props;
-    const { editing, label } = this.state;
+    const { box, selected, editing } = this.props;
+    const { label } = this.state;
 
     const input = (
       <LabelInput
         type="text"
-        value={label || box.name}
+        value={label || box.name || ''}
         innerRef={this.inputRef}
         onChange={this.onChangeHandler}
         onBlur={this.onBlurHandler}
@@ -294,6 +274,8 @@ export const BoxView = connect<Props>((store, { box, zoom }) => ({
   zoom,
   box,
   onSelect: store.select,
+  onEditing: store.setEditing,
   selected: store.selection === box.id,
+  editing: store.editing === box.id,
   setIsDragging: store.setDragging,
 }))(observer(BoxViewVanilla));
