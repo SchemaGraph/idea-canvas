@@ -10,7 +10,6 @@ import { getCognitoAuth, getToken } from '../utils/auth';
 import '../normalize.css';
 import '../styles.css';
 
-
 const SigninCallback = () => {
   const auth = getCognitoAuth();
   const location = window.location;
@@ -65,9 +64,12 @@ export default () => (
   </Router>
 );
 
-const RenderOrRedirectToLogin: React.SFC<{ graphId: string }> = ({
+const RenderOrRedirectToLogin: React.SFC<{ graphId?: string }> = ({
   graphId,
 }) => {
+  if (!graphId) {
+    return null;
+  }
   const auth = getCognitoAuth();
   // This is only available (from localStorage) if we have logged in previously
   const token = getToken(auth);

@@ -26,8 +26,8 @@ export function logAction(recorder: IPatchRecorder, event: IMiddlewareEvent) {
 }
 
 export function logEntry({ action, patches }: Entry) {
-  const { name, id } = action;
-  console.log(id, name);
+  const { name } = action;
+  console.log(name);
   patches.forEach(p => logPatch(p));
 }
 

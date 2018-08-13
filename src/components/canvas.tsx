@@ -97,6 +97,7 @@ class CanvasVanilla extends React.Component<Props, State> {
   }
   attachZoom() {
     if (this.container.current) {
+      // Error appeared with updated typings
       select(this.container.current).call(this.zoom);
     }
   }
@@ -158,6 +159,7 @@ class CanvasVanilla extends React.Component<Props, State> {
       const t = zoomTransform
         .translate(offsetX - x / k, offsetY - y / k)
         .scale(scale / k);
+      // Error appeared with updated typings
       this.zoom.transform(selection, t);
     }
   }
