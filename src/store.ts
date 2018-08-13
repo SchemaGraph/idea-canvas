@@ -70,11 +70,11 @@ export const Store = types
       return box;
     },
     removeBox(box: IBox) {
-      const arrow = self.arrows.find(
+      const removeArrows = self.arrows.filter(
         a => a.to.id === box.id || a.from.id === box.id
       );
-      if (arrow) {
-        self.arrows.remove(arrow);
+      if (removeArrows) {
+        removeArrows.map(a => self.arrows.remove(a));
       }
       self.boxes.delete(box.id);
     },
@@ -120,8 +120,8 @@ export const Store = types
         self.removeArrow(arrow);
       }
     },
-    addArrow(from: any, to: any) {
-      const existing = self.arrows.find(a => a.from === from && a.to === to);
+    addArrow(from: string, to: string) {
+      const existing = self.arrows.find(a => a.from.id === from && a.to.id === to);
       if (existing) {
         return;
       }
@@ -151,8 +151,8 @@ export const Store = types
       const selection = self.selection;
       if (tool !== TOOL_ADD_NODE && tool !== TOOL_PAN) {
         if (tool === TOOL_CONNECT) {
-          if (selection && target !== selection) {
-            self.addArrow(self.selection, target);
+          if (selection && target && target !== selection) {
+            self.addArrow(selection, target);
           }
           if (!selection && target) {
             self.selection = target;
