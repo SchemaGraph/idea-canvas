@@ -35,11 +35,24 @@ const SigninCallback = () => {
   };
   auth.parseCognitoWebResponse(location.href);
   const session = auth.getSignInUserSession();
-  return <Redirect to={`/${session.getState()}`} auth={auth} replace={true} />;
+  const state = session.getState();
+  if (auth.isUserSignedIn() && state && state !== '') {
+    replaceState(`/${state}`);
+    return <ConnectedApp auth={auth} graphId={state} />;
+  }
+  replaceState('/');
+  return <LocalApp auth={auth} />;
 };
 
+function replaceState(url: string, title?: string) {
+  if (history) {
+    history.replaceState({}, title, url);
+  }
+}
+
 const SignoutCallback = () => {
-  return <Redirect to="/" replace={true} />;
+  replaceState('/');
+  return <LocalApp />;
 };
 
 const SignoutAction = () => {
@@ -48,7 +61,9 @@ const SignoutAction = () => {
   return <h1>SIGNOUT</h1>;
 };
 
-const LocalApp = () => (<App store={initStore()} auth={getCognitoAuth()}/>);
+const LocalApp: React.SFC<{ auth?: CognitoAuth }> = ({ auth }) => (
+  <App store={initStore()} auth={auth || getCognitoAuth()} />
+);
 
 export default () => (
   <Router>
@@ -61,6 +76,7 @@ export default () => (
 );
 interface Props {
   graphId?: string;
+  auth?: CognitoAuth;
 }
 
 // tslint:disable-next-line:max-classes-per-file
@@ -99,8 +115,6 @@ class ConnectedApp extends React.Component<Props, State> {
     if (!store) {
       return null;
     }
-    return (<App store={store} auth={auth}/>);
+    return <App store={store} auth={auth} />;
   }
 }
-
-
