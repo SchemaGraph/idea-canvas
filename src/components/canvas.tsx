@@ -10,7 +10,7 @@ import { colors } from '../theme/theme';
 import { connect } from '../utils';
 import { ArrowView } from './arrow-view';
 import { BoxView } from './box-view';
-import { TOOL_PAN } from './toolbar/constants';
+import { TOOL_ADD_NODE, TOOL_NONE, TOOL_PAN } from './toolbar/constants';
 
 function zoomTransformToZoom(zt: { x: number; y: number; k: number }): Zoom {
   return {
@@ -172,7 +172,7 @@ class CanvasVanilla extends React.Component<Props, State> {
   };
 
   handleClick: React.MouseEventHandler = e => {
-    const { clearSelection, createBox, zoom } = this.store;
+    const { clearSelection, createBox, zoom, tool } = this.store;
     const { scale, offsetX, offsetY } = zoom;
     // console.log(e.target);
     // only handle clicks that actually originate from the canvas
@@ -187,14 +187,15 @@ class CanvasVanilla extends React.Component<Props, State> {
     ) {
       return;
     }
-    if (e.ctrlKey === false && e.altKey === false) {
-      clearSelection();
-    } else {
+    if (tool === TOOL_ADD_NODE) {
       createBox!(
-        '',
+        undefined,
         (e.clientX - offsetX) / scale,
         (e.clientY - offsetY) / scale
       );
+    }
+    if (tool === TOOL_NONE) {
+      clearSelection();
     }
   };
 
@@ -205,12 +206,12 @@ class CanvasVanilla extends React.Component<Props, State> {
     }
     const { selection, removeElement } = this.props.store!;
     if (selection && key === 'Backspace') {
-      removeElement(selection.id);
+      removeElement(selection);
     }
   };
 
   public render() {
-    const { boxes, arrows, zoom, tool } = this.store;
+    const { boxes, arrows, zoom } = this.store;
     // const zoom = zoomTransformToZoom(this.state.zoomTransform || { x: 0, y: 0, k: 1 });
     // const { scale, offsetX, offsetY } = zoom;
     return (

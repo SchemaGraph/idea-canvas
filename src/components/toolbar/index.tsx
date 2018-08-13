@@ -17,19 +17,15 @@ const ToolbarVanilla: React.SFC<Props> = ({ store, onSignOut, signedIn }) => {
     tool,
     setTool,
     setZoom,
-    createBox,
     removeElement,
     selection,
   } = store!;
   const onFit = () => {
     setZoom({ scale: 1, offsetX: 0, offsetY: 0 });
   };
-  const onAddNode = () => {
-    createBox('');
-  };
   const onRemoveNode = () => {
     if (selection) {
-      removeElement(selection.id);
+      removeElement(selection);
     }
   };
 
@@ -38,9 +34,8 @@ const ToolbarVanilla: React.SFC<Props> = ({ store, onSignOut, signedIn }) => {
       tool={tool}
       onChangeTool={setTool}
       onFit={onFit}
-      onAddNode={onAddNode}
       onRemoveNode={onRemoveNode}
-      selectedNode={selection && selection.id}
+      selectedNode={selection}
       position={POSITION_TOP}
       onSignOut={onSignOut}
       signedIn={signedIn}

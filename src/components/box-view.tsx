@@ -11,6 +11,8 @@ interface Props {
   box: IBox;
   zoom: Zoom;
   setIsDragging?: (boxId?: string) => void;
+  onSelect?: (id: string) => void;
+  selected?: boolean;
 }
 interface State {
   label?: string;
@@ -189,9 +191,13 @@ class BoxViewVanilla extends React.Component<Props, State> {
   };
 
   select = () => {
-    const { box } = this.props;
-    if (!box.selected) {
-      box.setSelected(true);
+    const {
+      selected,
+      onSelect,
+      box: { id },
+    } = this.props;
+    if (!selected) {
+      onSelect!(id);
     }
     // e.stopPropagation();
   };
@@ -251,7 +257,7 @@ class BoxViewVanilla extends React.Component<Props, State> {
   }
 
   public render() {
-    const { box, zoom } = this.props;
+    const { box, zoom, selected } = this.props;
     const { editing, label } = this.state;
 
     const input = (
@@ -265,7 +271,7 @@ class BoxViewVanilla extends React.Component<Props, State> {
       />
     );
 
-    const { selected, name } = box;
+    const { name } = box;
     // const { offsetX, offsetY, scale } = zoom;
 
     return (
@@ -273,7 +279,7 @@ class BoxViewVanilla extends React.Component<Props, State> {
         <BoxDiv
           innerRef={this.boxRef}
           style={getStyle(box, this.prevX, this.prevY, !!this.dragStart)}
-          selected={selected}
+          selected={!!selected}
           onDoubleClick={this.dblClickHandler}
         >
           <Label editing={editing}>{name || `\xa0`}</Label>
@@ -284,7 +290,10 @@ class BoxViewVanilla extends React.Component<Props, State> {
   }
 }
 
-export const BoxView = connect<Props>((store, props) => ({
-  ...props,
+export const BoxView = connect<Props>((store, { box, zoom }) => ({
+  zoom,
+  box,
+  onSelect: store.select,
+  selected: store.selection === box.id,
   setIsDragging: store.setDragging,
 }))(observer(BoxViewVanilla));

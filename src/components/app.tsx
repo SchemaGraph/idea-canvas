@@ -6,6 +6,7 @@ import { Canvas } from '../components/canvas';
 import { Toolbar } from '../components/toolbar';
 import Layout from '../layouts';
 import { IStore } from '../store';
+import { TOOL_ADD_NODE } from './toolbar/constants';
 
 interface StraightProps {
   store: IStore;
@@ -20,6 +21,10 @@ export const App: React.SFC<StraightProps> = ({ store, auth, dev }) => {
       auth.signOut();
     }
   };
+  if (store.boxes.size === 0) {
+    // Select the 'ADD' tool as the default one for an empty diagram
+    store.setTool(TOOL_ADD_NODE);
+  }
   return (
     <Provider store={store}>
       <Layout>

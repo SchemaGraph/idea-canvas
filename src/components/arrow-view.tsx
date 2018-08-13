@@ -5,6 +5,7 @@ import * as React from 'react';
 import { Animate } from 'react-move';
 import styled from 'styled-components';
 import { colors } from '../theme/theme';
+import { connect } from '../utils';
 import { IArrow, IBox } from './models';
 
 interface PathProps {
@@ -29,6 +30,8 @@ const GhostPath = styled.path`
 // const boxHeight = 60;
 interface Props {
   arrow: IArrow;
+  onSelect?: (id: string) => void;
+  selected?: boolean;
 }
 type P = [number, number];
 type V = [P, P];
@@ -98,15 +101,13 @@ function positionLink(s: P, e: P, c1: P, c2: P) {
     e[1]
   }`;
 }
-const ArrowViewVanilla: React.SFC<Props> = ({ arrow }) => {
-  const { from, to, selected } = arrow;
+const ArrowViewVanilla: React.SFC<Props> = ({ arrow, onSelect, selected }) => {
+  const { from, to, id } = arrow;
   if (!from || !to) {
     return null;
   }
   const select: React.MouseEventHandler = () => {
-    if (!arrow.selected) {
-      arrow.setSelected(true);
-    }
+    onSelect!(id);
   };
   // tries to compute the closest point on the *border* of the box
   const { end, control: c2 } = tweak(from, to, 10, 70);
@@ -159,4 +160,9 @@ function debug(from: IBox, to: IBox, c1: P, c2: P) {
   );
 }
 
-export const ArrowView = observer(ArrowViewVanilla);
+
+export const ArrowView = connect<Props>((store, {arrow}) => ({
+  arrow,
+  onSelect: store.select,
+  selected: store.selection === arrow.id
+}))(observer(ArrowViewVanilla));

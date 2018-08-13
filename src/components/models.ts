@@ -6,10 +6,9 @@ export const Box = types
     name: types.maybe(types.string),
     x: 0,
     y: 0,
-    selected: types.optional(types.boolean, false),
     width: 150,
     height: 60,
-    initialized: false
+    initialized: false,
   })
   .actions(self => ({
     move(dx: number, dy: number) {
@@ -27,9 +26,6 @@ export const Box = types
         self.name = newName;
       }
     },
-    setSelected(selected: boolean) {
-      self.selected = selected;
-    },
     setDimensions(w: number, h: number) {
       self.width = w;
       self.height = h;
@@ -44,19 +40,13 @@ export const Box = types
 export type IBox = typeof Box.Type;
 export const BoxRef = types.reference(Box);
 export type IBoxRef = typeof BoxRef;
-export const Arrow = types
-  .model('Arrow', {
-    id: types.identifier,
-    from: types.reference(Box),
-    to: types.reference(Box),
-    selected: types.optional(types.boolean, false),
-  })
-  .actions(self => ({
-    setSelected(selected: boolean) {
-      self.selected = selected;
-    },
-  }));
+export const Arrow = types.model('Arrow', {
+  id: types.identifier,
+  from: types.reference(Box),
+  to: types.reference(Box),
+});
 export type IArrow = typeof Arrow.Type;
+export const ArrowRef = types.reference(Arrow);
 export const boxes = types.map(Box);
 export const arrows = types.array(Arrow);
 

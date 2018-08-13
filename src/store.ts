@@ -7,6 +7,7 @@ import {
 } from './appsync/client';
 import {
   Arrow,
+  ArrowRef,
   arrows,
   Box,
   boxes,
@@ -37,6 +38,8 @@ export const Store = types
     boxes,
     arrows,
     dragging: SelectionType,
+    selection: SelectionType,
+    editing: SelectionType,
     scale: 1,
     offsetX: 0,
     offsetY: 0,
@@ -45,13 +48,6 @@ export const Store = types
     canvasHeight: -1,
   })
   .views(self => ({
-    get selection() {
-      const all = values(self.boxes).concat(self.arrows);
-      return all.find(box => box.selected === true) as
-        | IBox
-        | IArrow
-        | undefined;
-    },
     get zoom(): Zoom {
       const { scale, offsetX, offsetY } = self;
       // console.log('getZoom', scale, offsetX, offsetY);
@@ -64,7 +60,7 @@ export const Store = types
   }))
   .actions(self => ({
     addBox(x: number, y: number, name?: string) {
-      const box = Box.create({ name, x, y, id: uuid(), selected: false });
+      const box = Box.create({ name, x, y, id: uuid() });
       self.boxes.put(box);
       return box;
     },
@@ -98,19 +94,14 @@ export const Store = types
       self.canvasWidth = w;
       self.canvasHeight = h;
     },
-    clearSelection(except?: IBox | IArrow) {
-      values(self.boxes).map(
-        box =>
-          box.selected &&
-          (!except || except.id !== box.id) &&
-          box.setSelected(false)
-      );
-      self.arrows.map(
-        arrow =>
-          arrow.selected &&
-          (!except || except.id !== arrow.id) &&
-          arrow.setSelected(false)
-      );
+    clearSelection() {
+      self.selection = null;
+    },
+    select(target: string | null) {
+      self.selection = target;
+    },
+    setEditing(target: string | null) {
+      self.editing = target;
     },
   }))
   .actions(self => ({
@@ -133,7 +124,6 @@ export const Store = types
         id: uuid(),
         from,
         to,
-        selected: false,
       });
       self.arrows.push(arrow);
       self.clearSelection();
@@ -144,12 +134,13 @@ export const Store = types
       const xx = x || (self.canvasWidth / 2 - 37 - self.offsetX) / self.scale;
       const yy = y || (50 - self.offsetY) / self.scale;
       const box = self.addBox(xx, yy, name);
-      const source = self.selection;
-      if (source) {
-        self.addArrow(source.id || source, box.id);
-      }
-      self.clearSelection();
-      box.setSelected(true);
+      self.setEditing(box.id);
+      // const source = self.selection;
+      // if (source) {
+      //   self.addArrow(source, box.id);
+      // }
+      // self.clearSelection();
+      // box.setSelected(true);
     },
   }));
 
@@ -176,40 +167,40 @@ export async function load(
 
 export function initStore() {
   const store = Store.create();
-  onAction(store.boxes, data => {
-    const { name, args, path } = data;
-    if (!name || !args || !path) {
-      return;
-    }
-    if (name === 'setSelected' && args[0] === true) {
-      const components = path.split('/');
-      const { boxes: b, selection, clearSelection, tool, addArrow } = store;
-      const box = b.get(components[1]);
-      const currentBox = selection && b.get(selection.id);
-      if (box) {
-        if (tool === 'connect' && currentBox) {
-          addArrow(currentBox, box);
-        } else {
-          clearSelection(box);
-        }
-      }
-    }
-  });
+  // onAction(store.boxes, data => {
+  //   const { name, args, path } = data;
+  //   if (!name || !args || !path) {
+  //     return;
+  //   }
+  //   if (name === 'setSelected' && args[0] === true) {
+  //     const components = path.split('/');
+  //     const { boxes: b, selection, clearSelection, tool, addArrow } = store;
+  //     const box = b.get(components[1]);
+  //     const currentBox = selection && b.get(selection.id);
+  //     if (box) {
+  //       if (tool === 'connect' && currentBox) {
+  //         addArrow(currentBox, box);
+  //       } else {
+  //         clearSelection(box);
+  //       }
+  //     }
+  //   }
+  // });
 
-  onAction(store.arrows, data => {
-    const { name, args, path } = data;
-    if (!name || !args || !path) {
-      return;
-    }
-    if (name === 'setSelected' && args[0] === true) {
-      const components = path.split('/');
-      const arrow = store.arrows[Number(components[1])];
-      // const arrow = store.arrows.find(a => a.id === components[1]);
-      if (arrow) {
-        store.clearSelection(arrow);
-      }
-    }
-  });
+  // onAction(store.arrows, data => {
+  //   const { name, args, path } = data;
+  //   if (!name || !args || !path) {
+  //     return;
+  //   }
+  //   if (name === 'setSelected' && args[0] === true) {
+  //     const components = path.split('/');
+  //     const arrow = store.arrows[Number(components[1])];
+  //     // const arrow = store.arrows.find(a => a.id === components[1]);
+  //     if (arrow) {
+  //       store.clearSelection(arrow);
+  //     }
+  //   }
+  // });
   return store;
 }
 

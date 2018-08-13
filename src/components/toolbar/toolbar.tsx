@@ -4,6 +4,7 @@ import {
   POSITION_LEFT,
   POSITION_RIGHT,
   POSITION_TOP,
+  TOOL_ADD_NODE,
   TOOL_CONNECT,
   TOOL_NONE,
   TOOL_PAN,
@@ -23,7 +24,6 @@ interface Props {
   tool: string;
   onFit: () => void;
   onChangeTool: (tool: string) => void;
-  onAddNode: () => void;
   onRemoveNode: () => void;
   selectedNode: any;
   position: string;
@@ -35,7 +35,6 @@ export const Toolbar: React.SFC<Props> = ({
   tool,
   onFit,
   onChangeTool,
-  onAddNode,
   onRemoveNode,
   selectedNode,
   position,
@@ -50,12 +49,6 @@ export const Toolbar: React.SFC<Props> = ({
 
   const handleFit = (event: any) => {
     onFit();
-    event.stopPropagation();
-    event.preventDefault();
-  };
-
-  const handleAddNode = (event: any) => {
-    onAddNode();
     event.stopPropagation();
     event.preventDefault();
   };
@@ -118,6 +111,15 @@ export const Toolbar: React.SFC<Props> = ({
       </ToolbarButton>
       <ToolbarButton
         toolbarPosition={position}
+        active={tool === TOOL_ADD_NODE}
+        name="add-node"
+        title="Add node"
+        onClick={handleChangeTool(TOOL_ADD_NODE)}
+      >
+        <IconPlus />
+      </ToolbarButton>
+      <ToolbarButton
+        toolbarPosition={position}
         active={tool === TOOL_PAN}
         name="select-tool-pan"
         title="Pan"
@@ -137,15 +139,6 @@ export const Toolbar: React.SFC<Props> = ({
 
       <ToolbarDivider />
 
-      <ToolbarButton
-        toolbarPosition={position}
-        active={false}
-        name="add-node"
-        title="Add node"
-        onClick={handleAddNode}
-      >
-        <IconPlus />
-      </ToolbarButton>
       <ToolbarButton
         toolbarPosition={position}
         active={false}
