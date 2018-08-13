@@ -33,6 +33,7 @@
     "d3-selection": "^1.3.0",
     "d3-zoom": "^1.7.1",
     "gatsby": "2.0.0-beta.97",
+    "gatsby-plugin-netlify": "2.0.0-beta.6",
     "gatsby-plugin-styled-components": "3.0.0-beta.3",
     "gatsby-plugin-typescript": "2.0.0-beta.9",
     "graphql": "^0.13.2",
