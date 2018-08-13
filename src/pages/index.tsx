@@ -86,7 +86,6 @@ class ConnectedApp extends React.Component<Props, State> {
     const client = getApolloClient(url, region, authOptions);
     await load(store, graphId!, client, dev);
     this.setState({ store, auth });
-    this.forceUpdate();
   }
   render() {
     let { store } = this.state;
