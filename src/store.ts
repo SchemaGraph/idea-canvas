@@ -125,6 +125,11 @@ export const Store = types
       if (existing) {
         return;
       }
+      const fromBox = self.boxes.get(from);
+      const toBox = self.boxes.get(to);
+      if (!fromBox || !toBox) {
+        return;
+      }
       const arrow = Arrow.create({
         id: uuid(),
         from,
