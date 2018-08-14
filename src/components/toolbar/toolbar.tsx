@@ -88,7 +88,6 @@ export const Toolbar: React.SFC<Props> = ({
           : 'unset',
     right: [POSITION_RIGHT].indexOf(position) >= 0 ? '5px' : 'unset',
     bottom: [POSITION_BOTTOM].indexOf(position) >= 0 ? '5px' : 'unset',
-    zIndex: 10,
 
     // inner styling
     backgroundColor: 'rgba(19, 20, 22, 0.90)',

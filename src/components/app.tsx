@@ -6,6 +6,7 @@ import { Canvas } from '../components/canvas';
 import { Toolbar } from '../components/toolbar';
 import Layout from '../layouts';
 import { IStore } from '../store';
+import { Info } from './Info';
 import { TOOL_ADD_NODE } from './toolbar/constants';
 
 interface StraightProps {
@@ -28,11 +29,12 @@ export const App: React.SFC<StraightProps> = ({ store, auth, dev }) => {
   return (
     <Provider store={store}>
       <Layout>
+        <Canvas />
         <Toolbar
           onSignOut={handleSignout}
           signedIn={auth && auth.isUserSignedIn()}
         />
-        <Canvas />
+        <Info />
         {dev && <DevTools />}
       </Layout>
     </Provider>
