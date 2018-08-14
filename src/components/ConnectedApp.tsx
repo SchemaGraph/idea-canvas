@@ -3,7 +3,7 @@ import { AUTH_TYPE } from 'aws-appsync';
 import * as React from 'react';
 import { getApolloClient } from '../appsync/client';
 import { AppSyncConf } from '../appsync/config';
-import { initStore, IStore, load } from '../store';
+import { initStore, IStore, remoteLoad } from '../store';
 import { App } from './app';
 
 interface Props {
@@ -33,7 +33,7 @@ export class ConnectedApp extends React.Component<Props, State> {
       jwtToken: () => token,
     });
     const client = getApolloClient(url, region, authOptions);
-    await load(store, graphId!, client, dev);
+    await remoteLoad(store, graphId!, client, dev);
     this.setState({ store });
   }
   render() {

@@ -3,7 +3,7 @@ import { CognitoAuth } from 'amazon-cognito-auth-js';
 import * as React from 'react';
 import { App } from '../components/app';
 import { ConnectedApp } from '../components/ConnectedApp';
-import { initStore } from '../store';
+import { initStore, localLoad } from '../store';
 import {
   getCognitoAuth,
   getState,
@@ -86,9 +86,11 @@ const SigninAction = () => {
   );
 };
 
-const LocalApp: React.SFC<{ auth?: CognitoAuth }> = ({ auth }) => (
-  <App store={initStore()} auth={auth || getCognitoAuth()} />
-);
+const LocalApp: React.SFC<{ auth?: CognitoAuth }> = ({ auth }) => {
+  const store = initStore();
+  localLoad(store);
+  return <App store={store} auth={auth || getCognitoAuth()} />;
+};
 
 const Profile: React.SFC<{ auth: CognitoAuth }> = ({ auth }) => {
   const session = getValidSession(auth);

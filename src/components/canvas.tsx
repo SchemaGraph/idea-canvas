@@ -22,7 +22,7 @@ function zoomTransformToZoom(zt: { x: number; y: number; k: number }): Zoom {
 interface Props {
   store?: IStore;
   tool?: string;
-  editing: string | null;
+  editing?: string | null;
 }
 
 function layerStyles() {

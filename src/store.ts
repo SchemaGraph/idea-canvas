@@ -1,5 +1,13 @@
 import { values } from 'mobx';
-import { applyPatch, onAction, types } from 'mobx-state-tree';
+import {
+  applyPatch,
+  applySnapshot,
+  onAction,
+  onSnapshot,
+  types,
+} from 'mobx-state-tree';
+import { Subject } from 'rxjs';
+import { debounceTime, tap } from 'rxjs/operators';
 import {
   deserializeRemotePatches,
   flattenPatches,
@@ -121,13 +129,15 @@ export const Store = types
       }
     },
     addArrow(from: string, to: string) {
-      const existing = self.arrows.find(a => a.from.id === from && a.to.id === to);
+      const existing = self.arrows.find(
+        a => a.from.id === from && a.to.id === to
+      );
       if (existing) {
         return;
       }
       const fromBox = self.boxes.get(from);
       const toBox = self.boxes.get(to);
-      if (!fromBox || !toBox) {
+      if (!fromBox || !toBox) {
         return;
       }
       const arrow = Arrow.create({
@@ -169,7 +179,7 @@ export const Store = types
     },
   }));
 
-export async function load(
+export async function remoteLoad(
   store: IStore,
   graphId: string,
   client: MyApolloClient<any>,
@@ -192,6 +202,45 @@ export async function load(
 
 export function initStore() {
   const store = Store.create();
+  return store;
+}
+
+const snapshotSaver = (key: string) => (snapshot: IStoreSnapshot) =>
+  localStorage.setItem(key, JSON.stringify(snapshot));
+
+const snapshotStream = new Subject<IStoreSnapshot>();
+
+export function localLoad(store: IStore, localStorageKey = 'ideacanvas-graph') {
+  if (localStorage) {
+    const cached = localStorage.getItem(localStorageKey);
+    const saver = snapshotSaver(localStorageKey);
+    if (cached) {
+      try {
+        const snapshot = JSON.parse(cached);
+        applySnapshot(store, snapshot);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    onSnapshot(store, snapshot => {
+      if (localStorage) {
+        snapshotStream.next(snapshot);
+      }
+    });
+    snapshotStream
+      .pipe(
+        debounceTime(400),
+        tap(_ => console.log('SAVING TO LOCALSTORAGE'))
+      )
+      .subscribe(
+        saver,
+        e => {
+          console.error(e);
+        },
+        () => console.log('snaphsotStream completed')
+      );
+  }
+
   return store;
 }
 
