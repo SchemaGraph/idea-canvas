@@ -17,20 +17,6 @@ declare module 'lz-string' {
   function decompress(compressed: string): string;
 }
 
-declare module 'amazon-cognito-auth-js' {
-  class CognitoAuth {
-    constructor(p: any);
-    public userhandler?: {
-      onSuccess: (session: any) => void;
-      onFailure: (error: any) => void;
-    };
-    public parseCognitoWebResponse(response: string): void;
-    public getSession(): any;
-    public signOut(): void;
-    public isUserSignedIn(): boolean;
-    public getSignInUserSession(): any;
-  }
-}
 
 declare module "@reach/router" {
   class Router extends React.Component<any> {

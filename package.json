@@ -18,6 +18,7 @@
     "@babel/core": "7.0.0-beta.54",
     "@babel/preset-stage-2": "7.0.0-beta.54",
     "@reach/router": "^1.1.1",
+    "@types/amazon-cognito-auth-js": "^1.2.0",
     "amazon-cognito-auth-js": "^1.2.4",
     "apollo-cache-inmemory": "^1.2.7",
     "apollo-client": "^2.3.8",

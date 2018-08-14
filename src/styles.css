@@ -7,6 +7,11 @@ html, body, #___gatsby, #___gatsby > div, #___gatsby > div > div {
   height: 100%;
   width: 100%;
   overflow: hidden;
+  color: rgba(255, 255, 255, 0.8);
+}
+pre {
+  font-size: 12px;
+  font-family: 'Courier New', Courier, monospace;
 }
 
 body {
