@@ -211,7 +211,7 @@ const snapshotSaver = (key: string) => (snapshot: IStoreSnapshot) =>
 const snapshotStream = new Subject<IStoreSnapshot>();
 
 export function localLoad(store: IStore, localStorageKey = 'ideacanvas-graph') {
-  if (localStorage) {
+  if (typeof localStorage !== 'undefined') {
     const cached = localStorage.getItem(localStorageKey);
     const saver = snapshotSaver(localStorageKey);
     if (cached) {
