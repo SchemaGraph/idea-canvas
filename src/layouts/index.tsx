@@ -33,9 +33,8 @@ const MainLayout: React.SFC<Props> = ({ children, location }) => (
   <ThemeProvider theme={{}}>
     <MainDiv>
       <Helmet defaultTitle={`IdeaCanvas`} titleTemplate={`%s | IdeaCanvas`}>
-        <meta name="twitter:site" content="@gatsbyjs" />
         <meta name="og:type" content="website" />
-        <meta name="og:site_name" content="GatsbyJS" />
+        <meta name="og:site_name" content="IdeaCanvas" />
         <link
           rel="canonical"
           href={`https://idea-canvas.netlify.com/${location &&
