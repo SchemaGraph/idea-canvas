@@ -13,6 +13,7 @@ import { TOOL_ADD_NODE } from './toolbar/constants';
 interface StraightProps {
   store: IStore;
   auth: CognitoAuth;
+  location?: Location;
   dev?: boolean;
   undoredo?: boolean;
 }
@@ -22,6 +23,7 @@ export const App: React.SFC<StraightProps> = ({
   auth,
   undoredo,
   dev,
+  location
 }) => {
   const handleSignout = () => {
     if (auth.isUserSignedIn()) {
@@ -39,7 +41,7 @@ export const App: React.SFC<StraightProps> = ({
   }
   return (
     <Provider store={store}>
-      <Layout>
+      <Layout location={location}>
         <Canvas />
         <Toolbar
           onSignOut={handleSignout}

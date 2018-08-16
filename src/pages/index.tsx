@@ -20,23 +20,26 @@ const ACTION_SIGNIN = 'signin';
 const ACTION_SIGNOUT = 'signout';
 const ACTION_GRAPH = 'graph';
 
-const SigninCallback = () => {
-  const auth = getCognitoAuth();
-  const location = window.location;
-  const error = auth.parseCognitoWebResponse(location.href);
-  const state = getState(auth);
-  const token = getToken(auth);
-  if (token && state) {
-    const { action, graphId } = state;
-    if (action === ACTION_GRAPH && graphId) {
-      replaceState(`/${graphId}`);
-      return <ConnectedApp auth={auth} graphId={graphId} token={token} />;
-    } else if (action === ACTION_SIGNIN) {
-      replaceState(`/`);
-      return <Profile auth={auth} />;
-    } else {
-      replaceState(`/`);
-      return <LocalApp auth={auth} />;
+const SigninCallback: React.SFC<{ location?: Location }> = ({ location }) => {
+  let error: any = {};
+  if (location) {
+    const auth = getCognitoAuth();
+    // const location = window.location;
+    error = auth.parseCognitoWebResponse(location.href);
+    const state = getState(auth);
+    const token = getToken(auth);
+    if (token && state) {
+      const { action, graphId } = state;
+      if (action === ACTION_GRAPH && graphId) {
+        replaceState(`/${graphId}`);
+        return <ConnectedApp auth={auth} graphId={graphId} token={token} />;
+      } else if (action === ACTION_SIGNIN) {
+        replaceState(`/`);
+        return <Profile auth={auth} />;
+      } else {
+        replaceState(`/`);
+        return <LocalApp auth={auth} />;
+      }
     }
   }
   return (
@@ -86,10 +89,20 @@ const SigninAction = () => {
   );
 };
 
-const LocalApp: React.SFC<{ auth?: CognitoAuth }> = ({ auth }) => {
+const LocalApp: React.SFC<{ auth?: CognitoAuth; location?: Location }> = ({
+  auth,
+  location,
+}) => {
   const store = initStore();
   localLoad(store);
-  return <App store={store} auth={auth || getCognitoAuth()} undoredo={true}/>;
+  return (
+    <App
+      store={store}
+      auth={auth || getCognitoAuth()}
+      undoredo={true}
+      location={location}
+    />
+  );
 };
 
 const Profile: React.SFC<{ auth: CognitoAuth }> = ({ auth }) => {
@@ -125,9 +138,10 @@ export default () => (
   </Router>
 );
 
-const RenderOrRedirectToLogin: React.SFC<{ graphId?: string }> = ({
-  graphId,
-}) => {
+const RenderOrRedirectToLogin: React.SFC<{
+  graphId?: string;
+  location?: Location;
+}> = ({ graphId, location }) => {
   if (!graphId) {
     return null;
   }
@@ -141,5 +155,5 @@ const RenderOrRedirectToLogin: React.SFC<{ graphId?: string }> = ({
     return null;
   }
   // return React.cloneElement(children as any, { auth, graphId, token });
-  return <ConnectedApp {...{ auth, graphId, token }} />;
+  return <ConnectedApp {...{ auth, graphId, token, location }} />;
 };

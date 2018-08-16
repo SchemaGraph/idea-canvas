@@ -10,6 +10,7 @@ interface Props {
   graphId: string;
   auth: CognitoAuth;
   token: string;
+  location?: Location;
 }
 
 interface State {
@@ -38,7 +39,7 @@ export class ConnectedApp extends React.Component<Props, State> {
   }
   render() {
     let { store } = this.state;
-    const {auth} = this.props;
+    const { auth } = this.props;
     const { graphId } = this.props;
     console.log('GRAPH', graphId);
     if (!store && !graphId) {
@@ -48,6 +49,6 @@ export class ConnectedApp extends React.Component<Props, State> {
     if (!store) {
       return null;
     }
-    return <App store={store} auth={auth} />;
+    return <App store={store} auth={auth} location={location} />;
   }
 }
