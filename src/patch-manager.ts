@@ -44,7 +44,7 @@ export interface Entry {
   action: ISerializedActionCall;
 }
 
-interface Context {
+export interface Context {
   recorder: IPatchRecorder;
   actionId: string;
 }

@@ -39,13 +39,13 @@ export default class ToolbarButton extends React.Component<Props> {
           ? '2px 1px'
           : '1px 2px',
       color: this.props.active || this.state.hover ? '#1CA6FC' : '#FFF',
-      opacity: this.props.disabled ? 0.7 : 1,
+      opacity: this.props.disabled ? 0.3 : 1,
       transition: 'color 200ms ease',
       background: 'none',
       padding: '0px',
       border: '0px',
       outline: '0px',
-      cursor: 'pointer',
+      cursor: this.props.disabled ? 'auto' : 'pointer',
     };
 
     const touchHandler = (e:any) => {
@@ -63,7 +63,7 @@ export default class ToolbarButton extends React.Component<Props> {
         onTouchStart={touchHandler}
         onTouchEnd={this.change}
         onTouchCancel={this.change}
-        onClick={this.props.onClick}
+        onClick={touchHandler}
         style={style}
         title={this.props.title}
         name={this.props.name}

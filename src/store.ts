@@ -230,7 +230,7 @@ export function localLoad(store: IStore, localStorageKey = 'ideacanvas-graph') {
     snapshotStream
       .pipe(
         debounceTime(400),
-        tap(_ => console.log('SAVING TO LOCALSTORAGE'))
+        // tap(_ => console.log('SAVING TO LOCALSTORAGE'))
       )
       .subscribe(
         saver,

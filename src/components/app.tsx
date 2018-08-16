@@ -7,15 +7,22 @@ import { Toolbar } from '../components/toolbar';
 import Layout from '../layouts';
 import { IStore } from '../store';
 import { Info } from './Info';
+import { attachUndoManager, IUndoManager, UndoRedo } from './time-traveller';
 import { TOOL_ADD_NODE } from './toolbar/constants';
 
 interface StraightProps {
   store: IStore;
   auth: CognitoAuth;
   dev?: boolean;
+  undoredo?: boolean;
 }
 
-export const App: React.SFC<StraightProps> = ({ store, auth, dev }) => {
+export const App: React.SFC<StraightProps> = ({
+  store,
+  auth,
+  undoredo,
+  dev,
+}) => {
   const handleSignout = () => {
     if (auth.isUserSignedIn()) {
       // also redirects
@@ -26,6 +33,10 @@ export const App: React.SFC<StraightProps> = ({ store, auth, dev }) => {
     // Select the 'ADD' tool as the default one for an empty diagram
     store.setTool(TOOL_ADD_NODE);
   }
+  let undoManager: IUndoManager | undefined;
+  if (undoredo) {
+    undoManager = attachUndoManager(store);
+  }
   return (
     <Provider store={store}>
       <Layout>
@@ -35,6 +46,7 @@ export const App: React.SFC<StraightProps> = ({ store, auth, dev }) => {
           signedIn={auth && auth.isUserSignedIn()}
         />
         <Info />
+        {undoManager && <UndoRedo manager={undoManager} />}
         {dev && <DevTools />}
       </Layout>
     </Provider>

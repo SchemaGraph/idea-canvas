@@ -89,7 +89,7 @@ const SigninAction = () => {
 const LocalApp: React.SFC<{ auth?: CognitoAuth }> = ({ auth }) => {
   const store = initStore();
   localLoad(store);
-  return <App store={store} auth={auth || getCognitoAuth()} />;
+  return <App store={store} auth={auth || getCognitoAuth()} undoredo={true}/>;
 };
 
 const Profile: React.SFC<{ auth: CognitoAuth }> = ({ auth }) => {
