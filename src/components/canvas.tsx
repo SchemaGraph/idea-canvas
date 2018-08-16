@@ -49,30 +49,28 @@ const DevInfo = styled.div`
 
 const OuterContainer = styled.div`
   ${layerStyles()};
-  border: 0px solid red;
+  /* border: 1px solid red; */
 `;
 
 const MainContainer = styled.div`
   ${layerStyles()};
-  border: 0px solid blue;
-  transition: transform 0.2s ease-out;
+  /* border: 1px solid blue; */
+  /* transition: transform 0.2s ease-out; */
 `;
 
 const SvgLayer = styled.svg`
   ${layerStyles()};
-`;
-
-const HtmlLayer = styled.div`
-  ${layerStyles()};
-  border: 0px solid blue;
+  /* border: 1px solid green; */
+  width: 2px;
+  height: 2px;
 `;
 
 function getScaleStyle(z: Zoom) {
   const { scale, offsetX, offsetY } = z;
   const inv = (100 / scale).toFixed(4);
   return {
-    width: `calc(${inv}% + ${offsetX}px)`,
-    height: `calc(${inv}% + ${offsetY}px)`,
+    // width: `calc(${inv}% + ${offsetX}px)`, // not necessary with overflow: visible
+    // height: `calc(${inv}% + ${offsetY}px)`,
     transform: `translate(${offsetX}px,${offsetY}px) scale(${scale})`,
   };
 }
