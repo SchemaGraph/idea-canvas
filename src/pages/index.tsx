@@ -3,7 +3,7 @@ import { CognitoAuth } from 'amazon-cognito-auth-js';
 import * as React from 'react';
 import { App } from '../components/app';
 import { ConnectedApp } from '../components/ConnectedApp';
-import { initStore, localLoad } from '../store';
+import { initStore, localClear, localLoad } from '../store';
 import {
   getCognitoAuth,
   getState,
@@ -105,6 +105,20 @@ const LocalApp: React.SFC<{ auth?: CognitoAuth; location?: Location }> = ({
   );
 };
 
+const NewLocalApp: React.SFC<{ auth?: CognitoAuth; location?: Location }> = ({
+  auth,
+  location,
+}) => {
+  localClear();
+  replaceState(`/`);
+  return (
+    <LocalApp
+      auth={auth}
+      location={location}
+    />
+  );
+};
+
 const Profile: React.SFC<{ auth: CognitoAuth }> = ({ auth }) => {
   const session = getValidSession(auth);
   if (!session) {
@@ -130,6 +144,7 @@ export default () => (
   <Router>
     <RenderOrRedirectToLogin path="/:graphId" />
     <LocalApp path="/" />
+    <NewLocalApp path="/action/new" />
     <SigninCallback path="/callback/signin" />
     <SignoutCallback path="/callback/signout" />
     <SignoutAction path="/action/signout" />

@@ -214,8 +214,15 @@ export function initStore() {
   return store;
 }
 
-const snapshotSaver = (key: string) => (snapshot: IStoreSnapshot) =>
-  localStorage.setItem(key, JSON.stringify(snapshot));
+const snapshotSaver = (key: string) => (snapshot: IStoreSnapshot) => {
+  localStorage.setItem(key, JSON.stringify({
+    ...snapshot,
+    scale: 1,
+    offsetX: 0,
+    offsetY: 0,
+    tool: TOOL_NONE,
+  }));
+};
 
 const snapshotStream = new Subject<IStoreSnapshot>();
 
@@ -238,7 +245,7 @@ export function localLoad(store: IStore, localStorageKey = 'ideacanvas-graph') {
     });
     snapshotStream
       .pipe(
-        debounceTime(400),
+        debounceTime(400)
         // tap(_ => console.log('SAVING TO LOCALSTORAGE'))
       )
       .subscribe(
@@ -252,6 +259,13 @@ export function localLoad(store: IStore, localStorageKey = 'ideacanvas-graph') {
 
   return store;
 }
+
+export function localClear() {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.clear();
+  }
+}
+
 
 export type IStore = typeof Store.Type;
 export type IStoreSnapshot = typeof Store.SnapshotType;
