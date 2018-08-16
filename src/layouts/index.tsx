@@ -18,11 +18,13 @@ function getTitle(location?: Location) {
     return null;
   }
   const { pathname } = location;
-  if (pathname === '/') {
+  const stripped = pathname.replace(/^\//, '');
+  const pathSections = stripped.split('/');
+  if (pathname === '/' || pathSections.length > 1) {
     return null;
   }
-  const parts = pathname.replace(/^\//, '').split(/[-|]/);
-  const title = parts
+  const title = stripped
+    .split(/[-|]/)
     .map(p => p.substr(0, 1).toUpperCase() + p.substr(1))
     .join(' ');
   return <title>{title}</title>;
