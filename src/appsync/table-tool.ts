@@ -16,12 +16,20 @@ async function main() {
     const args = yargs
       .usage('Usage: $0 <command>')
       .command('list-graphs', 'List graph-ids')
+      .command('list-graph [graph]', 'List the events of a graph')
+      .command('delete-graph <graph>', 'Delete a graph')
       .command('truncate <table>', 'List graph-ids')
       .help().argv;
     const cmd = args._ && args._[0];
     switch (cmd) {
       case 'list-graphs':
         await mainListGraphs();
+        break;
+      case 'list-graph':
+        await mainListGraph(args.graph);
+        break;
+      case 'delete-graph':
+        await mainDeleteGraph(args.graph);
         break;
       case 'truncate':
         await mainTruncate(args.table);
@@ -41,6 +49,31 @@ async function mainListGraphs() {
   const results = await listGraphs(client);
   console.log(results);
 }
+async function mainListGraph(graph?: string) {
+  const options = getAwsOptions();
+  const client = new DynamoDB(options);
+  const { Items } = await listPatches(client, graph);
+  if (Items) {
+    console.log(
+      Items.map(({ graphId, seq, createdAt }) => ({
+        graphId: graphId.S,
+        seq: seq.N,
+        createdAt: createdAt.S,
+      }))
+    );
+  }
+}
+
+async function mainDeleteGraph(graph: string) {
+  if (!graph || graph.length <= 1) {
+    throw new Error('give a better graph name');
+  }
+  const options = getAwsOptions();
+  const client = new DynamoDB(options);
+  const results = await deletePatches(graph, client);
+  console.log(results);
+}
+
 
 async function mainTruncate(table: string) {
   const options = getAwsOptions();
@@ -48,7 +81,6 @@ async function mainTruncate(table: string) {
   const results = await truncate(table, client);
   console.log(results);
 }
-
 
 async function truncate(table: string, client: DynamoDB) {
   let numItems: number | undefined;
@@ -61,7 +93,7 @@ async function truncate(table: string, client: DynamoDB) {
   };
   while (numItems === undefined || numItems > 0) {
     const { Items } = await client.scan(query).promise();
-    if (!Items || !Items.length) {
+    if (!Items || !Items.length) {
       break;
     }
     numItems = Items.length;
@@ -75,13 +107,44 @@ async function truncate(table: string, client: DynamoDB) {
       };
     });
 
-    await client.batchWriteItem({
-      RequestItems: {
-        [table]: requests,
-      },
-    }).promise();
+    await client
+      .batchWriteItem({
+        RequestItems: {
+          [table]: requests,
+        },
+      })
+      .promise();
+  }
+  return totalItems;
+}
 
+async function deletePatches(graph: string, client: DynamoDB) {
+  let numItems: number | undefined;
+  let totalItems = 0;
+  const batchSize = 25;
+  while (numItems === undefined || numItems > 0) {
+    const { Items } = await listPatches(client, graph, batchSize);
+    if (!Items || !Items.length) {
+      break;
+    }
+    numItems = Items.length;
+    totalItems += numItems;
+    const requests = Items.map(i => {
+      console.log(i);
+      return {
+        DeleteRequest: {
+          Key: i,
+        },
+      };
+    });
 
+    await client
+      .batchWriteItem({
+        RequestItems: {
+          [PATCH_TABLE]: requests,
+        },
+      })
+      .promise();
   }
   return totalItems;
 }
@@ -96,7 +159,31 @@ async function listGraphs(client: DynamoDB) {
     return Items.map(d => d.id);
   }
   return null;
+}
 
+async function listPatches(client: DynamoDB, graph?: string, limit = 200) {
+  let query: QueryInput = {
+    TableName: PATCH_TABLE,
+    ProjectionExpression: '#graphId, #seq',
+    Limit: limit,
+    ExpressionAttributeNames: {
+      '#graphId': 'graphId',
+      '#seq': 'seq',
+    },
+  };
+  if (graph) {
+    query = {
+      ...query,
+      KeyConditionExpression: '#graphId = :graphId',
+      ExpressionAttributeValues: {
+        ':graphId': { S: graph },
+      },
+    };
+  }
+  if (graph) {
+    return client.query(query).promise();
+  }
+  return client.scan(query).promise();
 }
 
 interface AwsOptions {
