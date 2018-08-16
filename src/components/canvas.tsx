@@ -10,6 +10,7 @@ import { colors } from '../theme/theme';
 import { connect } from '../utils';
 import { ArrowView } from './arrow-view';
 import { BoxView } from './box-view';
+import { INITIAL_HEIGHT, INITIAL_WIDTH } from './models';
 import { TOOL_ADD_NODE, TOOL_NONE, TOOL_PAN } from './toolbar/constants';
 
 function zoomTransformToZoom(zt: { x: number; y: number; k: number }): Zoom {
@@ -192,8 +193,8 @@ class CanvasVanilla extends React.Component<Props, State> {
     if (tool === TOOL_ADD_NODE && !editing) {
       createBox!(
         undefined,
-        (e.clientX - offsetX) / scale,
-        (e.clientY - offsetY) / scale
+        (e.clientX - offsetX - INITIAL_WIDTH / 2) / scale,
+        (e.clientY - offsetY - INITIAL_HEIGHT / 2) / scale
       );
     }
     if (tool === TOOL_NONE) {

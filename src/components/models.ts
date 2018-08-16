@@ -1,13 +1,15 @@
 import { types } from 'mobx-state-tree';
 
+export const INITIAL_WIDTH = 100;
+export const INITIAL_HEIGHT = 60;
 export const Box = types
   .model('Box', {
     id: types.identifier,
     name: types.maybe(types.string),
     x: 0,
     y: 0,
-    width: 150,
-    height: 60,
+    width: INITIAL_WIDTH,
+    height: INITIAL_HEIGHT,
     initialized: false,
   })
   .actions(self => ({
