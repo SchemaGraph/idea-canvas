@@ -1,6 +1,8 @@
+import { easeExp, easeExpOut } from 'd3-ease';
 import { observer } from 'mobx-react';
 import * as React from 'react';
 import { DraggableCore, DraggableEventHandler } from 'react-draggable';
+import { Animate } from 'react-move';
 import styled, { OuterStyledProps } from 'styled-components';
 import { Zoom } from '../store';
 import { colors, fadedAlpha } from '../theme/theme';
@@ -47,19 +49,18 @@ const BoxDiv = styled.div`
   touch-action: none;
   /* transition: transform 0.2s ease-out; */
 `;
-function getScaleStyle(top: number, left: number) {
-  return { transform: `translate(${left}px,${top}px)` };
-}
 
 function getStyle(
+  x: number,
+  y: number,
   box: IBox,
-  prevX?: number,
-  prevY?: number,
+  opacity = 1,
   isDragging?: boolean
 ): React.CSSProperties {
-  const { y, x, initialized, width } = box;
+  const { initialized, width } = box;
   return {
-    ...getScaleStyle(y, x),
+    transform: `translate(${x}px,${y}px)`,
+    opacity,
     width: !initialized ? width : undefined,
     transition: !isDragging ? 'transform 0.2s ease-out' : undefined,
   };
@@ -257,20 +258,45 @@ class BoxViewVanilla extends React.Component<Props, State> {
     );
 
     const { name } = box;
-    // const { offsetX, offsetY, scale } = zoom;
-
     return (
-      <DraggableCore onDrag={this.move} onStart={this.start} onStop={this.stop}>
-        <BoxDiv
-          innerRef={this.boxRef}
-          style={getStyle(box, this.prevX, this.prevY, !!this.dragStart)}
-          selected={!!selected}
-          onDoubleClick={this.dblClickHandler}
-        >
-          <Label editing={editing}>{name || `\xa0`}</Label>
-          {editing ? input : null}
-        </BoxDiv>
-      </DraggableCore>
+      <Animate
+        start={{ x: box.x, y: box.y, opacity: 0 }}
+        enter={{
+          opacity: [1],
+          timing: { duration: 100 },
+          easing: easeExp,
+        }}
+        update={{
+          x: box.x,
+          y: box.y,
+          timing: { duration: 30 },
+          easing: easeExpOut,
+        }}
+      >
+        {({ opacity, x, y }) => (
+          <DraggableCore
+            onDrag={this.move}
+            onStart={this.start}
+            onStop={this.stop}
+          >
+            <BoxDiv
+              innerRef={this.boxRef}
+              style={getStyle(
+                x as number,
+                y as number,
+                box,
+                opacity as number,
+                !!this.dragStart
+              )}
+              selected={!!selected}
+              onDoubleClick={this.dblClickHandler}
+            >
+              <Label editing={editing}>{name || `\xa0`}</Label>
+              {editing ? input : null}
+            </BoxDiv>
+          </DraggableCore>
+        )}
+      </Animate>
     );
   }
 }
