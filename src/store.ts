@@ -26,7 +26,9 @@ import {
 import {
   TOOL_ADD_NODE,
   TOOL_CONNECT,
+  TOOL_NONE,
   TOOL_PAN,
+  TOOL_REMOVE_NODE,
 } from './components/toolbar/constants';
 import { PatchManager } from './patch-manager';
 import { uuid } from './utils';
@@ -164,7 +166,11 @@ export const Store = types
     select(target: string | null) {
       const tool = self.tool;
       const selection = self.selection;
-      if (tool !== TOOL_ADD_NODE && tool !== TOOL_PAN) {
+      if (
+        tool !== TOOL_ADD_NODE &&
+        tool !== TOOL_PAN &&
+        tool !== TOOL_REMOVE_NODE
+      ) {
         if (tool === TOOL_CONNECT) {
           if (selection && target && target !== selection) {
             self.addArrow(selection, target);
@@ -175,6 +181,9 @@ export const Store = types
         } else {
           self.selection = target;
         }
+      }
+      if (tool === TOOL_REMOVE_NODE && target) {
+        self.removeElement(target);
       }
     },
   }));

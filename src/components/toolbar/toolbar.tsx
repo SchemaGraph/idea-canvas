@@ -8,6 +8,7 @@ import {
   TOOL_CONNECT,
   TOOL_NONE,
   TOOL_PAN,
+  TOOL_REMOVE_NODE,
 } from './constants';
 
 import IconCursor from './icon-cursor';
@@ -24,8 +25,6 @@ interface Props {
   tool: string;
   onFit: () => void;
   onChangeTool: (tool: string) => void;
-  onRemoveNode: () => void;
-  selectedNode: any;
   position: string;
   onSignOut?: () => void;
   signedIn?: boolean;
@@ -35,8 +34,6 @@ export const Toolbar: React.SFC<Props> = ({
   tool,
   onFit,
   onChangeTool,
-  onRemoveNode,
-  selectedNode,
   position,
   onSignOut,
   signedIn,
@@ -49,12 +46,6 @@ export const Toolbar: React.SFC<Props> = ({
 
   const handleFit = (event: any) => {
     onFit();
-    event.stopPropagation();
-    event.preventDefault();
-  };
-
-  const handleRemoveNode = (event: any) => {
-    onRemoveNode();
     event.stopPropagation();
     event.preventDefault();
   };
@@ -119,13 +110,14 @@ export const Toolbar: React.SFC<Props> = ({
       </ToolbarButton>
       <ToolbarButton
         toolbarPosition={position}
-        active={tool === TOOL_PAN}
-        name="select-tool-pan"
-        title="Pan"
-        onClick={handleChangeTool(TOOL_PAN)}
+        active={tool === TOOL_REMOVE_NODE}
+        name="remove-node"
+        title="Remove node"
+        onClick={handleChangeTool(TOOL_REMOVE_NODE)}
       >
-        <IconPan />
+        <IconRemove />
       </ToolbarButton>
+
       <ToolbarButton
         toolbarPosition={position}
         active={tool === TOOL_CONNECT}
@@ -136,38 +128,20 @@ export const Toolbar: React.SFC<Props> = ({
         <IconConnect />
       </ToolbarButton>
 
+
       <ToolbarDivider />
 
       <ToolbarButton
         toolbarPosition={position}
-        active={false}
-        name="remove-node"
-        title="Remove node"
-        onClick={handleRemoveNode}
-        disabled={!selectedNode}
+        active={tool === TOOL_PAN}
+        name="select-tool-pan"
+        title="Pan"
+        onClick={handleChangeTool(TOOL_PAN)}
       >
-        <IconRemove />
-      </ToolbarButton>
-      <ToolbarDivider />
-
-      {/* <ToolbarButton
-        toolbarPosition={position}
-        active={tool === TOOL_ZOOM_IN}
-        name="select-tool-zoom-in"
-        title="Zoom in"
-        onClick={ event => handleChangeTool(event, TOOL_ZOOM_IN) }>
-        <IconZoomIn/>
+        <IconPan />
       </ToolbarButton>
 
-      <ToolbarButton
-        toolbarPosition={position}
-        active={tool === TOOL_ZOOM_OUT}
-        name="select-tool-zoom-out"
-        title="Zoom out"
-        onClick={ event => handleChangeTool(event, TOOL_ZOOM_OUT) }>
-        <IconZoomOut/>
-      </ToolbarButton>
- */}
+
       <ToolbarButton
         toolbarPosition={position}
         active={false}
@@ -177,6 +151,7 @@ export const Toolbar: React.SFC<Props> = ({
       >
         <IconFit />
       </ToolbarButton>
+      <ToolbarDivider />
 
       <ToolbarButton
         toolbarPosition={position}
