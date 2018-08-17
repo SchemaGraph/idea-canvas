@@ -133,17 +133,6 @@ export const Toolbar: React.SFC<Props> = ({
 
       <ToolbarButton
         toolbarPosition={position}
-        active={tool === TOOL_PAN}
-        name="select-tool-pan"
-        title="Pan"
-        onClick={handleChangeTool(TOOL_PAN)}
-      >
-        <IconPan />
-      </ToolbarButton>
-
-
-      <ToolbarButton
-        toolbarPosition={position}
         active={false}
         name="fit-to-viewer"
         title="Fit to viewer"

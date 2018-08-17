@@ -1,5 +1,10 @@
 import { select, ValueFn } from 'd3-selection';
-import { zoom as d3Zoom, ZoomBehavior, ZoomTransform } from 'd3-zoom';
+import {
+  zoom as d3Zoom,
+  ZoomBehavior,
+  zoomIdentity,
+  ZoomTransform,
+} from 'd3-zoom';
 import { values } from 'mobx';
 import { observer } from 'mobx-react';
 import * as React from 'react';
@@ -88,16 +93,31 @@ class CanvasVanilla extends React.Component<Props, State> {
   private mainContainer = React.createRef<HTMLDivElement>();
   private svgLayer = React.createRef<SVGElement>();
   private readonly zoom: ZoomBehavior<HTMLDivElement, {}>;
-  private zoomTransform?: ZoomTransform;
+  private zoomTransform = zoomIdentity;
 
   constructor(props: Readonly<Props>) {
     super(props);
     this.zoom = d3Zoom<HTMLDivElement, {}>()
       .scaleExtent([0.1, 5])
+      .filter(() => {
+        const event = require('d3-selection').event;
+        if (
+          event.type === 'mousedown' &&
+          this.container.current &&
+          this.mainContainer.current
+        ) {
+          if (
+            event.target !== this.container.current &&
+            event.target !== this.mainContainer.current
+          ) {
+            return false;
+          }
+        }
+        return !event.button;
+      })
       .on('zoom', this.zoomed.bind(this));
   }
   attachZoom() {
-    // console.log('attachZoom');
     if (this.container.current) {
       // Error appeared with updated typings
       select(this.container.current).call(this.zoom);
@@ -122,47 +142,24 @@ class CanvasVanilla extends React.Component<Props, State> {
         container.clientWidth,
         container.clientHeight
       );
-      // this.container.current.addEventListener(
-      //   'ontouchmove',
-      //   e => {
-      //     e.preventDefault();
-      //     e.stopPropagation();
-      //     e.stopImmediatePropagation();
-      //   },
-      //   { passive: false }
-      // );
       document.addEventListener('keyup', this.onKeyPressHandler);
     }
-
-    if (this.store.tool === TOOL_PAN) {
-      this.attachZoom();
-    } else {
-      this.deAttachZoom();
-    }
+    this.attachZoom();
   }
   componentDidUpdate(_prevProps: Props, _prevState: State) {
-    const { tool } = this.store;
-    if (tool === TOOL_PAN) {
-      this.attachZoom();
-    } else {
-      this.deAttachZoom();
-    }
-    const zoomTransform = this.zoomTransform;
-    const { zoom } = this.store;
-    if (!zoomTransform || !this.container.current) {
+    if (!this.zoomTransform || !this.container.current) {
       return;
     }
-    const { k, x, y } = zoomTransform;
-    const { scale, offsetX, offsetY } = zoom;
+    const { k, x, y } = this.zoomTransform;
+    const { scale, offsetX, offsetY } = this.store.zoom;
+    // This happens if we update the zoom on the store from outside
+    // the zoom event handler
     if (scale !== k || offsetX !== x || offsetY !== y) {
-      // This happens if we update the zoom on the store from outside
-      // the zoom event handler
-      const selection = select(this.container.current);
-      const t = zoomTransform
-        .translate(offsetX - x / k, offsetY - y / k)
-        .scale(scale / k);
       // Error appeared with updated typings
-      this.zoom.transform(selection, t);
+      this.zoom.transform(
+        select(this.container.current),
+        zoomIdentity.translate(offsetX, offsetY).scale(scale)
+      );
     }
   }
 
@@ -177,17 +174,8 @@ class CanvasVanilla extends React.Component<Props, State> {
   handleClick: React.MouseEventHandler = e => {
     const { clearSelection, createBox, zoom, tool, editing } = this.store;
     const { scale, offsetX, offsetY } = zoom;
-    // console.log(e.target);
     // only handle clicks that actually originate from the canvas
-    if (
-      !e.target ||
-      !this.mainContainer.current ||
-      !this.container.current ||
-      !(
-        e.target === this.container.current ||
-        e.target === this.mainContainer.current
-      )
-    ) {
+    if (!this.isCanvasClick(e)) {
       return;
     }
     if (tool === TOOL_ADD_NODE && !editing) {
@@ -200,6 +188,13 @@ class CanvasVanilla extends React.Component<Props, State> {
     if (tool === TOOL_NONE) {
       clearSelection();
     }
+  };
+
+  isCanvasClick = (e: React.SyntheticEvent<any>) => {
+    return (
+      e.target === this.container.current ||
+      e.target === this.mainContainer.current
+    );
   };
 
   onKeyPressHandler = ({ target, key }: KeyboardEvent) => {
@@ -223,16 +218,6 @@ class CanvasVanilla extends React.Component<Props, State> {
           style={getScaleStyle(zoom)}
           innerRef={this.mainContainer}
         >
-          {/* <DevInfo>
-          scale: {scale.toFixed(2)}, x: {offsetX.toFixed(0)}, y:{' '}
-          {offsetY.toFixed(0)}
-        </DevInfo> */}
-          {/* <HtmlLayer
-          style={getScaleStyle({ scale, offsetX: 0, offsetY: 0 })}
-          innerRef={this.nodeLayer}
-          onClick={this.handleClick}
-        >
-        </HtmlLayer> */}
           <SvgLayer innerRef={this.svgLayer}>
             <defs>
               <marker
