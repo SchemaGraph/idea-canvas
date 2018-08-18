@@ -58,13 +58,26 @@ const DevInfo = styled.div`
   font-size: 18px;
 `;
 
+interface WithTool {
+  tool?: string;
+}
+
+function toolToCursor(tool?: string) {
+  if (tool === TOOL_ADD_NODE) {
+    return 'crosshair';
+  }
+  return 'auto';
+}
+
 const OuterContainer = styled.div`
   ${layerStyles()};
+  cursor: ${({tool}: WithTool) => toolToCursor(tool)};
   /* border: 1px solid red; */
 `;
 
 const MainContainer = styled.div`
   ${layerStyles()};
+  cursor: ${({tool}: WithTool) => toolToCursor(tool)};
   /* border: 1px solid blue; */
   /* transition: transform 0.2s ease-out; */
 `;
@@ -221,14 +234,15 @@ class CanvasVanilla extends React.Component<Props, State> {
   };
 
   public render() {
-    const { boxes, arrows, zoom, connecting } = this.store;
+    const { boxes, arrows, zoom, connecting, tool } = this.store;
     // const zoom = zoomTransformToZoom(this.state.zoomTransform || { x: 0, y: 0, k: 1 });
     // const { scale, offsetX, offsetY } = zoom;
     return (
-      <OuterContainer innerRef={this.container} onClick={this.handleClick}>
+      <OuterContainer innerRef={this.container} onClick={this.handleClick} tool={tool}>
         <MainContainer
           style={getScaleStyle(zoom)}
           innerRef={this.mainContainer}
+          tool={tool}
         >
           <SvgLayer innerRef={this.svgLayer}>
             <defs>
