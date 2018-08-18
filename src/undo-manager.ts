@@ -27,6 +27,9 @@ const discard = new Set([
 //  'setEditing',
   'setDimensions',
   'setWidth',
+  'startConnecting',
+  'updateConnecting',
+  'endConnecting'
 ]);
 
 export const ObservableUndoManager = types

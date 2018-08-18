@@ -13,8 +13,13 @@ import styled from 'styled-components';
 import { IStore, Zoom } from '../store';
 import { colors } from '../theme/theme';
 import { connect } from '../utils';
-import { ArrowView } from './arrow-view';
+import {
+  ArrowView,
+  MarkerArrowDef,
+  MarkerSelectedArrowDef,
+} from './arrow-view';
 import { BoxView } from './box-view';
+import { ConnectingArrowView } from './connecting-arrow-view';
 import { INITIAL_HEIGHT, INITIAL_WIDTH } from './models';
 import { TOOL_ADD_NODE, TOOL_NONE, TOOL_PAN } from './toolbar/constants';
 
@@ -209,7 +214,7 @@ class CanvasVanilla extends React.Component<Props, State> {
   };
 
   public render() {
-    const { boxes, arrows, zoom } = this.store;
+    const { boxes, arrows, zoom, connecting } = this.store;
     // const zoom = zoomTransformToZoom(this.state.zoomTransform || { x: 0, y: 0, k: 1 });
     // const { scale, offsetX, offsetY } = zoom;
     return (
@@ -220,38 +225,14 @@ class CanvasVanilla extends React.Component<Props, State> {
         >
           <SvgLayer innerRef={this.svgLayer}>
             <defs>
-              <marker
-                id="arrow"
-                viewBox="0 0 10 10"
-                refX="5"
-                refY="5"
-                markerWidth="6"
-                markerHeight="6"
-                orient="auto-start-reverse"
-              >
-                <path
-                  d="M 0 0 L 10 5 L 0 10 z"
-                  fill={colors.white.toString()}
-                />
-              </marker>
-              <marker
-                id="arrow-selected"
-                viewBox="0 0 10 10"
-                refX="5"
-                refY="5"
-                markerWidth="6"
-                markerHeight="6"
-                orient="auto-start-reverse"
-              >
-                <path
-                  d="M 0 0 L 10 5 L 0 10 z"
-                  fill={colors.orange.toString()}
-                />
-              </marker>
+              <MarkerArrowDef />
+              <MarkerSelectedArrowDef />
             </defs>
             {arrows.map(arrow => (
               <ArrowView arrow={arrow} key={arrow.id} />
             ))}
+            {connecting && <ConnectingArrowView arrow={connecting} />}
+            {/* {connecting && arrowCandidate && <ArrowView arrow={arrowCandidate}/>} */}
           </SvgLayer>
           {values(boxes).map(box => (
             <BoxView box={box} key={box.id} zoom={zoom} />

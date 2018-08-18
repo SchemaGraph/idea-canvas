@@ -20,8 +20,10 @@ import {
   Box,
   boxes,
   BoxRef,
+  ConnectingArrow,
   IArrow,
   IBox,
+  IConnectingArrow,
 } from './components/models';
 import {
   TOOL_ADD_NODE,
@@ -32,6 +34,7 @@ import {
 } from './components/toolbar/constants';
 import { PatchManager } from './patch-manager';
 import { uuid } from './utils';
+import { getCloseEnoughBox } from './utils/vec';
 
 const SelectionType = types.maybeNull(types.string);
 
@@ -48,6 +51,8 @@ export interface Zoom {
   offsetY: number;
 }
 
+let connectableBoxes: IBox[] = [];
+
 export const Store = types
   .model('Store', {
     boxes,
@@ -55,6 +60,8 @@ export const Store = types
     dragging: SelectionType,
     selection: SelectionType,
     editing: SelectionType,
+    connecting: types.maybeNull(ConnectingArrow),
+    arrowCandidate: types.maybeNull(Arrow),
     scale: 1,
     offsetX: 0,
     offsetY: 0,
@@ -186,6 +193,49 @@ export const Store = types
         self.removeElement(target);
       }
     },
+    startConnecting(from: IBox, to: [number, number]) {
+      self.connecting = ConnectingArrow.create({
+        from,
+        toX: to[0],
+        toY: to[1],
+      });
+      connectableBoxes = [];
+      self.boxes.forEach(v => {
+        if (v !== from) {
+          connectableBoxes.push(v);
+        }
+      });
+    },
+    updateConnecting(to: [number, number]) {
+      if (!self.connecting) {
+        return;
+      }
+      self.connecting.toX = to[0];
+      self.connecting.toY = to[1];
+      const targetCandidate = getCloseEnoughBox(to, connectableBoxes, 20);
+      self.connecting.to = targetCandidate ? targetCandidate.box : null;
+      // if (targetCandidate) {
+      //   // self.arrowCandidate = Arrow.create({
+      //   //   from: self.connecting.from,
+      //   //   to: targetCandidate.box,
+      //   //   id: uuid(),
+      //   // });
+      //   // self.connecting.intersectionX = targetCandidate.distance.intersection[0];
+      //   // self.connecting.intersectionY = targetCandidate.distance.intersection[1];
+      //   // self.connecting.distance = targetCandidate.distance.distance;
+      // } else {
+      //   self.connecting.to = null;
+      //   // self.connecting.intersectionX = null;
+      //   // self.connecting.intersectionY = null;
+      //   // self.arrowCandidate = null;
+      // }
+    },
+    endConnecting() {
+      if (self.connecting && self.connecting.to) {
+        self.addArrow(self.connecting.from.id, self.connecting.to.id);
+      }
+      self.connecting = null;
+    },
   }));
 
 export async function remoteLoad(
@@ -215,13 +265,16 @@ export function initStore() {
 }
 
 const snapshotSaver = (key: string) => (snapshot: IStoreSnapshot) => {
-  localStorage.setItem(key, JSON.stringify({
-    ...snapshot,
-    scale: 1,
-    offsetX: 0,
-    offsetY: 0,
-    tool: TOOL_NONE,
-  }));
+  localStorage.setItem(
+    key,
+    JSON.stringify({
+      ...snapshot,
+      scale: 1,
+      offsetX: 0,
+      offsetY: 0,
+      tool: TOOL_NONE,
+    })
+  );
 };
 
 const snapshotStream = new Subject<IStoreSnapshot>();
@@ -265,7 +318,6 @@ export function localClear() {
     localStorage.clear();
   }
 }
-
 
 export type IStore = typeof Store.Type;
 export type IStoreSnapshot = typeof Store.SnapshotType;

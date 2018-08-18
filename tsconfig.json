@@ -1,5 +1,6 @@
 {
   "include": ["./src/**/*"],
+  "exclude": ["./src/zoom/*"],
   "compilerOptions": {
     "target": "esnext",
     "module": "commonjs",

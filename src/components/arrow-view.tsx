@@ -6,16 +6,21 @@ import { Animate } from 'react-move';
 import styled from 'styled-components';
 import { colors } from '../theme/theme';
 import { connect } from '../utils';
+import { a, centroid, mult, P, Rectangle, scale, V } from '../utils/vec';
 import { IArrow, IBox } from './models';
 
 interface PathProps {
   selected?: boolean;
 }
 
-const Path = styled.path`
+const ARROW_SELECTED_ID = 'arrow-selected';
+const ARROW_ID = 'arrow';
+
+
+export const Path = styled.path`
   stroke-width: 2;
   cursor: pointer;
-  marker-end: ${p => (p.selected ? `url(#arrow-selected)` : `url(#arrow)`)};
+  marker-end: ${p => (p.selected ? `url(#${ARROW_SELECTED_ID})` : `url(#${ARROW_ID})`)};
   stroke: ${({ selected }: PathProps) =>
     (selected ? colors.orange : colors.white).toString()}};
   fill: none;
@@ -33,29 +38,14 @@ interface Props {
   onSelect?: (id: string) => void;
   selected?: boolean;
 }
-type P = [number, number];
-type V = [P, P];
-// const nil: V = [[0, 0], [0, 0]];
-function length(p: P) {
-  return Math.hypot(p[0], p[1]);
-}
-function add(x: V, y: V): V {
-  return [a(x[0], y[0]), a(x[1], y[1])];
-}
-function a(x: P, y: P): P {
-  return [x[0] + y[0], x[1] + y[1]];
-}
-function scale(p: P, c: number): P {
-  return [c * p[0], c * p[1]];
-}
-function mult(A: V, x: P): P {
-  return [A[0][0] * x[0] + A[1][0] * x[1], A[0][1] * x[0] + A[1][1] * x[1]];
-}
-function tweak(from: IBox, to: IBox, endpointMargin = 0, controlMargin = 30) {
-  // middle of the origin box, when origo is at 0,0
-  const start: P = [from.x + from.width / 2, from.y + from.height / 2];
+export function tweak(
+  start: P,
+  to: Rectangle,
+  endpointMargin = 0,
+  controlMargin = 30
+) {
   // middle of the target box, when origo is at 0,0
-  const end: P = [to.x + to.width / 2, to.y + to.height / 2];
+  const end: P = centroid(to);
   const [w, h] = [to.width, to.height];
   // the middle of the *target* box, when origo is at *start*
   const m = a(end, scale(start, -1));
@@ -96,7 +86,7 @@ function tweak(from: IBox, to: IBox, endpointMargin = 0, controlMargin = 30) {
   };
 }
 
-function positionLink(s: P, e: P, c1: P, c2: P) {
+export function positionLink(s: P, e: P, c1: P, c2: P) {
   return `M ${s[0]} ${s[1]} C ${c1[0]} ${c1[1]}, ${c2[0]} ${c2[1]}, ${e[0]} ${
     e[1]
   }`;
@@ -110,9 +100,8 @@ const ArrowViewVanilla: React.SFC<Props> = ({ arrow, onSelect, selected }) => {
     onSelect!(id);
   };
   // tries to compute the closest point on the *border* of the box
-  const { end, control: c2 } = tweak(from, to, 10, 70);
-  const { end: start, control: c1 } = tweak(to, from, 0, 30);
-
+  const { end, control: c2 } = tweak(centroid(from), to, 10, 70);
+  const { end: start, control: c1 } = tweak(centroid(to), from, 0, 30);
 
   const data = { d: positionLink(start, end, c1, c2) };
   return (
@@ -160,9 +149,36 @@ function debug(from: IBox, to: IBox, c1: P, c2: P) {
   );
 }
 
-
-export const ArrowView = connect<Props>((store, {arrow}) => ({
+export const ArrowView = connect<Props>((store, { arrow }) => ({
   arrow,
   onSelect: store.select,
-  selected: store.selection === arrow.id
+  selected: store.selection === arrow.id,
 }))(observer(ArrowViewVanilla));
+
+export const MarkerArrowDef = () => (
+  <marker
+    id={ARROW_ID}
+    viewBox="0 0 10 10"
+    refX="5"
+    refY="5"
+    markerWidth="6"
+    markerHeight="6"
+    orient="auto-start-reverse"
+  >
+    <path d="M 0 0 L 10 5 L 0 10 z" fill={colors.white.toString()} />
+  </marker>
+);
+
+export const MarkerSelectedArrowDef = () => (
+  <marker
+    id={ARROW_SELECTED_ID}
+    viewBox="0 0 10 10"
+    refX="5"
+    refY="5"
+    markerWidth="6"
+    markerHeight="6"
+    orient="auto-start-reverse"
+  >
+    <path d="M 0 0 L 10 5 L 0 10 z" fill={colors.orange.toString()} />
+  </marker>
+);

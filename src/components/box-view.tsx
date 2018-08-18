@@ -7,11 +7,17 @@ import styled, { OuterStyledProps } from 'styled-components';
 import { Zoom } from '../store';
 import { colors, fadedAlpha } from '../theme/theme';
 import { connect } from '../utils';
+import { P } from '../utils/vec';
 import { IBox } from './models';
+import { TOOL_CONNECT } from './toolbar/constants';
 
 interface Props {
   box: IBox;
   zoom: Zoom;
+  connect?: boolean;
+  startConnecting: (from: IBox, to: P) => void;
+  updateConnecting: (to: P) => void;
+  endConnecting: () => void;
   setIsDragging?: (boxId?: string) => void;
   onSelect?: (id: string) => void;
   selected?: boolean;
@@ -21,6 +27,7 @@ interface Props {
 interface State {
   label?: string;
   dragStart: number;
+  connectorEnd?: [number, number];
 }
 
 interface BoxDivProps {
@@ -159,11 +166,22 @@ class BoxViewVanilla extends React.Component<Props, State> {
   };
 
   public start: DraggableEventHandler = (_e, { x, y }) => {
-    this.props.setIsDragging!(this.props.box.id);
+    const {
+      box,
+      setIsDragging,
+      connect: connectTool,
+      startConnecting,
+      zoom: { scale },
+    } = this.props;
+    setIsDragging!(box.id);
     this.dragStart = Math.hypot(x, y);
+    if (connectTool) {
+      startConnecting(box, [x / scale, y / scale]);
+    }
   };
   public stop: DraggableEventHandler = (_e, { x, y }) => {
-    this.props.setIsDragging!();
+    const { setIsDragging, connect: connectTool, endConnecting } = this.props;
+    setIsDragging!();
     if (this.dragStart) {
       const d = Math.abs(this.dragStart - Math.hypot(x, y));
       // console.log('BOX MOVE END', d);
@@ -172,11 +190,23 @@ class BoxViewVanilla extends React.Component<Props, State> {
       }
       this.dragStart = undefined;
     }
+    if (connectTool) {
+      endConnecting();
+    }
   };
 
-  public move: DraggableEventHandler = (_e, { deltaX, deltaY }) => {
-    const { scale } = this.props.zoom;
-    this.props.box.move(deltaX / scale, deltaY / scale);
+  public move: DraggableEventHandler = (_e, { x, y, deltaX, deltaY }) => {
+    const {
+      box,
+      connect: connectTool,
+      updateConnecting,
+      zoom: { scale },
+    } = this.props;
+    if (connectTool) {
+      updateConnecting([x / scale, y / scale]);
+    } else {
+      box.move(deltaX / scale, deltaY / scale);
+    }
   };
 
   select = () => {
@@ -304,6 +334,10 @@ class BoxViewVanilla extends React.Component<Props, State> {
 export const BoxView = connect<Props>((store, { box, zoom }) => ({
   zoom,
   box,
+  connect: store.tool === TOOL_CONNECT,
+  startConnecting: store.startConnecting,
+  updateConnecting: store.updateConnecting,
+  endConnecting: store.endConnecting,
   onSelect: store.select,
   onEditing: store.setEditing,
   selected: store.selection === box.id,

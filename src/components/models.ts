@@ -52,3 +52,14 @@ export const arrows = types.array(Arrow);
 
 export type IBoxes = typeof boxes.Type;
 export type IArrows = typeof arrows.Type;
+
+export const ConnectingArrow = types.model('ConnectingArrow', {
+  from: types.reference(Box),
+  toX: types.number,
+  toY: types.number,
+  to: types.maybeNull(types.reference(Box)),
+  intersectionX: types.maybeNull(types.number),
+  intersectionY: types.maybeNull(types.number),
+  distance: types.maybeNull(types.number),
+});
+export type IConnectingArrow = typeof ConnectingArrow.Type;
