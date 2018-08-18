@@ -90,7 +90,7 @@ export const Toolbar: React.SFC<Props> = ({
 
   return (
     <div style={style} role="toolbar">
-      <ToolbarButton
+      {/* <ToolbarButton
         toolbarPosition={position}
         active={tool === TOOL_NONE}
         name="unselect-tools"
@@ -98,7 +98,7 @@ export const Toolbar: React.SFC<Props> = ({
         onClick={handleChangeTool(TOOL_NONE)}
       >
         <IconCursor />
-      </ToolbarButton>
+      </ToolbarButton> */}
       <ToolbarButton
         toolbarPosition={position}
         active={tool === TOOL_ADD_NODE}
