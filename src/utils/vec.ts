@@ -56,24 +56,21 @@ export function pointToRect(point: P, rect: IBox) {
   const ay = Math.abs(y);
   // clockwise, with lower right as 1
   const quadrant = x > 0 ? (y > 0 ? 1 : 4) : y > 0 ? 2 : 3;
-  const axes: P = [
-    [w,h] as P,
-    [-w,h] as P,
-    [-w,-h] as P,
-    [w,-h] as P,
-  ][quadrant - 1];
+  const axes: P = [[w, h] as P, [-w, h] as P, [-w, -h] as P, [w, -h] as P][
+    quadrant - 1
+  ];
 
   // Vector from middle of the rectangle to the closest corner
   const OC: P = [axes[0], axes[1]];
   // Vector from the point to the closest corner
   const PC = a(OP, scale(OC, -1));
 
-  if (ax <= w  && ay <= h ) {
+  if (ax <= w && ay <= h) {
     // we are inside the rectangle
     return undefined;
   }
   if (ax <= w && ay > h) {
-    const OQ:P = [x, axes[1]];
+    const OQ: P = [x, axes[1]];
     const PQ = a(OP, scale(OQ, -1));
     return {
       distance: length2(PQ),
@@ -81,7 +78,7 @@ export function pointToRect(point: P, rect: IBox) {
     };
   }
   if (ax > w && ay <= h) {
-    const OQ:P = [axes[0], y];
+    const OQ: P = [axes[0], y];
     const PQ = a(OP, scale(OQ, -1));
     return {
       distance: length2(PQ),

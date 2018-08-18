@@ -61,7 +61,6 @@ export const Store = types
     selection: SelectionType,
     editing: SelectionType,
     connecting: types.maybeNull(ConnectingArrow),
-    arrowCandidate: types.maybeNull(Arrow),
     scale: 1,
     offsetX: 0,
     offsetY: 0,

@@ -10,5 +10,3 @@ export const AppSyncConf = (auth: AuthOptions): AWSAppSyncClientOptions => {
     complexObjectsCredentials: () => null,
   };
 };
-
-

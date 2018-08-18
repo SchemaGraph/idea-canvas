@@ -119,7 +119,11 @@ const ArrowViewVanilla: React.SFC<Props> = ({ arrow, onSelect, selected }) => {
     >
       {({ d, opacity }) => (
         <g>
-          <Path d={d as string} selected={selected} opacity={opacity as number}/>
+          <Path
+            d={d as string}
+            selected={selected}
+            opacity={opacity as number}
+          />
           <GhostPath d={d as string} onClick={select} />
         </g>
       )}

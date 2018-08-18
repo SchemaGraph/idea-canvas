@@ -85,10 +85,9 @@ export function setState(
   if (graphId) {
     parts.push(graphId);
   }
-  a.setState(parts.map(p => p.replace('_','-')).join('_'));
+  a.setState(parts.map(p => p.replace('_', '-')).join('_'));
   return a;
 }
-
 
 export function getValidSession(a: CognitoAuth) {
   const session = a.getSignInUserSession() || a.getCachedSession();

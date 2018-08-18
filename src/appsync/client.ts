@@ -74,7 +74,11 @@ export function createAwsLink(url: string, region: string, auth: AuthOptions) {
   ]);
 }
 
-export function getApolloClient<T>(url: string, region: string, auth: AuthOptions) {
+export function getApolloClient<T>(
+  url: string,
+  region: string,
+  auth: AuthOptions
+) {
   return new MyApolloClient<T>(createAwsLink(url, region, auth));
 }
 
@@ -187,7 +191,7 @@ interface CombinedPatch extends IJsonPatch {
 function toPatchInput(
   { patches, inversePatches, action }: Entry,
   version: number,
-  client: string,
+  client: string
 ): PatchInput {
   return {
     seq: version + 1,
@@ -197,7 +201,10 @@ function toPatchInput(
   };
 }
 
-export function deserializeRemotePatch(p: getGraph_getGraph_patches, clientCheck?: string) {
+export function deserializeRemotePatch(
+  p: getGraph_getGraph_patches,
+  clientCheck?: string
+) {
   const patch = {
     ...p,
     payload: JSON.parse(p.payload) as CombinedPatch[],

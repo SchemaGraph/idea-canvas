@@ -23,7 +23,7 @@ export const App: React.SFC<StraightProps> = ({
   auth,
   undoredo,
   dev,
-  location
+  location,
 }) => {
   const handleSignout = () => {
     if (auth.isUserSignedIn()) {

@@ -65,7 +65,7 @@ async function mainListGraph(graph?: string) {
 }
 
 async function mainDeleteGraph(graph: string) {
-  if (!graph || graph.length <= 1) {
+  if (!graph || graph.length <= 1) {
     throw new Error('give a better graph name');
   }
   const options = getAwsOptions();
@@ -73,7 +73,6 @@ async function mainDeleteGraph(graph: string) {
   const results = await deletePatches(graph, client);
   console.log(results);
 }
-
 
 async function mainTruncate(table: string) {
   const options = getAwsOptions();

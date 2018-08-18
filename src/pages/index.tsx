@@ -111,12 +111,7 @@ const NewLocalApp: React.SFC<{ auth?: CognitoAuth; location?: Location }> = ({
 }) => {
   localClear();
   replaceState(`/`);
-  return (
-    <LocalApp
-      auth={auth}
-      location={location}
-    />
-  );
+  return <LocalApp auth={auth} location={location} />;
 };
 
 const Profile: React.SFC<{ auth: CognitoAuth }> = ({ auth }) => {

@@ -10,9 +10,8 @@ interface Props {
 }
 
 const ConnectingArrowViewVanilla: React.SFC<Props> = ({
-  arrow: { from, to: candidate, toX, toY, intersectionX, intersectionY, distance },
+  arrow: { from, to: candidate, toX, toY },
 }) => {
-
   const height = 2;
   const width = 2;
   const cursorBox = {
@@ -27,8 +26,18 @@ const ConnectingArrowViewVanilla: React.SFC<Props> = ({
   // if (dev && intersectionX && intersectionY) {
   //   intersectionD = `M ${toX} ${toY} L ${intersectionX} ${intersectionY}`;
   // }
-  const { end, control: c2 } = tweak(centroid(from), candidate || cursorBox, 10, 70);
-  const { end: start, control: c1 } = tweak(centroid(candidate || cursorBox), from, 0, 30);
+  const { end, control: c2 } = tweak(
+    centroid(from),
+    candidate || cursorBox,
+    10,
+    70
+  );
+  const { end: start, control: c1 } = tweak(
+    centroid(candidate || cursorBox),
+    from,
+    0,
+    30
+  );
 
   const data = { d: positionLink(start, end, c1, c2) };
   return (
