@@ -13,8 +13,8 @@ const ConnectingArrowViewVanilla: React.SFC<Props> = ({
   arrow: { from, to: candidate, toX, toY, intersectionX, intersectionY, distance },
 }) => {
 
-  const height = 20;
-  const width = 20;
+  const height = 2;
+  const width = 2;
   const cursorBox = {
     x: toX - width / 2,
     y: toY - height / 2,

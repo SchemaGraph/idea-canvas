@@ -89,7 +89,14 @@ function getScaleStyle(z: Zoom) {
 interface State {
   zoomTransform?: ZoomTransform;
 }
-
+const filteredEvents = new Set([
+  'mousedown',
+  'wheel',
+  'dblclick',
+  'touchstart',
+  'touchend',
+  'touchmove',
+]);
 class CanvasVanilla extends React.Component<Props, State> {
   public state: State = {
     zoomTransform: undefined,
@@ -107,7 +114,7 @@ class CanvasVanilla extends React.Component<Props, State> {
       .filter(() => {
         const event = require('d3-selection').event;
         if (
-          event.type === 'mousedown' &&
+          filteredEvents.has(event.type) &&
           this.container.current &&
           this.mainContainer.current
         ) {

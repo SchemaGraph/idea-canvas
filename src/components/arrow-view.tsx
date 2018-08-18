@@ -16,11 +16,11 @@ interface PathProps {
 const ARROW_SELECTED_ID = 'arrow-selected';
 const ARROW_ID = 'arrow';
 
-
 export const Path = styled.path`
   stroke-width: 2;
   cursor: pointer;
-  marker-end: ${p => (p.selected ? `url(#${ARROW_SELECTED_ID})` : `url(#${ARROW_ID})`)};
+  marker-end: ${p =>
+    p.selected ? `url(#${ARROW_SELECTED_ID})` : `url(#${ARROW_ID})`};
   stroke: ${({ selected }: PathProps) =>
     (selected ? colors.orange : colors.white).toString()}};
   fill: none;
@@ -103,19 +103,23 @@ const ArrowViewVanilla: React.SFC<Props> = ({ arrow, onSelect, selected }) => {
   const { end, control: c2 } = tweak(centroid(from), to, 10, 70);
   const { end: start, control: c1 } = tweak(centroid(to), from, 0, 30);
 
-  const data = { d: positionLink(start, end, c1, c2) };
+  const data = { d: positionLink(start, end, c1, c2), opacity: 0 };
   return (
     <Animate
       start={data}
-      enter={data}
+      enter={{
+        opacity: [1],
+        timing: { duration: 100 },
+        easing: easeExp,
+      }}
       update={{
         d: [data.d],
         timing: { delay: 0, duration: 70, easing: easeExp },
       }}
     >
-      {({ d }) => (
+      {({ d, opacity }) => (
         <g>
-          <Path d={d as string} selected={selected} />
+          <Path d={d as string} selected={selected} opacity={opacity as number}/>
           <GhostPath d={d as string} onClick={select} />
         </g>
       )}
