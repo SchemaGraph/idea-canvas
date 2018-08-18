@@ -64,7 +64,7 @@ export const Store = types
     scale: 1,
     offsetX: 0,
     offsetY: 0,
-    tool: TOOL_ADD_NODE,
+    tool: TOOL_NONE,
     canvasWidth: -1,
     canvasHeight: -1,
   })
