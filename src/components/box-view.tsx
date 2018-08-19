@@ -225,16 +225,19 @@ class BoxViewVanilla extends React.Component<Props, State> {
     const { setIsDragging, connect: connectTool, endConnecting } = this.props;
     setIsDragging!();
     if (this.dragStart) {
-      if (
-        this.isItDragging() === false &&
-        this.pressedFor() > longPressDuration
-      ) {
-        const {
-          onEditing,
-          box: { id },
-        } = this.props;
-        onEditing!(id);
+      if (this.isItDragging() === false) {
+        if (this.pressedFor() > longPressDuration) {
+          const {
+            onEditing,
+            box: { id },
+          } = this.props;
+          onEditing!(id);
+        } else {
+          // it was just a click
+          this.select();
+        }
       }
+
       this.dragStart = undefined;
     }
     if (connectTool) {
@@ -262,16 +265,12 @@ class BoxViewVanilla extends React.Component<Props, State> {
     }
   };
 
-  select = () => {
+  private select = () => {
     const {
-      selected,
       onSelect,
       box: { id },
     } = this.props;
-    if (!selected) {
-      onSelect!(id);
-    }
-    // e.stopPropagation();
+    onSelect!(id);
   };
 
   public componentDidMount() {
@@ -324,7 +323,7 @@ class BoxViewVanilla extends React.Component<Props, State> {
   }
 
   public render() {
-    const { box, selected, editing } = this.props;
+    const { box, editing } = this.props;
     const { label } = this.state;
 
     const input = (
@@ -369,7 +368,7 @@ class BoxViewVanilla extends React.Component<Props, State> {
                 opacity as number,
                 !!this.dragStart
               )}
-              selected={!!selected}
+              selected={false}
               onDoubleClick={this.dblClickHandler}
             >
               <Label editing={editing}>{name || `\xa0`}</Label>
