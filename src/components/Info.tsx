@@ -51,7 +51,7 @@ const InfoIconContainer = styled.div`
   position: absolute;
   top: 0;
   left: 0;
-  padding: 1rem;
+  padding: 5px;
   visibility: ${({ show }: ContainerProps) => (show ? 'visible' : 'hidden')};
   transform: ${({ show }: ContainerProps) =>
     `translate(${show ? '-100%' : 0}, 0)`};
@@ -139,8 +139,8 @@ export class Info extends React.Component<Props, State> {
                 <IconCursor />
               </ToolIcon>
               <ToolDescription>
-                Select nodes and arrows by clicking. Move nodes by dragging.
-                Double click a node to edit its label.
+                Move nodes by dragging.
+                Double click or long-press a node to edit its label.
               </ToolDescription>
             </ToolExplanation>
             <ToolExplanation>
@@ -153,20 +153,10 @@ export class Info extends React.Component<Props, State> {
             </ToolExplanation>
             <ToolExplanation>
               <ToolIcon>
-                <IconPan />
-              </ToolIcon>
-              <ToolDescription>
-                Zoom by scrolling or with a pinch gesture. Pan by dragging the
-                canvas.
-              </ToolDescription>
-            </ToolExplanation>
-            <ToolExplanation>
-              <ToolIcon>
                 <IconConnect />
               </ToolIcon>
               <ToolDescription>
-                Connect nodes by clicking on two nodes consecutively. A
-                connector is drawn from the the first to the latter.
+                Connect nodes by dragging a connector from one to the other.
               </ToolDescription>
             </ToolExplanation>
             <ToolExplanation>
@@ -174,7 +164,7 @@ export class Info extends React.Component<Props, State> {
                 <IconRemove />
               </ToolIcon>
               <ToolDescription>
-                Remove the selected node or connector.
+                Remove a node or connector by clicking / tapping.
               </ToolDescription>
             </ToolExplanation>
             <ToolExplanation>
