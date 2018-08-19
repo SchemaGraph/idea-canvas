@@ -9,6 +9,7 @@ import { colors, fadedAlpha } from '../theme/theme';
 import { connect } from '../utils';
 import { P } from '../utils/vec';
 import { IBox } from './models';
+import { Ripple } from './ripple';
 import { TOOL_CONNECT } from './toolbar/constants';
 
 interface Props {
@@ -26,13 +27,14 @@ interface Props {
 }
 interface State {
   label?: string;
-  dragStart: number;
   connectorEnd?: [number, number];
 }
 
 interface BoxDivProps {
   selected: boolean;
 }
+
+export const longPressDuration = 800;
 const BoxDiv = styled.div`
   border: 2px solid white;
   padding: 16px;
@@ -111,13 +113,15 @@ const Input = styled.input`
 class BoxViewVanilla extends React.Component<Props, State> {
   private inputRef = React.createRef<HTMLInputElement>();
   private boxRef = React.createRef<HTMLDivElement>();
-  prevX?: number;
-  prevY?: number;
-  dragStart?: number;
+  private ripple = React.createRef<Ripple>();
+  private dragStart?: {
+    initialPosition: { x: number; y: number };
+    latestPosition?: { x: number; y: number };
+    instant: number;
+  };
 
   public state: State = {
     label: undefined,
-    dragStart: 0,
   };
 
   constructor(props: Props) {
@@ -174,19 +178,62 @@ class BoxViewVanilla extends React.Component<Props, State> {
       zoom: { scale },
     } = this.props;
     setIsDragging!(box.id);
-    this.dragStart = Math.hypot(x, y);
+    this.dragStart = {
+      initialPosition: { x, y },
+      instant: Date.now(),
+    };
     if (connectTool) {
       startConnecting(box, [x / scale, y / scale]);
+    } else {
+      setTimeout(this.possiblyMakeRipples, longPressDuration);
     }
   };
-  public stop: DraggableEventHandler = (_e, { x, y }) => {
+
+  possiblyMakeRipples = () => {
+    if (this.isItDragging() === false && this.ripple.current) {
+      this.ripple.current.ripple();
+    }
+  };
+
+  isItDragging = () => {
+    if (this.dragStart) {
+      const { connect: connectTool } = this.props;
+      let d = 0;
+      if (this.dragStart.latestPosition) {
+        const { x: x1, y: y1 } = this.dragStart.initialPosition;
+        const { x: x2, y: y2 } = this.dragStart.latestPosition;
+        d = Math.hypot(x2 - x1, y2 - y1);
+      }
+      // const dt = Date.now() - this.dragStart.instant; // in ms
+      // console.log('BOX MOVE END', d);
+      if (d < 0.01 && !connectTool) {
+        return false;
+      }
+      return true;
+    }
+    return undefined;
+  };
+
+  pressedFor = () => {
+    if (this.dragStart) {
+      return Date.now() - this.dragStart.instant;
+    }
+    return 0;
+  };
+
+  public stop: DraggableEventHandler = () => {
     const { setIsDragging, connect: connectTool, endConnecting } = this.props;
     setIsDragging!();
     if (this.dragStart) {
-      const d = Math.abs(this.dragStart - Math.hypot(x, y));
-      // console.log('BOX MOVE END', d);
-      if (d < 0.001) {
-        this.select();
+      if (
+        this.isItDragging() === false &&
+        this.pressedFor() > longPressDuration
+      ) {
+        const {
+          onEditing,
+          box: { id },
+        } = this.props;
+        onEditing!(id);
       }
       this.dragStart = undefined;
     }
@@ -206,6 +253,12 @@ class BoxViewVanilla extends React.Component<Props, State> {
       updateConnecting([x / scale, y / scale]);
     } else {
       box.move(deltaX / scale, deltaY / scale);
+    }
+    if (this.dragStart) {
+      this.dragStart.latestPosition = {
+        x,
+        y,
+      };
     }
   };
 
@@ -268,8 +321,6 @@ class BoxViewVanilla extends React.Component<Props, State> {
         setHeight(dH);
       }
     }
-    this.prevX = x;
-    this.prevY = y;
   }
 
   public render() {
@@ -323,6 +374,7 @@ class BoxViewVanilla extends React.Component<Props, State> {
             >
               <Label editing={editing}>{name || `\xa0`}</Label>
               {editing ? input : null}
+              <Ripple duration={500} ref={this.ripple} />
             </BoxDiv>
           </DraggableCore>
         )}
