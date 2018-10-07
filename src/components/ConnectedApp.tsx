@@ -18,12 +18,7 @@ interface State {
 }
 const dev = process.env.NODE_ENV !== 'production';
 
-// tslint:disable-next-line:max-classes-per-file
 export class ConnectedApp extends React.Component<Props, State> {
-  constructor(p: Readonly<Props>) {
-    super(p);
-    console.log('CONSTRUCTOR');
-  }
   state: State = {};
 
   async componentDidMount() {
@@ -45,10 +40,9 @@ export class ConnectedApp extends React.Component<Props, State> {
     if (!store && !graphId) {
       store = initStore();
     }
-    console.log('STORE', store);
     if (!store) {
       return null;
     }
-    return <App store={store} auth={auth} location={location} />;
+    return <App store={store} auth={auth} location={location} undoredo={false} />;
   }
 }

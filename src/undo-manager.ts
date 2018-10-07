@@ -62,7 +62,6 @@ export const ObservableUndoManager = types
           throw new Error('Provide the undoManager in the context');
         } else {
           undoManager.$now.subscribe(({ canUndo, canRedo }) => {
-            console.log('GOT $NOW');
             (self as any).setCanUndo(canUndo);
             (self as any).setCanRedo(canRedo);
           });

@@ -328,7 +328,7 @@ export class PatchManager {
     { recorder, actionId }: Context
   ) => {
     if (recorder) {
-      this.log('ONFAIL', actionId);
+      this.log('ONFAIL', actionId, recorder);
       recorder.undo();
       this.currentRecorder = undefined;
     }
