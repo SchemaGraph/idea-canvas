@@ -32,3 +32,21 @@ declare module "@reach/router" {
   function navigate(to: string, options?: {state?: any, replace?: boolean});
 }
 
+declare module "grommet-icons" {
+  const Actions: string;
+  const ClosedCaption: string;
+  const Expand: string;
+  const FormDown: string;
+  const FormNext: string;
+  const FormPrevious: string;
+  const FormUp: string;
+  const Next: string;
+  const Pause: string;
+  const Play: string;
+  const Previous: string;
+  const Subtract: string;
+  const Volume: string;
+  const VolumeLow: string;
+}
+
+

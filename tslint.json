@@ -19,7 +19,8 @@
       "allow-leading-underscore",
       "allow-pascal-case"
     ],
-    "no-submodule-imports": [false]
+    "no-submodule-imports": [false],
+    "forin": [false],
   },
   "rulesDirectory": []
 }
