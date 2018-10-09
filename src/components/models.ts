@@ -2,10 +2,22 @@ import { types } from 'mobx-state-tree';
 
 export const INITIAL_WIDTH = 100;
 export const INITIAL_HEIGHT = 60;
+
+export const Context = types.model('Context', {
+  name: types.identifier,
+  seq: types.number,
+  color: types.string,
+});
+export type IContext = typeof Context.Type;
+export const contexts = types.map(Context);
+export type IContexts = typeof contexts;
+
+
 export const Box = types
   .model('Box', {
     id: types.identifier,
     name: types.maybe(types.string),
+    context: types.maybe(types.reference(Context)),
     x: 0,
     y: 0,
     width: INITIAL_WIDTH,
@@ -36,6 +48,9 @@ export const Box = types
     setHeight(h: number) {
       self.height = h;
     },
+    setContext(c?: IContext) {
+      self.context = c;
+    },
   }));
 export type IBox = typeof Box.Type;
 export const BoxRef = types.reference(Box);
@@ -63,3 +78,4 @@ export const ConnectingArrow = types.model('ConnectingArrow', {
   distance: types.maybeNull(types.number),
 });
 export type IConnectingArrow = typeof ConnectingArrow.Type;
+

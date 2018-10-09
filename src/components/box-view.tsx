@@ -8,7 +8,7 @@ import { Zoom } from '../store';
 import { colors, fadedAlpha } from '../theme/theme';
 import { connect } from '../utils';
 import { P } from '../utils/vec';
-import { IBox } from './models';
+import { IBox, IContext } from './models';
 import { Ripple } from './ripple';
 import { TOOL_CONNECT } from './toolbar/constants';
 
@@ -63,6 +63,7 @@ function getStyle(
   x: number,
   y: number,
   box: IBox,
+  context?: IContext,
   opacity = 1,
   isDragging?: boolean
 ): React.CSSProperties {
@@ -70,6 +71,7 @@ function getStyle(
   return {
     transform: `translate(${x}px,${y}px)`,
     opacity,
+    backgroundColor: context ? context.color : 'transparent',
     width: !initialized ? width : undefined,
     transition: !isDragging ? 'transform 0.2s ease-out' : undefined,
   };
@@ -337,7 +339,7 @@ class BoxViewVanilla extends React.Component<Props, State> {
       />
     );
 
-    const { name } = box;
+    const { name, context } = box;
     return (
       <Animate
         start={{ x: box.x, y: box.y, opacity: 0 }}
@@ -365,6 +367,7 @@ class BoxViewVanilla extends React.Component<Props, State> {
                 x as number,
                 y as number,
                 box,
+                context,
                 opacity as number,
                 !!this.dragStart
               )}

@@ -10,6 +10,7 @@ export const TOOL_ZOOM_OUT = 'zoom-out';
 export const TOOL_ADD_NODE = 'add-node';
 export const TOOL_REMOVE_NODE = 'remove-node';
 export const TOOL_CONNECT = 'connect';
+export const TOOL_LAYERS = 'layers';
 
 export const POSITION_NONE = 'none';
 export const POSITION_TOP = 'top';

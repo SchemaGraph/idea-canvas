@@ -2,7 +2,6 @@ import { values } from 'mobx';
 import {
   applyPatch,
   applySnapshot,
-  onAction,
   onSnapshot,
   types,
 } from 'mobx-state-tree';
@@ -15,15 +14,14 @@ import {
 } from './appsync/client';
 import {
   Arrow,
-  ArrowRef,
   arrows,
   Box,
   boxes,
-  BoxRef,
   ConnectingArrow,
+  Context,
+  contexts,
   IArrow,
   IBox,
-  IConnectingArrow,
 } from './components/models';
 import {
   TOOL_ADD_NODE,
@@ -31,8 +29,10 @@ import {
   TOOL_NONE,
   TOOL_PAN,
   TOOL_REMOVE_NODE,
+  TOOL_LAYERS,
 } from './components/toolbar/constants';
 import { PatchManager } from './patch-manager';
+import { defaultContextColor } from './theme/theme';
 import { uuid } from './utils';
 import { getCloseEnoughBox } from './utils/vec';
 
@@ -52,11 +52,12 @@ export interface Zoom {
 }
 
 let connectableBoxes: IBox[] = [];
-
+const contextCounts: {[k: string]: number} = {};
 export const Store = types
   .model('Store', {
     boxes,
     arrows,
+    contexts,
     dragging: SelectionType,
     selection: SelectionType,
     editing: SelectionType,
@@ -65,6 +66,8 @@ export const Store = types
     offsetX: 0,
     offsetY: 0,
     tool: TOOL_NONE,
+    newContextInput: false,
+    newContextInputValue: '',
     canvasWidth: -1,
     canvasHeight: -1,
   })
@@ -117,14 +120,37 @@ export const Store = types
     setEditing(target: string | null) {
       self.editing = target;
     },
+    toggleContextInput() {
+      self.newContextInput = !self.newContextInput;
+    },
+    addContext(name: string, customColor?: string) {
+      const existing = self.contexts.get(name);
+      self.newContextInputValue = '';
+      if (existing) {
+        return undefined;
+      }
+      const seq = self.contexts.size;
+      const color = customColor || defaultContextColor(seq).toString();
+      const context = Context.create({ name, color, seq });
+      self.contexts.put(context);
+      return context;
+    },
+    removeContext(name: string) {
+      self.contexts.delete(name);
+    },
+    setContextInputValue(name: string) {
+      self.newContextInputValue = name;
+    },
   }))
   .actions(self => ({
     setTool(tool: string) {
-      console.log(tool.toUpperCase());
+      // console.log(tool.toUpperCase());
       self.tool = tool;
       if (tool === TOOL_ADD_NODE) {
         self.clearSelection();
       }
+      self.newContextInput = tool === TOOL_LAYERS;
+      self.newContextInputValue = '';
     },
     removeElement(id: string) {
       const box = self.boxes.get(id);
@@ -190,6 +216,23 @@ export const Store = types
       }
       if (tool === TOOL_REMOVE_NODE && target) {
         self.removeElement(target);
+      }
+      if (tool === TOOL_LAYERS && target) {
+        const box = self.boxes.get(target);
+        if (box) {
+          const clicks = contextCounts[target] || 0;
+          contextCounts[target] = clicks + 1;
+          let counter = 0;
+          let N = self.contexts.size;
+          for (const context of self.contexts.values()) {
+            console.log('select', box.id, clicks % N, counter);
+            if (clicks % N === counter) {
+              box.setContext(context);
+              break;
+            }
+            counter++;
+          }
+        }
       }
     },
     startConnecting(from: IBox, to: [number, number]) {

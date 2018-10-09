@@ -7,25 +7,54 @@ import {
   TOOL_ADD_NODE,
   TOOL_CONNECT,
   TOOL_NONE,
-  TOOL_PAN,
   TOOL_REMOVE_NODE,
+  TOOL_LAYERS,
 } from './constants';
 
+import styled, { OuterStyledProps } from 'styled-components';
+import { IContext } from '../models';
 import IconCursor from './icon-cursor';
 import IconFit from './icon-fit';
-import IconPan from './icon-pan';
+import IconLayers from './icon-layers';
 import IconPlus from './icon-plus';
 import IconConnect from './icon-plus-arrow';
 import IconRemove from './icon-remove';
 import IconSignout from './icon-signout';
 import ToolbarButton from './toolbar-button';
 import { ToolbarDivider } from './toolbar-divider';
+import { inputStyle } from '../../theme/styles';
+
+const ContextInputContainer = styled.div`
+  position: absolute;
+  bottom: -2px;
+  left: 0px;
+  transform: translate(0%, 100%);
+`;
+
+const ContextInput = (
+  props: OuterStyledProps<React.InputHTMLAttributes<HTMLInputElement>>
+) => {
+  return (
+    <ContextInputContainer>
+      <Input type="text" {...props} />
+    </ContextInputContainer>
+  );
+};
+const Input = styled.input`
+  display: block;
+  width: 100%;
+  ${inputStyle};
+`;
 
 interface Props {
   tool: string;
   onFit: () => void;
   onChangeTool: (tool: string) => void;
   position: string;
+  showContextInput: boolean;
+  setContextInputValue: (v: string) => void;
+  contextInputValue: string;
+  addContext: (name: string) => IContext | undefined;
   onSignOut?: () => void;
   signedIn?: boolean;
 }
@@ -37,6 +66,10 @@ export const Toolbar: React.SFC<Props> = ({
   position,
   onSignOut,
   signedIn,
+  showContextInput,
+  setContextInputValue,
+  contextInputValue,
+  addContext,
 }) => {
   const handleChangeTool = (newTool: string) => (event: any) => {
     onChangeTool(newTool);
@@ -56,6 +89,22 @@ export const Toolbar: React.SFC<Props> = ({
     }
     event.stopPropagation();
     event.preventDefault();
+  };
+
+  const contextKeyUpHandler = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    e.stopPropagation();
+    if (e.key === 'Enter') {
+      addContext(contextInputValue);
+    }
+    if (e.key === 'Escape') {
+      e.currentTarget.value = '';
+      // toggleContextInput();
+    }
+  };
+
+  const contextChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation();
+    setContextInputValue(e.currentTarget.value);
   };
 
   const isHorizontal = [POSITION_TOP, POSITION_BOTTOM].indexOf(position) >= 0;
@@ -127,6 +176,15 @@ export const Toolbar: React.SFC<Props> = ({
       >
         <IconConnect />
       </ToolbarButton>
+      <ToolbarButton
+        toolbarPosition={position}
+        active={tool === TOOL_LAYERS}
+        name="select-tool-layers"
+        title="Add group"
+        onClick={handleChangeTool(TOOL_LAYERS)}
+      >
+        <IconLayers />
+      </ToolbarButton>
 
       <ToolbarDivider />
 
@@ -151,6 +209,13 @@ export const Toolbar: React.SFC<Props> = ({
       >
         <IconSignout />
       </ToolbarButton>
+      {showContextInput ? (
+        <ContextInput
+          value={contextInputValue}
+          onChange={contextChangeHandler}
+          onKeyUp={contextKeyUpHandler}
+        />
+      ) : null}
     </div>
   );
 };
