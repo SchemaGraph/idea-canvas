@@ -1,13 +1,7 @@
 import * as React from 'react';
 import Helmet from 'react-helmet';
-import styled, { ThemeProvider } from 'styled-components';
-
-const MainDiv = styled.div`
-  height: 100%;
-  /* display: flex; */
-  position: relative;
-  overflow: hidden;
-`;
+import { injectGlobal, ThemeProvider } from 'styled-components';
+import { global, Root, theme } from '../theme/theme';
 
 interface Props {
   location?: Location;
@@ -30,8 +24,8 @@ function getTitle(location?: Location) {
   return <title>{title}</title>;
 }
 const MainLayout: React.SFC<Props> = ({ children, location }) => (
-  <ThemeProvider theme={{}}>
-    <MainDiv>
+  <ThemeProvider theme={theme}>
+    <Root className="bp3-dark">
       <Helmet defaultTitle={`IdeaCanvas`} titleTemplate={`%s | IdeaCanvas`}>
         <meta name="og:type" content="website" />
         <meta name="og:site_name" content="IdeaCanvas" />
@@ -44,8 +38,10 @@ const MainLayout: React.SFC<Props> = ({ children, location }) => (
         <html lang="en" />
       </Helmet>
       {children}
-    </MainDiv>
+    </Root>
   </ThemeProvider>
 );
-
+injectGlobal`
+  ${global}
+`;
 export default MainLayout;

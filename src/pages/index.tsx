@@ -52,7 +52,7 @@ const SigninCallback: React.SFC<{ location?: Location }> = ({ location }) => {
 
 function replaceState(url: string, title?: string) {
   if (history) {
-    history.replaceState({}, title, url);
+    history.replaceState({}, title || 'unknown', url);
   }
 }
 

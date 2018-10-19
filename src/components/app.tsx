@@ -10,6 +10,7 @@ import { Info } from './Info';
 import { attachUndoManager, IUndoManager, UndoRedo } from './time-traveller';
 import { TOOL_ADD_NODE } from './toolbar/constants';
 import { ContextList } from './context-list';
+import { Sidebar } from './Sidebar';
 
 interface StraightProps {
   store: IStore;
@@ -49,7 +50,7 @@ export const App: React.SFC<StraightProps> = ({
           signedIn={auth && auth.isUserSignedIn()}
         />
         <ContextList/>
-        <Info />
+        <Sidebar />
         {undoManager && <UndoRedo manager={undoManager} />}
         {dev && <DevTools />}
       </Layout>

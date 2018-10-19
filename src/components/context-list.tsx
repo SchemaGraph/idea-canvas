@@ -4,12 +4,15 @@ import styled from 'styled-components';
 import { connect } from '../utils';
 import { IContexts, IContext } from './models';
 import { values } from 'mobx';
+import { Tag, Icon } from '@blueprintjs/core';
 
 const Container = styled.div`
   position: absolute;
   right: 0px;
   bottom: 0px;
-  background-color: rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-flow column;
+  /* background-color: rgba(0, 0, 0, 0.2); */
 `;
 interface Props {
   contexts?: IContexts;
@@ -18,25 +21,22 @@ interface ItemProps {
   context: IContext;
 }
 
-const ContextListItem = styled.div<ItemProps>`
-  background-color: ${({context}) => context.color};
-  padding: 8px;
-  margin-bottom: 4px;
-  width: 80px;
+const TTag = styled(Tag)`
+  margin: 0 1px 1px 0;
 `;
 
 const ContextListVanilla: React.SFC<Props> = ({ contexts }) => {
-  console.log(contexts);
+  const onRemove = () => {};
   return (
     <Container>
-      {values(contexts).map((context: IContext) => {
-        console.log(context);
-        return (
-          <ContextListItem context={context} key={context.name}>
-            {context.name}
-          </ContextListItem>
-        );
-      })}
+        {values(contexts).map((context: IContext) => {
+          const icon = <Icon icon="symbol-square" color={context.color} iconSize={20}/>
+          return (
+            <TTag icon={icon} key={context.name} minimal onRemove={onRemove}>
+              {context.name}
+            </TTag>
+          );
+        })}
     </Container>
   );
 };

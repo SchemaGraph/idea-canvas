@@ -1,4 +1,5 @@
 import React from 'react';
+import { InputGroup } from '@blueprintjs/core';
 import {
   POSITION_BOTTOM,
   POSITION_LEFT,
@@ -22,28 +23,13 @@ import IconRemove from './icon-remove';
 import IconSignout from './icon-signout';
 import ToolbarButton from './toolbar-button';
 import { ToolbarDivider } from './toolbar-divider';
-import { inputStyle } from '../../theme/styles';
 
 const ContextInputContainer = styled.div`
   position: absolute;
   bottom: -2px;
   left: 0px;
+  right: 0px;
   transform: translate(0%, 100%);
-`;
-
-const ContextInput = (
-  props: OuterStyledProps<React.InputHTMLAttributes<HTMLInputElement>>
-) => {
-  return (
-    <ContextInputContainer>
-      <Input type="text" {...props} />
-    </ContextInputContainer>
-  );
-};
-const Input = styled.input`
-  display: block;
-  width: 100%;
-  ${inputStyle};
 `;
 
 interface Props {
@@ -210,11 +196,13 @@ export const Toolbar: React.SFC<Props> = ({
         <IconSignout />
       </ToolbarButton>
       {showContextInput ? (
-        <ContextInput
-          value={contextInputValue}
-          onChange={contextChangeHandler}
-          onKeyUp={contextKeyUpHandler}
-        />
+        <ContextInputContainer>
+          <InputGroup
+            value={contextInputValue}
+            onChange={contextChangeHandler}
+            onKeyUp={contextKeyUpHandler}
+          />
+        </ContextInputContainer>
       ) : null}
     </div>
   );
