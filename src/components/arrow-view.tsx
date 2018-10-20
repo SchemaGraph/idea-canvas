@@ -100,7 +100,7 @@ const ArrowViewVanilla: React.SFC<Props> = ({ arrow, onSelect, selected }) => {
     onSelect!(id);
   };
   // tries to compute the closest point on the *border* of the box
-  const { end, control: c2 } = tweak(centroid(from), to, 10, 70);
+  const { end, control: c2 } = tweak(centroid(from), to, 7, 70);
   const { end: start, control: c1 } = tweak(centroid(to), from, 0, 30);
 
   const data = { d: positionLink(start, end, c1, c2), opacity: 0 };
@@ -125,6 +125,8 @@ const ArrowViewVanilla: React.SFC<Props> = ({ arrow, onSelect, selected }) => {
             opacity={opacity as number}
           />
           <GhostPath d={d as string} onClick={select} />
+          {/* <circle cx={start[0]} cy={start[1]} r={3} fill="red" />
+          <circle cx={end[0]} cy={end[1]} r={3} fill="red" /> */}
         </g>
       )}
     </Animate>

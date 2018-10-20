@@ -40,8 +40,6 @@ const BoxDiv = styled.div`
   padding: 16px;
   position: absolute;
   border-radius: 8px;
-  background-color: ${({ selected }: BoxDivProps) =>
-    (selected ? colors.orange : colors.blue).alpha(fadedAlpha).toString()};
   cursor: pointer;
   color: white;
   white-space: nowrap;
@@ -51,10 +49,7 @@ const BoxDiv = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  /* height: 60px; */
   overflow: hidden;
-  font-family: Arial, Helvetica, sans-serif;
-  /* min-width: 80px; */
   touch-action: none;
   /* transition: transform 0.2s ease-out; */
 `;
@@ -304,20 +299,18 @@ class BoxViewVanilla extends React.Component<Props, State> {
       setWidth,
       setHeight,
       initialized,
-      x,
-      y,
     } = this.props.box;
     // console.log('MAYBE MEASURING');
     if (ref && initialized && !this.props.editing) {
       // Don't measure if not initialized
-      const { clientWidth, clientHeight } = ref;
+      const { offsetWidth, offsetHeight } = ref;
       // console.log('MEASURED', clientWidth, clientHeight);
-      const dW = width - clientWidth;
-      const dH = height - clientHeight;
+      const dW = width - offsetWidth;
+      const dH = height - offsetHeight;
       if (dW && dH) {
-        setDimensions(clientWidth, clientHeight);
+        setDimensions(offsetWidth, offsetHeight);
       } else if (dW) {
-        setWidth(clientWidth);
+        setWidth(offsetWidth);
       } else if (dH) {
         setHeight(dH);
       }
@@ -371,7 +364,6 @@ class BoxViewVanilla extends React.Component<Props, State> {
                 opacity as number,
                 !!this.dragStart
               )}
-              selected={false}
               onDoubleClick={this.dblClickHandler}
             >
               <Label editing={editing}>{name || `\xa0`}</Label>
