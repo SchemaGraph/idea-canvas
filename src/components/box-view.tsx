@@ -34,6 +34,8 @@ interface BoxDivProps {
   selected: boolean;
 }
 
+const selectedColor = colors.orange.rgb().string();
+
 export const longPressDuration = 800;
 const BoxDiv = styled.div`
   border: 2px solid white;
@@ -51,7 +53,9 @@ const BoxDiv = styled.div`
   align-items: center;
   overflow: hidden;
   touch-action: none;
-  /* transition: transform 0.2s ease-out; */
+  box-shadow: ${(p: BoxDivProps) =>
+    p.selected ? `0 0 7px 2px ${selectedColor}` : `none`};
+  transition: box-shadow 0.2s ease-in-out;
 `;
 
 function getStyle(
@@ -318,7 +322,7 @@ class BoxViewVanilla extends React.Component<Props, State> {
   }
 
   public render() {
-    const { box, editing } = this.props;
+    const { box, editing, selected } = this.props;
     const { label } = this.state;
 
     const input = (
@@ -365,6 +369,7 @@ class BoxViewVanilla extends React.Component<Props, State> {
                 !!this.dragStart
               )}
               onDoubleClick={this.dblClickHandler}
+              selected={selected || false}
             >
               <Label editing={editing}>{name || `\xa0`}</Label>
               {editing ? input : null}
