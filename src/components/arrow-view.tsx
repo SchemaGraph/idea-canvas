@@ -1,4 +1,3 @@
-// import { Spring } from 'react-spring';
 import { easeExp } from 'd3-ease';
 import { observer } from 'mobx-react';
 import * as React from 'react';

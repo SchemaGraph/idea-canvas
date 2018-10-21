@@ -71,13 +71,13 @@ function toolToCursor(tool?: string) {
 
 const OuterContainer = styled.div`
   ${layerStyles()};
-  cursor: ${({tool}: WithTool) => toolToCursor(tool)};
+  cursor: ${({ tool }: WithTool) => toolToCursor(tool)};
   /* border: 1px solid red; */
 `;
 
 const MainContainer = styled.div`
   ${layerStyles()};
-  cursor: ${({tool}: WithTool) => toolToCursor(tool)};
+  cursor: ${({ tool }: WithTool) => toolToCursor(tool)};
   /* border: 1px solid blue; */
   /* transition: transform 0.2s ease-out; */
 `;
@@ -238,7 +238,11 @@ class CanvasVanilla extends React.Component<Props, State> {
     // const zoom = zoomTransformToZoom(this.state.zoomTransform || { x: 0, y: 0, k: 1 });
     // const { scale, offsetX, offsetY } = zoom;
     return (
-      <OuterContainer innerRef={this.container} onClick={this.handleClick} tool={tool}>
+      <OuterContainer
+        innerRef={this.container}
+        onClick={this.handleClick}
+        tool={tool}
+      >
         <MainContainer
           style={getScaleStyle(zoom)}
           innerRef={this.mainContainer}

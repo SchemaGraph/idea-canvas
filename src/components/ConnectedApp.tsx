@@ -43,6 +43,8 @@ export class ConnectedApp extends React.Component<Props, State> {
     if (!store) {
       return null;
     }
-    return <App store={store} auth={auth} location={location} undoredo={false} />;
+    return (
+      <App store={store} auth={auth} location={location} undoredo={false} />
+    );
   }
 }

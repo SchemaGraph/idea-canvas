@@ -139,8 +139,8 @@ export class Info extends React.Component<Props, State> {
                 <IconCursor />
               </ToolIcon>
               <ToolDescription>
-                Move nodes by dragging.
-                Double click or long-press a node to edit its label.
+                Move nodes by dragging. Double click or long-press a node to
+                edit its label.
               </ToolDescription>
             </ToolExplanation>
             <ToolExplanation>

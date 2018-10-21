@@ -12,7 +12,6 @@ export type IContext = typeof Context.Type;
 export const contexts = types.map(Context);
 export type IContexts = typeof contexts.Type;
 
-
 export const Box = types
   .model('Box', {
     id: types.identifier,
@@ -78,4 +77,3 @@ export const ConnectingArrow = types.model('ConnectingArrow', {
   distance: types.maybeNull(types.number),
 });
 export type IConnectingArrow = typeof ConnectingArrow.Type;
-

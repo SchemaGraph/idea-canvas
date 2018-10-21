@@ -24,7 +24,7 @@ const MButton = styled(MenuButton)`
   position: absolute;
   left: 10px;
   top: 100px;
-`
+`;
 
 export const App: React.SFC<StraightProps> = ({
   store,
@@ -52,7 +52,7 @@ export const App: React.SFC<StraightProps> = ({
       <Layout location={location}>
         <Mainbar>
           <Canvas />
-          <MButton/>
+          <MButton />
           <Toolbar
             onSignOut={handleSignout}
             signedIn={auth && auth.isUserSignedIn()}

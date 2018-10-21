@@ -369,7 +369,7 @@ class BoxViewVanilla extends React.Component<Props, State> {
                 !!this.dragStart
               )}
               onDoubleClick={this.dblClickHandler}
-              selected={selected || false}
+              selected={selected || false}
             >
               <Label editing={editing}>{name || `\xa0`}</Label>
               {editing ? input : null}
