@@ -10,7 +10,7 @@ export const Context = types.model('Context', {
 });
 export type IContext = typeof Context.Type;
 export const contexts = types.map(Context);
-export type IContexts = typeof contexts;
+export type IContexts = typeof contexts.Type;
 
 
 export const Box = types

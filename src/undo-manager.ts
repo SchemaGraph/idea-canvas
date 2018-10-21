@@ -30,8 +30,10 @@ const discard = new Set([
   'startConnecting',
   'updateConnecting',
   'endConnecting',
-  'addContext',
-  'toggleContextInput'
+  'toggleContextInput',
+  'setContextInputValue',
+  'clearSelection',
+  'setSidebarVisibility',
 ]);
 
 export const ObservableUndoManager = types

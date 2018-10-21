@@ -16,6 +16,7 @@ const Container = styled.div`
 `;
 interface Props {
   contexts?: IContexts;
+  remove?: (name: string) => void;
 }
 interface ItemProps {
   context: IContext;
@@ -25,22 +26,34 @@ const TTag = styled(Tag)`
   margin: 0 1px 1px 0;
 `;
 
-const ContextListVanilla: React.SFC<Props> = ({ contexts }) => {
-  const onRemove = () => {};
+export const ContextIcon: React.SFC<{ context?: IContext }> = ({ context }) => (
+  <Icon
+    icon={context ? 'symbol-square' : 'symbol-circle'}
+    color={context ? context.color : 'grey'}
+    iconSize={20}
+  />
+);
+const ContextListVanilla: React.SFC<Props> = ({ contexts, remove }) => {
+  const onRemove = (name: string) => () => remove!(name);
   return (
     <Container>
-        {values(contexts).map((context: IContext) => {
-          const icon = <Icon icon="symbol-square" color={context.color} iconSize={20}/>
-          return (
-            <TTag icon={icon} key={context.name} minimal onRemove={onRemove}>
-              {context.name}
-            </TTag>
-          );
-        })}
+      {values(contexts).map((context: IContext) => {
+        return (
+          <TTag
+            icon={<ContextIcon context={context} />}
+            key={context.name}
+            minimal
+            onRemove={onRemove(context.name)}
+          >
+            {context.name}
+          </TTag>
+        );
+      })}
     </Container>
   );
 };
 
 export const ContextList = connect<Props>(store => ({
-  contexts: store.contexts as any,
+  contexts: store.contexts,
+  remove: store.removeContext,
 }))(observer(ContextListVanilla));

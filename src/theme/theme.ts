@@ -4,11 +4,20 @@ import styled, { css, keyframes } from 'styled-components';
 
 export const fadedAlpha = 0.95;
 
-export const colors = {
-  orange: Color('#f99b1d'),
-  blue: Color('#2d3e4e'),
-  white: Color('#ffffff'),
+export const colorStrings = {
+  blue: 'rgb(45, 62, 78)',
+  orange: 'rgb(241, 143, 1)',
+  munsell: 'rgb(4, 139, 168)',
+  green: 'rgb(194, 249, 112)',
+  pink: 'rgb(185, 49, 79)',
+  white: 'rgb(255, 255 , 255)',
 };
+type ColorStrings = typeof colorStrings;
+type Colors = { [k in keyof ColorStrings]: Color };
+export const colors: Colors = Object.entries(colorStrings).reduce(
+  (acc, [k, v]) => ({ ...acc, [k]: Color(v) }),
+  {} as Colors
+);
 
 export const defaultContextColor = (i: number) => {
   if (i < 0 || i > 9) {
@@ -110,13 +119,11 @@ h1,h2,h3,h4,h5,h6 {
 
 export const Root = styled.div`
   height: 100%;
-  /* display: flex; */
+  display: flex;
   position: relative;
   overflow: hidden;
 `;
 
-
-
 export const theme = {
-  input: css
+  input: css,
 };

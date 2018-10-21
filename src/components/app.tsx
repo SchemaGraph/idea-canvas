@@ -6,11 +6,11 @@ import { Canvas } from '../components/canvas';
 import { Toolbar } from '../components/toolbar';
 import Layout from '../layouts';
 import { IStore } from '../store';
-import { Info } from './Info';
 import { attachUndoManager, IUndoManager, UndoRedo } from './time-traveller';
 import { TOOL_ADD_NODE } from './toolbar/constants';
 import { ContextList } from './context-list';
-import { Sidebar } from './Sidebar';
+import { Sidebar, Mainbar, MenuButton } from './Sidebar';
+import styled from 'styled-components';
 
 interface StraightProps {
   store: IStore;
@@ -19,6 +19,12 @@ interface StraightProps {
   dev?: boolean;
   undoredo?: boolean;
 }
+
+const MButton = styled(MenuButton)`
+  position: absolute;
+  left: 10px;
+  top: 100px;
+`
 
 export const App: React.SFC<StraightProps> = ({
   store,
@@ -44,15 +50,18 @@ export const App: React.SFC<StraightProps> = ({
   return (
     <Provider store={store}>
       <Layout location={location}>
-        <Canvas />
-        <Toolbar
-          onSignOut={handleSignout}
-          signedIn={auth && auth.isUserSignedIn()}
-        />
-        <ContextList/>
+        <Mainbar>
+          <Canvas />
+          <MButton/>
+          <Toolbar
+            onSignOut={handleSignout}
+            signedIn={auth && auth.isUserSignedIn()}
+          />
+          <ContextList />
+          {undoManager && <UndoRedo manager={undoManager} />}
+          {dev && <DevTools />}
+        </Mainbar>
         <Sidebar />
-        {undoManager && <UndoRedo manager={undoManager} />}
-        {dev && <DevTools />}
       </Layout>
     </Provider>
   );

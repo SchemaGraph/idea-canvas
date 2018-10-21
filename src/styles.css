@@ -1,5 +1,4 @@
 
-/* @import '~antd/dist/antd.css'; */
 @import "~@blueprintjs/core/lib/css/blueprint.css";
 @import "~@blueprintjs/icons/lib/css/blueprint-icons.css";
 
@@ -7,4 +6,12 @@ html, body, #___gatsby, #___gatsby > div, #___gatsby > div > div {
   height: 100%;
   width: 100%;
   overflow: hidden;
+}
+
+*:focus {
+  outline: none;
+}
+
+div[class^="Properties__Container"] span[class^="bp3-popover"] {
+  display: block;
 }

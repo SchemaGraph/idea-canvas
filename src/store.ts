@@ -70,6 +70,7 @@ export const Store = types
     newContextInputValue: '',
     canvasWidth: -1,
     canvasHeight: -1,
+    showSidebar: false,
   })
   .views(self => ({
     get zoom(): Zoom {
@@ -123,23 +124,38 @@ export const Store = types
     toggleContextInput() {
       self.newContextInput = !self.newContextInput;
     },
-    addContext(name: string, customColor?: string) {
+    addContext(name: string, customColor?: string, assignTo?: IBox) {
       const existing = self.contexts.get(name);
       self.newContextInputValue = '';
-      if (existing) {
+      if (existing || !name || name.length === 0) {
         return undefined;
       }
       const seq = self.contexts.size;
       const color = customColor || defaultContextColor(seq).toString();
       const context = Context.create({ name, color, seq });
       self.contexts.put(context);
+      if (assignTo) {
+        assignTo.context = context;
+      }
       return context;
     },
     removeContext(name: string) {
-      self.contexts.delete(name);
+      const context = self.contexts.get(name);
+      if (!context) {
+        return;
+      }
+      for (const box of self.boxes.values()) {
+        if (box.context === context) {
+          box.setContext();
+        }
+      }
+      self.contexts.delete(context.name);
     },
     setContextInputValue(name: string) {
       self.newContextInputValue = name;
+    },
+    setSidebarVisibility(v: boolean) {
+      self.showSidebar = v;
     },
   }))
   .actions(self => ({
@@ -149,8 +165,6 @@ export const Store = types
       if (tool === TOOL_ADD_NODE) {
         self.clearSelection();
       }
-      self.newContextInput = tool === TOOL_LAYERS;
-      self.newContextInputValue = '';
     },
     removeElement(id: string) {
       const box = self.boxes.get(id);
@@ -217,23 +231,23 @@ export const Store = types
       if (tool === TOOL_REMOVE_NODE && target) {
         self.removeElement(target);
       }
-      if (tool === TOOL_LAYERS && target) {
-        const box = self.boxes.get(target);
-        if (box) {
-          const clicks = contextCounts[target] || 0;
-          contextCounts[target] = clicks + 1;
-          let counter = 0;
-          let N = self.contexts.size;
-          for (const context of self.contexts.values()) {
-            console.log('select', box.id, clicks % N, counter);
-            if (clicks % N === counter) {
-              box.setContext(context);
-              break;
-            }
-            counter++;
-          }
-        }
-      }
+      // if (tool === TOOL_LAYERS && target) {
+      //   const box = self.boxes.get(target);
+      //   if (box) {
+      //     const clicks = contextCounts[target] || 0;
+      //     contextCounts[target] = clicks + 1;
+      //     let counter = 0;
+      //     let N = self.contexts.size;
+      //     for (const context of self.contexts.values()) {
+      //       console.log('select', box.id, clicks % N, counter);
+      //       if (clicks % N === counter) {
+      //         box.setContext(context);
+      //         break;
+      //       }
+      //       counter++;
+      //     }
+      //   }
+      // }
     },
     startConnecting(from: IBox, to: [number, number]) {
       self.connecting = ConnectingArrow.create({

@@ -17,10 +17,6 @@ const ToolbarVanilla: React.SFC<Props> = ({ store, onSignOut, signedIn }) => {
     tool,
     setTool,
     setZoom,
-    newContextInput,
-    newContextInputValue,
-    setContextInputValue,
-    addContext,
   } = store!;
   const onFit = () => {
     setZoom({ scale: 1, offsetX: 0, offsetY: 0 });
@@ -34,10 +30,6 @@ const ToolbarVanilla: React.SFC<Props> = ({ store, onSignOut, signedIn }) => {
       position={POSITION_TOP}
       onSignOut={onSignOut}
       signedIn={signedIn}
-      showContextInput={newContextInput}
-      contextInputValue={newContextInputValue}
-      setContextInputValue={setContextInputValue}
-      addContext={addContext}
     />
   );
 };
