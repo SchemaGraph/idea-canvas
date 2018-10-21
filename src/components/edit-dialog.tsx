@@ -22,7 +22,6 @@ class EditDialogBase extends React.Component<Props> {
     const { id, onClose, isMobile } = this.props;
     return (
       <Dialog
-        icon="info-sign"
         isOpen={isMobile && !!id}
         onClose={onClose}
         title="Edit"

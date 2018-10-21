@@ -36,6 +36,9 @@ interface Props {
 }
 class SidebarBase extends React.Component<Props> {
   public render() {
+    if (!this.props.visible) {
+      return null;
+    }
     return (
       <SidebarContainer>
         <SidebarDivider />
@@ -53,7 +56,7 @@ class SidebarBase extends React.Component<Props> {
 }
 
 export const Sidebar = connect<Props>((store, _) => ({
-  visible: store.showSidebar,
+  visible: !store.isMobile && store.showSidebar,
   setVisibility: store.setSidebarVisibility,
   selection: store.selection,
 }))(SidebarBase);
@@ -75,7 +78,7 @@ const MainbarBase = styled.div`
 `;
 
 export const Mainbar = connect((store, _) => ({
-  showSidebar: store.showSidebar,
+  showSidebar: !store.isMobile && store.showSidebar,
   setSidebarVisibility: store.setSidebarVisibility,
 }))(MainbarBase);
 
