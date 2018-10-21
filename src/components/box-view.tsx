@@ -23,6 +23,7 @@ interface Props {
   onSelect?: (id: string) => void;
   selected?: boolean;
   onEditing?: (id: string | null) => void;
+  onDeepEditing?: (id: string | null) => void;
   editing?: boolean;
 }
 interface State {
@@ -56,6 +57,7 @@ const BoxDiv = styled.div`
   box-shadow: ${(p: BoxDivProps) =>
     p.selected ? `0 0 7px 2px ${selectedColor}` : `none`};
   transition: box-shadow 0.2s ease-in-out;
+  font-size: 16px;
 `;
 
 function getStyle(
@@ -193,6 +195,14 @@ class BoxViewVanilla extends React.Component<Props, State> {
   possiblyMakeRipples = () => {
     if (this.isItDragging() === false && this.ripple.current) {
       this.ripple.current.ripple();
+      if (this.dragStart) {
+        if (
+          this.isItDragging() === false &&
+          this.pressedFor() > longPressDuration
+        ) {
+          this.props.onDeepEditing!(this.props.box.id);
+        }
+      }
     }
   };
 
@@ -226,17 +236,11 @@ class BoxViewVanilla extends React.Component<Props, State> {
     const { setIsDragging, connect: connectTool, endConnecting } = this.props;
     setIsDragging!();
     if (this.dragStart) {
-      if (this.isItDragging() === false) {
-        if (this.pressedFor() > longPressDuration) {
-          const {
-            onEditing,
-            box: { id },
-          } = this.props;
-          onEditing!(id);
-        } else {
-          // it was just a click
-          this.select();
-        }
+      if (
+        this.isItDragging() === false &&
+        this.pressedFor() < longPressDuration
+      ) {
+        this.select();
       }
 
       this.dragStart = undefined;
@@ -391,6 +395,7 @@ export const BoxView = connect<Props>((store, { box, zoom }) => ({
   endConnecting: store.endConnecting,
   onSelect: store.select,
   onEditing: store.setEditing,
+  onDeepEditing: store.setDeepEditing,
   selected: store.selection === box.id,
   editing: store.editing === box.id,
   setIsDragging: store.setDragging,

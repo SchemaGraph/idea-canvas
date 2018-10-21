@@ -26,7 +26,13 @@ function getTitle(location?: Location) {
 const MainLayout: React.SFC<Props> = ({ children, location }) => (
   <ThemeProvider theme={theme}>
     <Root className="bp3-dark">
-      <Helmet defaultTitle={`IdeaCanvas`} titleTemplate={`%s | IdeaCanvas`}>
+      <Helmet
+        defaultTitle={`IdeaCanvas`}
+        titleTemplate={`%s | IdeaCanvas`}
+        bodyAttributes={{
+          class: 'bp3-dark',
+        }}
+      >
         <meta name="og:type" content="website" />
         <meta name="og:site_name" content="IdeaCanvas" />
         <link

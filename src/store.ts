@@ -61,6 +61,7 @@ export const Store = types
     dragging: SelectionType,
     selection: SelectionType,
     editing: SelectionType,
+    deepEditing: SelectionType,
     connecting: types.maybeNull(ConnectingArrow),
     scale: 1,
     offsetX: 0,
@@ -70,7 +71,7 @@ export const Store = types
     newContextInputValue: '',
     canvasWidth: -1,
     canvasHeight: -1,
-    showSidebar: false,
+    showSidebar: true,
   })
   .views(self => ({
     get zoom(): Zoom {
@@ -81,6 +82,14 @@ export const Store = types
         offsetX,
         offsetY,
       };
+    },
+    get isMobile(): boolean {
+      const { canvasWidth, canvasHeight } = self;
+      if (canvasWidth === -1 || canvasHeight === -1) {
+        return true;
+      }
+      console.log(canvasWidth, canvasHeight);
+      return canvasWidth >= 320 && canvasWidth <= 480;
     },
   }))
   .actions(self => ({
@@ -120,6 +129,9 @@ export const Store = types
     },
     setEditing(target: string | null) {
       self.editing = target;
+    },
+    setDeepEditing(target: string | null) {
+      self.deepEditing = target;
     },
     toggleContextInput() {
       self.newContextInput = !self.newContextInput;

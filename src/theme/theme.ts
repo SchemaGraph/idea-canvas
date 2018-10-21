@@ -1,6 +1,6 @@
 import Color from 'color';
 import { schemeCategory10 } from 'd3-scale-chromatic';
-import styled, { css, keyframes } from 'styled-components';
+import styled, { css, keyframes, SimpleInterpolation } from 'styled-components';
 
 export const fadedAlpha = 0.95;
 
@@ -126,4 +126,20 @@ export const Root = styled.div`
 
 export const theme = {
   input: css,
+};
+
+export const mobileOnly = (
+  strings: TemplateStringsArray,
+  ...interpolations: SimpleInterpolation[]
+) => {
+  return css`
+    /*
+  https://responsivedesign.is/develop/browser-feature-support/
+  media-queries-for-common-device-breakpoints/
+  */
+    /* Smartphones (portrait and landscape) ----------- */
+    @media only screen and (min-device-width: 320px) and (max-device-width: 480px) {
+      ${css(strings, ...interpolations)};
+    }
+  `;
 };

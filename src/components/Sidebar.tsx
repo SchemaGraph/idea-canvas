@@ -1,7 +1,7 @@
 import * as React from 'react';
 import styled from 'styled-components';
 import { Tabs, Tab, Icon, Button, Divider } from '@blueprintjs/core';
-import { colors } from '../theme/theme';
+import { colors, mobileOnly } from '../theme/theme';
 import { connect } from '../utils';
 import { Properties } from './Properties';
 interface ContainerProps {
@@ -32,6 +32,7 @@ const SidebarDivider = styled.div`
 interface Props {
   visible?: boolean;
   setVisibility?: (v: boolean) => void;
+  selection?: string | null;
 }
 class SidebarBase extends React.Component<Props> {
   public render() {
@@ -42,7 +43,7 @@ class SidebarBase extends React.Component<Props> {
           <Tab
             id="properties"
             title={<Icon icon="settings" />}
-            panel={<Properties />}
+            panel={<Properties id={this.props.selection || undefined} />}
           />
           <Tab id="info" title={<Icon icon="info-sign" />} />
         </Tabs>
@@ -51,9 +52,10 @@ class SidebarBase extends React.Component<Props> {
   }
 }
 
-export const Sidebar = connect((store, _) => ({
+export const Sidebar = connect<Props>((store, _) => ({
   visible: store.showSidebar,
   setVisibility: store.setSidebarVisibility,
+  selection: store.selection,
 }))(SidebarBase);
 
 interface MainbarProps {
@@ -63,12 +65,13 @@ interface MainbarProps {
 }
 
 const MainbarBase = styled.div`
-  width: ${(p: MainbarProps) => `${p.showSidebar ? 'auto' : '100%'}`};
-  flex: ${(p: MainbarProps) => `1 0 ${p.showSidebar ? 'auto' : 'auto'}`};
+  flex: ${(p: MainbarProps) => `1 0 ${p.showSidebar ? 'auto' : '100%'}`};
   border: 0px solid red;
   overflow: hidden;
   position: relative;
-  transition: all 0.3s ease-in-out;
+  ${mobileOnly`
+      flex: 1 0 100%;
+    `};
 `;
 
 export const Mainbar = connect((store, _) => ({

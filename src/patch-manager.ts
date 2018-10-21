@@ -55,6 +55,10 @@ const discard = new Set([
   'setDragging',
   'setZoom',
   'setTool',
+  'toggleContextInput',
+  'setContextInputValue',
+  'setEditing',
+  'setDeepEditing'
 ]);
 
 export class PatchManager {

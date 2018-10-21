@@ -22,6 +22,7 @@ import { observer } from 'mobx-react';
 const ContextSelect = Select.ofType<undefined | IContext>();
 const Container = styled.div``;
 interface P {
+  id?: string;
   store?: IStore;
 }
 
@@ -115,7 +116,7 @@ class BoxBase extends React.Component<BoxProps> {
     };
 
     const contextInputButtons = (
-      <ButtonGroup minimal>
+      <ButtonGroup minimal large>
         <Button
           icon={<Icon icon="tick" color={colors.white.string()} />}
           onClick={submitContext}
@@ -134,9 +135,13 @@ class BoxBase extends React.Component<BoxProps> {
     );
     return (
       <>
-        <H5>{name}</H5>
         <FormGroup label="Label" labelFor="box-label">
-          <InputGroup id="box-label" value={box.name} onChange={labelHandler} />
+          <InputGroup
+            id="box-label"
+            value={box.name}
+            onChange={labelHandler}
+            large
+          />
         </FormGroup>
         <FormGroup label="Context" labelFor="context">
           <ContextSelect
@@ -151,6 +156,7 @@ class BoxBase extends React.Component<BoxProps> {
               alignText="left"
               icon={context ? <ContextIcon context={context} /> : undefined}
               fill={true}
+              large
             />
           </ContextSelect>
           <div style={{ marginTop: '5px' }}>
@@ -162,9 +168,15 @@ class BoxBase extends React.Component<BoxProps> {
                 leftIcon="plus"
                 rightElement={contextInputButtons}
                 inputRef={this.contextInputRef as any}
+                large
               />
             ) : (
-              <Button rightIcon="plus" minimal onClick={newContext.toggle} />
+              <Button
+                rightIcon="plus"
+                minimal
+                onClick={newContext.toggle}
+                large
+              />
             )}
           </div>
         </FormGroup>
@@ -176,7 +188,6 @@ const Box = observer(BoxBase);
 class PropertiesBase extends React.Component<P> {
   public render() {
     const {
-      selection,
       boxes,
       arrows,
       contexts,
@@ -187,11 +198,12 @@ class PropertiesBase extends React.Component<P> {
       toggleContextInput,
     } = this.props.store!;
     let content: React.ReactNode;
-    if (selection) {
-      if (boxes.has(selection)) {
+    const id = this.props.id;
+    if (id) {
+      if (boxes.has(id)) {
         content = (
           <Box
-            box={boxes.get(selection)!}
+            box={boxes.get(id)!}
             contexts={contexts}
             newContext={{
               show: newContextInput,

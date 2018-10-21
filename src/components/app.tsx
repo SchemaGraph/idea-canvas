@@ -11,6 +11,8 @@ import { TOOL_ADD_NODE } from './toolbar/constants';
 import { ContextList } from './context-list';
 import { Sidebar, Mainbar, MenuButton } from './Sidebar';
 import styled from 'styled-components';
+import { mobileOnly } from '../theme/theme';
+import { EditDialog } from './edit-dialog';
 
 interface StraightProps {
   store: IStore;
@@ -24,6 +26,9 @@ const MButton = styled(MenuButton)`
   position: absolute;
   left: 10px;
   top: 100px;
+  ${mobileOnly`
+      display: none !important;
+    `};
 `;
 
 export const App: React.SFC<StraightProps> = ({
@@ -52,7 +57,7 @@ export const App: React.SFC<StraightProps> = ({
       <Layout location={location}>
         <Mainbar>
           <Canvas />
-          <MButton />
+          {/* <MButton /> */}
           <Toolbar
             onSignOut={handleSignout}
             signedIn={auth && auth.isUserSignedIn()}
@@ -60,6 +65,7 @@ export const App: React.SFC<StraightProps> = ({
           <ContextList />
           {undoManager && <UndoRedo manager={undoManager} />}
           {dev && <DevTools />}
+          {<EditDialog />}
         </Mainbar>
         <Sidebar />
       </Layout>
