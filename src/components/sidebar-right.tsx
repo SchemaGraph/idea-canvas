@@ -56,7 +56,7 @@ class SidebarBase extends React.Component<Props> {
 }
 
 export const Sidebar = connect<Props>((store, _) => ({
-  visible: !store.isMobile && store.showSidebar,
+  visible: !store.isMobile,
   setVisibility: store.setSidebarVisibility,
   selection: store.selection,
 }))(SidebarBase);
