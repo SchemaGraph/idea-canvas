@@ -78,7 +78,7 @@ const MainbarBase = styled.div`
 `;
 
 export const Mainbar = connect((store, _) => ({
-  showSidebar: !store.isMobile && store.showSidebar,
+  showSidebar: !store.isMobile,
   setSidebarVisibility: store.setSidebarVisibility,
 }))(MainbarBase);
 
