@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { Tabs, Tab, Icon, Button, Divider } from '@blueprintjs/core';
 import { colors, mobileOnly } from '../theme/theme';
 import { connect } from '../utils';
-import { Properties } from './Properties';
+import { Properties } from './properties';
 interface ContainerProps {
   show?: boolean;
 }

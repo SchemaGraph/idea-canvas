@@ -9,7 +9,7 @@ import { IStore } from '../store';
 import { attachUndoManager, IUndoManager, UndoRedo } from './time-traveller';
 import { TOOL_ADD_NODE } from './toolbar/constants';
 import { ContextList } from './context-list';
-import { Sidebar, Mainbar, MenuButton } from './Sidebar';
+import { Sidebar, Mainbar, MenuButton } from './sidebar';
 import styled from 'styled-components';
 import { mobileOnly } from '../theme/theme';
 import { EditDialog } from './edit-dialog';

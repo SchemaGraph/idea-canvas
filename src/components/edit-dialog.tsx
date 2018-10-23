@@ -1,17 +1,12 @@
 import * as React from 'react';
 import styled from 'styled-components';
 import {
-  Tabs,
-  Tab,
-  Icon,
   Button,
-  Divider,
   Dialog,
   Classes,
 } from '@blueprintjs/core';
-import { colors, mobileOnly } from '../theme/theme';
 import { connect } from '../utils';
-import { Properties } from './Properties';
+import { Properties } from './properties';
 interface Props {
   id?: string;
   onClose?: () => void;
