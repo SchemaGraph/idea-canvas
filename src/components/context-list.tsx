@@ -20,7 +20,7 @@ interface Props {
   remove?: (name: string) => void;
 }
 interface TagProps {
-  hidden?: boolean;
+  isHidden?: boolean;
 }
 
 const tagTextDecorations = ['none', 'line-through'];
@@ -35,8 +35,8 @@ const tagTextColors = [
 ];
 const TTag = styled<TagProps & Readonly<ITagProps>>(Tag)`
   margin: 0 1px 1px 0;
-  text-decoration: ${({ hidden }) => tagTextDecorations[hidden ? 1 : 0]};
-  color: ${({ hidden }) => tagTextColors[hidden ? 1 : 0]} !important;
+  text-decoration: ${({ isHidden }) => tagTextDecorations[isHidden ? 1 : 0]};
+  color: ${({ isHidden }) => tagTextColors[isHidden ? 1 : 0]} !important;
   &:focus {
     outline: none;
   }
@@ -59,9 +59,9 @@ const ContextListVanilla: React.SFC<Props> = ({ contexts, remove }) => {
           <TTag
             icon={<ContextIcon context={context} />}
             key={context.name}
-            // onRemove={onRemove(context.name)}
+            onRemove={onRemove(context.name)}
             onClick={clickHandler}
-            hidden={!context.visible}
+            isHidden={!context.visible}
             interactive
             minimal
             large
