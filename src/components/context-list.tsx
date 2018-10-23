@@ -59,7 +59,7 @@ const ContextListVanilla: React.SFC<Props> = ({ contexts, remove }) => {
           <TTag
             icon={<ContextIcon context={context} />}
             key={context.name}
-            onRemove={onRemove(context.name)}
+            // onRemove={onRemove(context.name)}
             onClick={clickHandler}
             hidden={!context.visible}
             interactive
