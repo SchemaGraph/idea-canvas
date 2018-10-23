@@ -20,7 +20,7 @@ import {
 } from './arrow-view';
 import { BoxView } from './box-view';
 import { ConnectingArrowView } from './connecting-arrow-view';
-import { INITIAL_HEIGHT, INITIAL_WIDTH } from './models';
+import { INITIAL_HEIGHT, INITIAL_WIDTH, IBox } from './models';
 import { TOOL_ADD_NODE, TOOL_NONE, TOOL_PAN } from './toolbar/constants';
 
 function zoomTransformToZoom(zt: { x: number; y: number; k: number }): Zoom {
@@ -253,19 +253,27 @@ class CanvasVanilla extends React.Component<Props, State> {
               <MarkerArrowDef />
               <MarkerSelectedArrowDef />
             </defs>
-            {arrows.map(arrow => (
-              <ArrowView arrow={arrow} key={arrow.id} />
-            ))}
+            {arrows
+              .filter(a => isVisible(a.from) && isVisible(a.to))
+              .map(arrow => (
+                <ArrowView arrow={arrow} key={arrow.id} />
+              ))}
             {connecting && <ConnectingArrowView arrow={connecting} />}
             {/* {connecting && arrowCandidate && <ArrowView arrow={arrowCandidate}/>} */}
           </SvgLayer>
-          {values(boxes).map(box => (
-            <BoxView box={box} key={box.id} zoom={zoom} />
-          ))}
+          {values(boxes)
+            .filter(box => isVisible(box))
+            .map(box => (
+              <BoxView box={box} key={box.id} zoom={zoom} />
+            ))}
         </MainContainer>
       </OuterContainer>
     );
   }
+}
+
+function isVisible({ context }: IBox) {
+  return !context || (context && context.visible);
 }
 
 export const Canvas = connect<Props>((store, _props) => ({

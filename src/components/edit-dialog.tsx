@@ -1,10 +1,6 @@
 import * as React from 'react';
 import styled from 'styled-components';
-import {
-  Button,
-  Dialog,
-  Classes,
-} from '@blueprintjs/core';
+import { Button, Dialog, Classes } from '@blueprintjs/core';
 import { connect } from '../utils';
 import { Properties } from './properties';
 interface Props {

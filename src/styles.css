@@ -8,10 +8,6 @@ html, body, #___gatsby, #___gatsby > div, #___gatsby > div > div {
   overflow: hidden;
 }
 
-*:focus {
-  outline: none;
-}
-
 div[class^="Properties__Container"] span[class^="bp3-popover"] {
   display: block;
 }

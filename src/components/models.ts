@@ -3,11 +3,19 @@ import { types } from 'mobx-state-tree';
 export const INITIAL_WIDTH = 100;
 export const INITIAL_HEIGHT = 60;
 
-export const Context = types.model('Context', {
-  name: types.identifier,
-  seq: types.number,
-  color: types.string,
-});
+export const Context = types
+  .model('Context', {
+    name: types.identifier,
+    seq: types.number,
+    color: types.string,
+    visible: true,
+  })
+  .actions(self => ({
+    setVisible(v: boolean) {
+      self.visible = v;
+    },
+  }));
+
 export type IContext = typeof Context.Type;
 export const contexts = types.map(Context);
 export type IContexts = typeof contexts.Type;

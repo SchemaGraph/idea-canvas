@@ -4,26 +4,42 @@ import styled from 'styled-components';
 import { connect } from '../utils';
 import { IContexts, IContext } from './models';
 import { values } from 'mobx';
-import { Tag, Icon } from '@blueprintjs/core';
+import { Tag, Icon, ITagProps } from '@blueprintjs/core';
+import Color from 'color';
 
 const Container = styled.div`
   position: absolute;
-  right: 0px;
-  bottom: 0px;
+  right: 1px;
+  bottom: 1px;
   display: flex;
-  flex-flow column;
+  flex-flow: column;
   /* background-color: rgba(0, 0, 0, 0.2); */
 `;
 interface Props {
   contexts?: IContexts;
   remove?: (name: string) => void;
 }
-interface ItemProps {
-  context: IContext;
+interface TagProps {
+  hidden?: boolean;
 }
 
-const TTag = styled(Tag)`
+const tagTextDecorations = ['none', 'line-through'];
+const tagTextColors = [
+  Color('#f5f8fa')
+    .rgb()
+    .string(),
+  Color('#f5f8fa')
+    .alpha(0.7)
+    .rgb()
+    .string(),
+];
+const TTag = styled<TagProps & Readonly<ITagProps>>(Tag)`
   margin: 0 1px 1px 0;
+  text-decoration: ${({ hidden }) => tagTextDecorations[hidden ? 1 : 0]};
+  color: ${({ hidden }) => tagTextColors[hidden ? 1 : 0]} !important;
+  &:focus {
+    outline: none;
+  }
 `;
 
 export const ContextIcon: React.SFC<{ context?: IContext }> = ({ context }) => (
@@ -38,12 +54,17 @@ const ContextListVanilla: React.SFC<Props> = ({ contexts, remove }) => {
   return (
     <Container>
       {values(contexts).map((context: IContext) => {
+        const clickHandler = () => context.setVisible(!context.visible);
         return (
           <TTag
             icon={<ContextIcon context={context} />}
             key={context.name}
-            minimal
             onRemove={onRemove(context.name)}
+            onClick={clickHandler}
+            hidden={!context.visible}
+            interactive
+            minimal
+            large
           >
             {context.name}
           </TTag>

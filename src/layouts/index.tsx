@@ -2,7 +2,9 @@ import * as React from 'react';
 import Helmet from 'react-helmet';
 import { injectGlobal, ThemeProvider } from 'styled-components';
 import { global, Root, theme } from '../theme/theme';
+import { FocusStyleManager } from '@blueprintjs/core';
 
+FocusStyleManager.onlyShowFocusOnTabs();
 interface Props {
   location?: Location;
 }
@@ -50,4 +52,5 @@ const MainLayout: React.SFC<Props> = ({ children, location }) => (
 injectGlobal`
   ${global}
 `;
+FocusStyleManager.onlyShowFocusOnTabs();
 export default MainLayout;
