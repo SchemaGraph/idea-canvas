@@ -1,19 +1,28 @@
 import { CognitoAuth } from 'amazon-cognito-auth-js';
 
-function getCognitoAuthOptions() {
-  const keys = [
-    'COGNITO_DOMAIN',
-    'COGNITO_USER_POOL_CLIENT_ID',
-    'EXTERNAL_BASE_URL',
-  ];
-  const defaults = [undefined, undefined, 'http://localhost:8000'];
-  const values = keys.map(
-    (k, i) => process.env[k] || process.env[`GATSBY_${k}`] || defaults[i]
-  );
-  if (values.reduce((s, v) => (v ? s + 1 : s), 0) !== keys.length) {
-    throw new Error('Required auth variables missing');
-  }
-  const [cognitoDomain, cognitoUserPoolClientId, externalBaseUrl] = values;
+export interface CognitoOptions {
+  cognitoDomain: string;
+  cognitoUserPoolClientId: string;
+  externalBaseUrl: string;
+}
+
+function getCognitoAuthOptions({
+  cognitoDomain,
+  cognitoUserPoolClientId,
+  externalBaseUrl,
+}: CognitoOptions) {
+  // const keys = [
+  //   'COGNITO_DOMAIN',
+  //   'COGNITO_USER_POOL_CLIENT_ID',
+  //   'EXTERNAL_BASE_URL',
+  // ];
+  // const defaults = [undefined, undefined, 'http://localhost:8000'];
+  // const values = keys.map(
+  //   (k, i) => process.env[k] || process.env[`GATSBY_${k}`] || defaults[i]
+  // );
+  // if (values.reduce((s, v) => (v ? s + 1 : s), 0) !== keys.length) {
+  //   throw new Error('Required auth variables missing');
+  // }
   const signinRedirectUrl = `${externalBaseUrl}/callback/signin`;
   const signoutRedirectUrl = `${externalBaseUrl}/callback/signout`;
   const responseType = 'token';
@@ -34,8 +43,8 @@ function getCognitoAuthOptions() {
   };
 }
 
-export function getCognitoAuth() {
-  const auth = new CognitoAuth(getCognitoAuthOptions());
+export function getCognitoAuth(opt: CognitoOptions) {
+  const auth = new CognitoAuth(getCognitoAuthOptions(opt));
   auth.userhandler = {
     // user signed in
     onSuccess: result => {
@@ -107,6 +116,6 @@ export function getToken(a: CognitoAuth) {
   return aToken && aToken !== ''
     ? aToken
     : iToken && iToken !== ''
-      ? iToken
-      : undefined;
+    ? iToken
+    : undefined;
 }

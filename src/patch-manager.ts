@@ -13,7 +13,7 @@ import {
 } from 'mobx-state-tree';
 import { IDisposer } from 'mobx-state-tree/dist/utils';
 import { Observable, Observer, Subject, Subscription } from 'rxjs';
-import { mergeMap } from 'rxjs/operators';
+import { mergeMap, tap } from 'rxjs/operators';
 import {
   deserializeRemotePatch,
   deserializeRemotePatches,
@@ -58,7 +58,7 @@ const discard = new Set([
   'toggleContextInput',
   'setContextInputValue',
   'setEditing',
-  'setDeepEditing'
+  'setDeepEditing',
 ]);
 
 export class PatchManager {
@@ -73,9 +73,14 @@ export class PatchManager {
   private readonly middlewareSubscription: IDisposer;
   private readonly client: MyApolloClient<any>;
   private readonly store: IStore;
-  private readonly $patchStream: Observable<Entry>;
+  public readonly $patchStream: Observable<Entry>;
+  public readonly $uploadStream: Observable<{
+    entry: Entry;
+    errors?: GraphQLError[];
+    updateWith?: createPatch_createPatch;
+  }>;
   private readonly graphId: string;
-  private readonly remoteSubscription: ZenObservable.Subscription;
+  // private readonly remoteSubscription: ZenObservable.Subscription;
   private readonly dev: boolean;
   updateInProgress: any;
 
@@ -106,13 +111,17 @@ export class PatchManager {
 
     const subject = new Subject<Entry>();
     this.$patchStream = subject;
+    this.$uploadStream = setupPatchStream(subject).pipe(
+      tap(_ => console.log('OUTER BEFORE')),
+      mergeMap(this.tryUpload, 1),
+      tap(_ => console.log('OUTER AFTER')),
+    );
+
     this.observer = subject;
     this.client = client;
     // this.log('CLIENT', client, this.client, this);
-    this.localSubscription = this.subscribeToLocalPatches(
-      setupPatchStream(subject)
-    );
-    this.remoteSubscription = this.subscribeToRemotePatches();
+    this.localSubscription = this.subscribeToUploadedPatches();
+    // this.remoteSubscription = this.subscribeToRemotePatches();
   }
 
   private log(msg: string, ...args: any[]) {
@@ -132,36 +141,34 @@ export class PatchManager {
     }
   }
 
-  private subscribeToLocalPatches($stream: Observable<Entry>) {
-    return $stream
-      .pipe(
-        // tap(_ => console.log('OUTER AFTER')),
-        mergeMap(this.tryUpload, 1)
-      )
-      .subscribe(
-        ({ errors, entry, updateWith }) => {
-          if (!errors || !errors.length) {
-            // this.log('UPLOADED', this.version);
-            // logEntry(entry);
-            this.version++;
-            this.log('mutation committed, new version is %d', this.version);
-          } else if (updateWith) {
-            this.rebaseWith(entry, updateWith);
-            this.log('mutation conflict, updated to version %d', this.version);
-          } else {
-            this.undo(entry);
-            this.log('mutation conflict, reverting back to version %d', this.version);
-          }
-          this.logPatches(entry.patches);
-        },
-        error => {
-          this.log('LOCAL SUBSCRIPTION FAILED');
-          this.logError(error);
-        },
-        () => {
-          this.log('LOCAL SUBSCRIPTION COMPLETED');
+  private subscribeToUploadedPatches() {
+    return this.$uploadStream.subscribe(
+      ({ errors, entry, updateWith }) => {
+        if (!errors || !errors.length) {
+          // this.log('UPLOADED', this.version);
+          // logEntry(entry);
+          this.version++;
+          this.log('mutation committed, new version is %d', this.version);
+        } else if (updateWith) {
+          this.log('mutation conflict, updated to version %d', this.version);
+          this.rebaseWith(entry, updateWith);
+        } else {
+          this.log(
+            'mutation conflict, reverting back to version %d',
+            this.version
+          );
+          this.undo(entry);
         }
-      );
+        this.logPatches(entry.patches);
+      },
+      error => {
+        this.log('LOCAL SUBSCRIPTION FAILED');
+        this.logError(error);
+      },
+      () => {
+        this.log('LOCAL SUBSCRIPTION COMPLETED');
+      }
+    );
   }
 
   public tryUpload = async (

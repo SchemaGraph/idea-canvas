@@ -28,8 +28,10 @@ type Query {
 }
 type Mutation {
   createGraph(id: ID!, name: String, patches: [PatchInput]): Graph!
+ 	deleteGraph(id: ID!): Graph!
   createPatch(graphId: ID!, patch: PatchInput!): Patch!
   addPatches(graph: ID!, patches: [PatchInput]): [Patch!]!
+ 	deletePatches(graphId: ID!, seqs: [Int!]!): [Patch]
 }
 
 type Subscription {

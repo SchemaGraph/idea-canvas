@@ -18,7 +18,6 @@ import {
 import {
   createPatch,
   createPatchVariables,
-  PatchInput,
 } from '../gql/generated/createPatch';
 import {
   getGraph,
@@ -40,10 +39,15 @@ import { SUBSCRIBTION_CREATE_PATCH } from '../gql/SubscriptionCreatePatch';
 import { Entry } from '../patch-manager';
 import { uuid } from '../utils';
 import { SubscriptionHandshakeLink } from './subscription-handshake-link';
+import fetch from "unfetch";
+import { deletePatches, deletePatchesVariables } from '../gql/generated/deletePatches';
+import { DELETE_PATCHES } from '../gql/MutationDeletePatches';
+import { PatchInput } from '../gql/generated/globalTypes';
+
 
 const createSubscriptionHandshakeLink = (
   urll: string,
-  resultsFetcherLink = new HttpLink({ uri: urll })
+  resultsFetcherLink = new HttpLink({ uri: urll, fetch })
 ) => {
   return ApolloLink.split(
     operation => {
@@ -57,7 +61,7 @@ const createSubscriptionHandshakeLink = (
       return isSubscription;
     },
     ApolloLink.from([
-      new NonTerminatingHttpLink('subsInfo', { uri: urll }),
+      new NonTerminatingHttpLink('subsInfo', { uri: urll, fetch }),
       new SubscriptionHandshakeLink('subsInfo'),
     ]),
     resultsFetcherLink
@@ -70,7 +74,7 @@ const createSubscriptionHandshakeLink = (
 export function createAwsLink(url: string, region: string, auth: AuthOptions) {
   return ApolloLink.from([
     createAuthLink({ url, region, auth }),
-    createSubscriptionHandshakeLink(url, new HttpLink({ uri: url })),
+    createSubscriptionHandshakeLink(url, new HttpLink({ uri: url, fetch })),
   ]);
 }
 
@@ -140,6 +144,17 @@ export class MyApolloClient<T> extends ApolloClient<T> {
       },
     });
   }
+    public deletePatches(graphId: string, seqs: number[]) {
+      return this.mutate<deletePatches, deletePatchesVariables>({
+        mutation: DELETE_PATCHES,
+        fetchPolicy: 'no-cache',
+        variables: {
+          graphId,
+          seqs,
+        },
+      });
+    }
+
 
   public subscribeToPatches(graphId: string) {
     return this.subscribe<{ data: onCreatePatch }, onCreatePatchVariables>({

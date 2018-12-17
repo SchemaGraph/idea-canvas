@@ -54,11 +54,12 @@ async function mainListGraph(graph?: string) {
   const client = new DynamoDB(options);
   const { Items } = await listPatches(client, graph);
   if (Items) {
+    const start = Math.max(0, Items.length - 50);
     console.log(
-      Items.map(({ graphId, seq, createdAt }) => ({
+      Items.slice(start).map(({ graphId, seq }) => ({
         graphId: graphId.S,
         seq: seq.N,
-        createdAt: createdAt.S,
+        // createdAt: createdAt.N,
       }))
     );
   }

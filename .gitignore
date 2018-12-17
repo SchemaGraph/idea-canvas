@@ -145,3 +145,4 @@ AppSync.ts
 src/zoom
 common-regexps.txt
 some-graphs
+.aws-credentials.json

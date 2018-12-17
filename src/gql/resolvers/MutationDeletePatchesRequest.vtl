@@ -1,0 +1,15 @@
+#set($ids = [])
+#foreach($seq in ${ctx.args.seqs})
+    #set($map = {})
+    #set($map.seq = $util.dynamodb.toNumber($seq))
+    #set($map.graphId = $util.dynamodb.toString(${ctx.args.graphId}))
+    $util.qr($ids.add($map))
+#end
+
+{
+    "version" : "2018-05-29",
+    "operation" : "BatchDeleteItem",
+    "tables" : {
+        "PatchTable": $util.toJson($ids)
+    }
+}

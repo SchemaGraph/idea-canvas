@@ -3,10 +3,10 @@ import { AppSync } from 'aws-sdk';
 import chalk from 'chalk';
 import * as fs from 'fs';
 import { from, timer } from 'rxjs';
-import { takeWhileInclusive } from 'rxjs-take-while-inclusive';
 import { map, mergeMap, tap, toArray } from 'rxjs/operators';
 import { promisify } from 'util';
 import yargs from 'yargs';
+import { takeWhileInclusive } from './take-while-inclusive';
 const readFile = promisify(fs.readFile);
 
 async function main() {
@@ -96,6 +96,14 @@ async function getResolvers(APPSYNC_API_ID: string): Promise<Resolver[]> {
       dataSourceName: 'IdeaCanvas_PatchTable',
       requestMappingTemplate: await readTemplate('MutationAddPatchesRequest'),
       responseMappingTemplate: await readTemplate('MutationAddPatchesResponse'),
+    },
+    {
+      apiId: APPSYNC_API_ID,
+      typeName: 'Mutation',
+      fieldName: 'deletePatches',
+      dataSourceName: 'IdeaCanvas_PatchTable',
+      requestMappingTemplate: await readTemplate('MutationDeletePatchesRequest'),
+      responseMappingTemplate: await readTemplate('MutationDeletePatchesResponse'),
     },
     {
       apiId: APPSYNC_API_ID,

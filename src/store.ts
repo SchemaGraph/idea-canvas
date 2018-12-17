@@ -263,7 +263,7 @@ export const Store = types
     },
     startConnecting(from: IBox, to: [number, number]) {
       self.connecting = ConnectingArrow.create({
-        from,
+        from: from.id,
         toX: to[0],
         toY: to[1],
       });

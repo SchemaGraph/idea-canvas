@@ -10,7 +10,9 @@ import {
   getToken,
   getValidSession,
   setState,
+  CognitoOptions,
 } from '../utils/auth';
+import { graphql } from 'gatsby';
 
 // tslint:disable-next-line:no-submodule-imports
 import '../normalize.css';
@@ -19,11 +21,12 @@ import '../styles.css';
 const ACTION_SIGNIN = 'signin';
 const ACTION_SIGNOUT = 'signout';
 const ACTION_GRAPH = 'graph';
-
-const SigninCallback: React.SFC<{ location?: Location }> = ({ location }) => {
+const SigninCallback: React.SFC<{ auth: CognitoAuth; location?: Location }> = ({
+  auth,
+  location,
+}) => {
   let error: any = {};
   if (location) {
-    const auth = getCognitoAuth();
     // const location = window.location;
     error = auth.parseCognitoWebResponse(location.href);
     const state = getState(auth);
@@ -56,8 +59,8 @@ function replaceState(url: string, title?: string) {
   }
 }
 
-const SignoutCallback = () => {
-  const auth = getCognitoAuth();
+const SignoutCallback = ({ auth }: { auth: CognitoAuth }) => {
+  // const auth = getCognitoAuth();
   // const state = getState(auth);
   // if (state) {
   //   // Trying to re-signin
@@ -69,16 +72,15 @@ const SignoutCallback = () => {
   return <LocalApp auth={auth} />;
 };
 
-const SignoutAction = () => {
-  const auth = getCognitoAuth();
+const SignoutAction = ({ auth }: { auth: CognitoAuth }) => {
   setState(auth, ACTION_SIGNOUT).signOut();
   return <h1>SIGNOUT</h1>;
 };
 
-const SigninAction = () => {
-  const auth = setState(getCognitoAuth(), ACTION_SIGNIN);
+const SigninAction = ({ auth }: { auth: CognitoAuth }) => {
+  setState(auth, ACTION_SIGNIN);
   // Redirects if not logged in!
-  const session = auth.getSession();
+  const session: string = auth.getSession() as any;
   if (session) {
     return <Profile auth={auth} />;
   }
@@ -89,23 +91,16 @@ const SigninAction = () => {
   );
 };
 
-const LocalApp: React.SFC<{ auth?: CognitoAuth; location?: Location }> = ({
+const LocalApp: React.SFC<{ auth: CognitoAuth; location?: Location }> = ({
   auth,
   location,
 }) => {
   const store = initStore();
   localLoad(store);
-  return (
-    <App
-      store={store}
-      auth={auth || getCognitoAuth()}
-      undoredo={true}
-      location={location}
-    />
-  );
+  return <App store={store} auth={auth} undoredo={true} location={location} />;
 };
 
-const NewLocalApp: React.SFC<{ auth?: CognitoAuth; location?: Location }> = ({
+const NewLocalApp: React.SFC<{ auth: CognitoAuth; location?: Location }> = ({
   auth,
   location,
 }) => {
@@ -133,29 +128,18 @@ const Profile: React.SFC<{ auth: CognitoAuth }> = ({ auth }) => {
   );
 };
 
-const CurrentProfile = () => <Profile auth={getCognitoAuth()} />;
-
-export default () => (
-  <Router>
-    <RenderOrRedirectToLogin path="/:graphId" />
-    <LocalApp path="/" />
-    <NewLocalApp path="/action/new" />
-    <SigninCallback path="/callback/signin" />
-    <SignoutCallback path="/callback/signout" />
-    <SignoutAction path="/action/signout" />
-    <SigninAction path="/action/signin" />
-    <CurrentProfile path="/action/profile" />
-  </Router>
+const CurrentProfile = ({ auth }: { auth: CognitoAuth }) => (
+  <Profile auth={auth} />
 );
 
 const RenderOrRedirectToLogin: React.SFC<{
+  auth: CognitoAuth;
   graphId?: string;
   location?: Location;
-}> = ({ graphId, location }) => {
+}> = ({ auth, graphId, location }) => {
   if (!graphId) {
     return null;
   }
-  const auth = getCognitoAuth();
   // This is only available (from localStorage) if we have logged in previously
   const token = getToken(auth);
   if (!token) {
@@ -167,3 +151,41 @@ const RenderOrRedirectToLogin: React.SFC<{
   // return React.cloneElement(children as any, { auth, graphId, token });
   return <ConnectedApp {...{ auth, graphId, token, location }} />;
 };
+
+export default ({
+  data: {
+    site: { siteMetadata },
+  },
+}: {
+  data: {
+    site: {
+      siteMetadata: CognitoOptions;
+    };
+  };
+}) => {
+  const auth = getCognitoAuth(siteMetadata);
+  return (
+    <Router>
+      <RenderOrRedirectToLogin auth={auth} path="/:graphId" />
+      <LocalApp auth={auth} path="/" />
+      <NewLocalApp auth={auth} path="/action/new" />
+      <SigninCallback auth={auth} path="/callback/signin" />
+      <SignoutCallback auth={auth} path="/callback/signout" />
+      <SignoutAction auth={auth} path="/action/signout" />
+      <SigninAction auth={auth} path="/action/signin" />
+      <CurrentProfile auth={auth} path="/action/profile" />
+    </Router>
+  );
+};
+
+export const query = graphql`
+  query {
+    site {
+      siteMetadata {
+        cognitoDomain
+        cognitoUserPoolClientId
+        externalBaseUrl
+      }
+    }
+  }
+`;
