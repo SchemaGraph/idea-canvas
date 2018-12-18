@@ -188,15 +188,17 @@ const Box = observer(BoxBase);
 class PropertiesBase extends React.Component<P> {
   public render() {
     const {
-      boxes,
-      arrows,
-      contexts,
       newContextInput,
       newContextInputValue,
       addContext,
       setContextInputValue,
       toggleContextInput,
     } = this.props.store!;
+    const {
+      boxes,
+      arrows,
+      contexts,
+    } = this.props.store!.graph;
     let content: React.ReactNode;
     const id = this.props.id;
     if (id) {

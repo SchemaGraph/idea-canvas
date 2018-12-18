@@ -32,18 +32,20 @@ export function centroid({ x, y, width, height }: Rectangle): P {
   return [x + width / 2, y + height / 2];
 }
 
-export function getCloseEnoughBox(point: P, bs: IBox[], r = 10) {
-  const candidates = bs.map(b => ({ box: b, distance: pointToRect(point, b) }));
-  const winner = candidates.find(c => c.distance === undefined);
-  if (winner) {
-    return winner;
+export function getCloseEnoughBox(point: P, bs: IterableIterator<IBox>, r = 10) {
+  let closest: [number, IBox] | undefined = undefined;
+  for (const box of bs) {
+    const d = pointToRect(point, box);
+
+    if (d === undefined) {
+      // we are inside the box
+      return box;
+    }
+    if (d.distance < r && (!closest || closest[0] > d.distance)) {
+      closest = [d.distance, box];
+    }
   }
-  const candidates2 = candidates.filter(b => b.distance!.distance < r);
-  if (candidates2.length > 0) {
-    candidates.sort((aa, bb) => aa.distance!.distance - bb.distance!.distance);
-    return candidates[0];
-  }
-  return undefined;
+  return closest ? closest[1] : undefined;
 }
 
 export function pointToRect(point: P, rect: IBox) {

@@ -75,6 +75,6 @@ const ContextListVanilla: React.SFC<Props> = ({ contexts, remove }) => {
 };
 
 export const ContextList = connect<Props>(store => ({
-  contexts: store.contexts,
-  remove: store.removeContext,
+  contexts: store.graph.contexts,
+  remove: store.graph.removeContext,
 }))(observer(ContextListVanilla));

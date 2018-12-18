@@ -17,8 +17,8 @@ export const Context = types
   }));
 
 export type IContext = typeof Context.Type;
-export const contexts = types.map(Context);
-export type IContexts = typeof contexts.Type;
+export const Contexts = types.map(Context);
+export type IContexts = typeof Contexts.Type;
 
 export const Box = types
   .model('Box', {
@@ -27,6 +27,7 @@ export const Box = types
     context: types.maybe(types.reference(Context)),
     x: 0,
     y: 0,
+    committed: 0, // to keep track of the positions on dragend
     width: INITIAL_WIDTH,
     height: INITIAL_HEIGHT,
     initialized: false,
@@ -35,6 +36,9 @@ export const Box = types
     move(dx: number, dy: number) {
       self.x += dx;
       self.y += dy;
+    },
+    commitPosition(from: [number, number], to: [number, number]) {
+      self.committed += 1;
     },
     initialize(name?: string) {
       self.initialized = true;
@@ -69,11 +73,11 @@ export const Arrow = types.model('Arrow', {
 });
 export type IArrow = typeof Arrow.Type;
 export const ArrowRef = types.reference(Arrow);
-export const boxes = types.map(Box);
-export const arrows = types.array(Arrow);
+export const Boxes = types.map(Box);
+export const Arrows = types.array(Arrow);
 
-export type IBoxes = typeof boxes.Type;
-export type IArrows = typeof arrows.Type;
+export type IBoxes = typeof Boxes.Type;
+export type IArrows = typeof Arrows.Type;
 
 export const ConnectingArrow = types.model('ConnectingArrow', {
   from: types.reference(Box),

@@ -1,21 +1,7 @@
-import {
-  applySnapshot,
-  onSnapshot,
-  types,
-} from 'mobx-state-tree';
+import { applySnapshot, onSnapshot, types } from 'mobx-state-tree';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
-import {
-  Arrow,
-  arrows,
-  Box,
-  boxes,
-  ConnectingArrow,
-  Context,
-  contexts,
-  IArrow,
-  IBox,
-} from './components/models';
+import { ConnectingArrow, IBox, Box } from './components/models';
 import {
   TOOL_ADD_NODE,
   TOOL_CONNECT,
@@ -23,9 +9,8 @@ import {
   TOOL_PAN,
   TOOL_REMOVE_NODE,
 } from './components/toolbar/constants';
-import { defaultContextColor } from './theme/theme';
-import { uuid } from './utils';
 import { getCloseEnoughBox } from './utils/vec';
+import { Graph } from './graph-store';
 
 const SelectionType = types.maybeNull(types.string);
 
@@ -42,17 +27,15 @@ export interface Zoom {
   offsetY: number;
 }
 
-let connectableBoxes: IBox[] = [];
-export const Store = types
-  .model('Store', {
-    boxes,
-    arrows,
-    contexts,
+export const Application = types
+  .model('Application', {
+    graph: Graph,
     dragging: SelectionType,
     selection: SelectionType,
     editing: SelectionType,
     deepEditing: SelectionType,
     connecting: types.maybeNull(ConnectingArrow),
+    initialBox: types.maybeNull(Box),
     scale: 1,
     offsetX: 0,
     offsetY: 0,
@@ -83,23 +66,6 @@ export const Store = types
     },
   }))
   .actions(self => ({
-    addBox(x: number, y: number, name?: string) {
-      const box = Box.create({ name, x, y, id: uuid() });
-      self.boxes.put(box);
-      return box;
-    },
-    removeBox(box: IBox) {
-      const removeArrows = self.arrows.filter(
-        a => a.to.id === box.id || a.from.id === box.id
-      );
-      if (removeArrows) {
-        removeArrows.map(a => self.arrows.remove(a));
-      }
-      self.boxes.delete(box.id);
-    },
-    removeArrow(arrow: IArrow) {
-      self.arrows.remove(arrow);
-    },
     setDragging(dragging: any) {
       self.dragging = dragging;
     },
@@ -127,37 +93,24 @@ export const Store = types
       self.newContextInput = !self.newContextInput;
     },
     addContext(name: string, customColor?: string, assignTo?: IBox) {
-      const existing = self.contexts.get(name);
       self.newContextInputValue = '';
-      if (existing || !name || name.length === 0) {
-        return undefined;
-      }
-      const seq = self.contexts.size;
-      const color = customColor || defaultContextColor(seq).toString();
-      const context = Context.create({ name, color, seq });
-      self.contexts.put(context);
-      if (assignTo) {
-        assignTo.context = context;
-      }
-      return context;
-    },
-    removeContext(name: string) {
-      const context = self.contexts.get(name);
-      if (!context) {
-        return;
-      }
-      for (const box of self.boxes.values()) {
-        if (box.context === context) {
-          box.setContext();
-        }
-      }
-      self.contexts.delete(context.name);
+      return self.graph.addContext(name, customColor, assignTo);
     },
     setContextInputValue(name: string) {
       self.newContextInputValue = name;
     },
     setSidebarVisibility(v: boolean) {
       self.showSidebar = v;
+    },
+    removeElement(id: string) {
+      const box = self.graph.boxes.get(id);
+      if (box) {
+        self.graph.removeBox(box);
+      }
+      const arrow = self.graph.arrows.find(a => a.id === id);
+      if (arrow) {
+        self.graph.removeArrow(arrow);
+      }
     },
   }))
   .actions(self => ({
@@ -168,48 +121,20 @@ export const Store = types
         self.clearSelection();
       }
     },
-    removeElement(id: string) {
-      const box = self.boxes.get(id);
-      if (box) {
-        self.removeBox(box);
-      }
-      const arrow = self.arrows.find(a => a.id === id);
-      if (arrow) {
-        self.removeArrow(arrow);
-      }
-    },
-    addArrow(from: string, to: string) {
-      const existing = self.arrows.find(
-        a => a.from.id === from && a.to.id === to
-      );
-      if (existing) {
-        return;
-      }
-      const fromBox = self.boxes.get(from);
-      const toBox = self.boxes.get(to);
-      if (!fromBox || !toBox) {
-        return;
-      }
-      const arrow = Arrow.create({
-        id: uuid(),
-        from,
-        to,
-      });
-      self.arrows.push(arrow);
-    },
   }))
   .actions(self => ({
-    createBox(name?: string, x?: number, y?: number) {
-      const xx = x || (self.canvasWidth / 2 - 37 - self.offsetX) / self.scale;
-      const yy = y || (50 - self.offsetY) / self.scale;
-      const box = self.addBox(xx, yy, name);
-      self.setEditing(box.id);
-      // const source = self.selection;
-      // if (source) {
-      //   self.addArrow(source, box.id);
-      // }
-      // self.clearSelection();
-      // box.setSelected(true);
+    createBox(x: number, y: number) {
+      // const xx = x || (self.canvasWidth / 2 - 37 - self.offsetX) / self.scale;
+      // const yy = y || (50 - self.offsetY) / self.scale;
+      self.initialBox = Box.create({ x, y, id: 'initial-box' });
+      self.setEditing(self.initialBox.id);
+    },
+    commitBox(name: string) {
+      if (self.initialBox && typeof name === 'string' && name.length > 0) {
+        const {x, y} = self.initialBox;
+        self.graph.addBox(x, y, name);
+      }
+      self.initialBox = null;
     },
     select(target: string | null) {
       const tool = self.tool;
@@ -221,7 +146,7 @@ export const Store = types
       ) {
         if (tool === TOOL_CONNECT) {
           if (selection && target && target !== selection) {
-            self.addArrow(selection, target);
+            self.graph.addArrow(selection, target);
           }
           if (!selection && target) {
             self.selection = target;
@@ -233,35 +158,12 @@ export const Store = types
       if (tool === TOOL_REMOVE_NODE && target) {
         self.removeElement(target);
       }
-      // if (tool === TOOL_LAYERS && target) {
-      //   const box = self.boxes.get(target);
-      //   if (box) {
-      //     const clicks = contextCounts[target] || 0;
-      //     contextCounts[target] = clicks + 1;
-      //     let counter = 0;
-      //     let N = self.contexts.size;
-      //     for (const context of self.contexts.values()) {
-      //       console.log('select', box.id, clicks % N, counter);
-      //       if (clicks % N === counter) {
-      //         box.setContext(context);
-      //         break;
-      //       }
-      //       counter++;
-      //     }
-      //   }
-      // }
     },
     startConnecting(from: IBox, to: [number, number]) {
       self.connecting = ConnectingArrow.create({
         from: from.id,
         toX: to[0],
         toY: to[1],
-      });
-      connectableBoxes = [];
-      self.boxes.forEach(v => {
-        if (v !== from) {
-          connectableBoxes.push(v);
-        }
       });
     },
     updateConnecting(to: [number, number]) {
@@ -270,35 +172,24 @@ export const Store = types
       }
       self.connecting.toX = to[0];
       self.connecting.toY = to[1];
-      const targetCandidate = getCloseEnoughBox(to, connectableBoxes, 20);
-      self.connecting.to = targetCandidate ? targetCandidate.box : null;
-      // if (targetCandidate) {
-      //   // self.arrowCandidate = Arrow.create({
-      //   //   from: self.connecting.from,
-      //   //   to: targetCandidate.box,
-      //   //   id: uuid(),
-      //   // });
-      //   // self.connecting.intersectionX = targetCandidate.distance.intersection[0];
-      //   // self.connecting.intersectionY = targetCandidate.distance.intersection[1];
-      //   // self.connecting.distance = targetCandidate.distance.distance;
-      // } else {
-      //   self.connecting.to = null;
-      //   // self.connecting.intersectionX = null;
-      //   // self.connecting.intersectionY = null;
-      //   // self.arrowCandidate = null;
-      // }
+      const targetCandidate = getCloseEnoughBox(
+        to,
+        self.graph.boxes.values(),
+        20
+      );
+      self.connecting.to = targetCandidate ? targetCandidate : null;
     },
     endConnecting() {
       if (self.connecting && self.connecting.to) {
-        self.addArrow(self.connecting.from.id, self.connecting.to.id);
+        self.graph.addArrow(self.connecting.from.id, self.connecting.to.id);
       }
       self.connecting = null;
     },
   }));
 
-
 export function initStore() {
-  const store = Store.create();
+  // const graph = Graph.create();
+  const store = Application.create({ graph: {} });
   return store;
 }
 
@@ -357,8 +248,8 @@ export function localClear() {
   }
 }
 
-export type IStore = typeof Store.Type;
-export type IStoreSnapshot = typeof Store.SnapshotType;
+export type IStore = typeof Application.Type;
+export type IStoreSnapshot = typeof Application.SnapshotType;
 export interface IStores {
   store: IStore;
 }

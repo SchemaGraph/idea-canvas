@@ -44,14 +44,11 @@ export const App: React.SFC<StraightProps> = ({
       auth.signOut();
     }
   };
-  if (store.boxes.size === 0) {
+  if (store.graph.boxes.size === 0) {
     // Select the 'ADD' tool as the default one for an empty diagram
     store.setTool(TOOL_ADD_NODE);
   }
-  let undoManager: IUndoManager | undefined;
-  if (undoredo) {
-    undoManager = attachUndoManager(store);
-  }
+  const undoManager = undoredo ? attachUndoManager(store.graph) : undefined;
   return (
     <Provider store={store}>
       <Layout location={location}>

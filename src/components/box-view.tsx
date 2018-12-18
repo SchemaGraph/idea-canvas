@@ -20,6 +20,7 @@ interface Props {
   updateConnecting: (to: P) => void;
   endConnecting: () => void;
   setIsDragging?: (boxId?: string) => void;
+  commitBox: (name: string) => void;
   onSelect?: (id: string) => void;
   selected?: boolean;
   onEditing?: (id: string | null) => void;
@@ -147,12 +148,13 @@ class BoxViewVanilla extends React.Component<Props, State> {
     const { label } = this.state;
     const {
       onEditing,
+      commitBox,
       box: { name, setName, initialized, initialize },
     } = this.props;
     onEditing!(null);
 
     if (!initialized) {
-      initialize(label);
+      commitBox(label!);
     } else if (label !== name) {
       setName(label);
     }
@@ -233,14 +235,23 @@ class BoxViewVanilla extends React.Component<Props, State> {
   };
 
   public stop: DraggableEventHandler = () => {
-    const { setIsDragging, connect: connectTool, endConnecting } = this.props;
+    const {
+      setIsDragging,
+      connect: connectTool,
+      endConnecting,
+      box,
+    } = this.props;
     setIsDragging!();
     if (this.dragStart) {
-      if (
-        this.isItDragging() === false &&
-        this.pressedFor() < longPressDuration
-      ) {
+      const wasDragging = this.isItDragging();
+      if (!wasDragging && this.pressedFor() < longPressDuration) {
         this.select();
+      }
+      if (wasDragging) {
+        // This is mainly to signal that this position is somehow stable
+        console.log('setposition')
+        const {x, y} = this.dragStart.initialPosition;
+        box.commitPosition([x, y], [box.x, box.y]);
       }
 
       this.dragStart = undefined;
@@ -399,4 +410,5 @@ export const BoxView = connect<Props>((store, { box, zoom }) => ({
   selected: store.selection === box.id,
   editing: store.editing === box.id,
   setIsDragging: store.setDragging,
+  commitBox: store.commitBox,
 }))(observer(BoxViewVanilla as any));

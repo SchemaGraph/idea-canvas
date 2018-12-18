@@ -8,6 +8,7 @@ import { POSITION_TOP, TOOL_ADD_NODE, TOOL_NONE } from './toolbar/constants';
 import IconBack from './toolbar/icon-back';
 import IconForward from './toolbar/icon-forward';
 import ToolbarButton from './toolbar/toolbar-button';
+import { IAnyStateTreeNode } from 'mobx-state-tree';
 
 export interface IUndoManager {
   canUndo: boolean;
@@ -15,7 +16,7 @@ export interface IUndoManager {
   undo: () => void;
   redo: () => void;
 }
-export function attachUndoManager(targetStore: IStore): IUndoManager {
+export function attachUndoManager(targetStore: IAnyStateTreeNode): IUndoManager {
   // console.log(targetStore);
   return ObservableUndoManager.create(
     {},

@@ -61,7 +61,6 @@ function toolToCursor(tool?: string) {
 const OuterContainer = styled.div`
   ${layerStyles()};
   cursor: ${({ tool }: WithTool) => toolToCursor(tool)};
-  /* border: 1px solid red; */
 `;
 
 const MainContainer = styled.div`
@@ -193,7 +192,6 @@ class CanvasVanilla extends React.Component<Props, State> {
     }
     if (tool === TOOL_ADD_NODE && !editing) {
       createBox!(
-        undefined,
         (e.clientX - offsetX - INITIAL_WIDTH / 2) / scale,
         (e.clientY - offsetY - INITIAL_HEIGHT / 2) / scale
       );
@@ -222,7 +220,8 @@ class CanvasVanilla extends React.Component<Props, State> {
   };
 
   public render() {
-    const { boxes, arrows, zoom, connecting, tool } = this.store;
+    const { zoom, connecting, tool, initialBox } = this.store;
+    const { boxes, arrows } = this.store.graph;
     // const zoom = zoomTransformToZoom(this.state.zoomTransform || { x: 0, y: 0, k: 1 });
     // const { scale, offsetX, offsetY } = zoom;
     return (
@@ -254,6 +253,7 @@ class CanvasVanilla extends React.Component<Props, State> {
             .map(box => (
               <BoxView box={box} key={box.id} zoom={zoom} />
             ))}
+          {initialBox && <BoxView box={initialBox} zoom={zoom} />}
         </MainContainer>
       </OuterContainer>
     );
