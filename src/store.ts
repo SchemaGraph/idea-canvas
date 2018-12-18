@@ -131,7 +131,7 @@ export const Application = types
     },
     commitBox(name: string) {
       if (self.initialBox && typeof name === 'string' && name.length > 0) {
-        const {x, y} = self.initialBox;
+        const { x, y } = self.initialBox;
         self.graph.addBox(x, y, name);
       }
       self.initialBox = null;
@@ -177,7 +177,10 @@ export const Application = types
         self.graph.boxes.values(),
         20
       );
-      self.connecting.to = targetCandidate ? targetCandidate : null;
+      self.connecting.to =
+        targetCandidate && targetCandidate.id !== self.connecting.from.id
+          ? targetCandidate
+          : null;
     },
     endConnecting() {
       if (self.connecting && self.connecting.to) {

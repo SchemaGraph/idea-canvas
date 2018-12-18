@@ -247,9 +247,9 @@ class BoxViewVanilla extends React.Component<Props, State> {
       if (!wasDragging && this.pressedFor() < longPressDuration) {
         this.select();
       }
-      if (wasDragging) {
+      if (wasDragging && !connectTool) {
         // This is mainly to signal that this position is somehow stable
-        console.log('setposition')
+        // console.log('setposition')
         const {x, y} = this.dragStart.initialPosition;
         box.commitPosition([x, y], [box.x, box.y]);
       }
