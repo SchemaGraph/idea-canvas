@@ -13,10 +13,15 @@ import {
 import { IDisposer } from 'mobx-state-tree/dist/utils';
 import { Observable, Observer, of, Subject, Subscription } from 'rxjs';
 import { exhaustMap, filter, map, mergeMap, take, tap, toArray } from 'rxjs/operators';
-import { setupPatchStream } from './event-stream';
-import { Context, Entry } from './patch-manager';
+import { setupPatchStream, Entry } from './event-stream';
 import { IStore } from './store';
 import { logEntry, logPatch } from './utils';
+
+export interface Context {
+  recorder: IPatchRecorder;
+  actionId: string;
+}
+
 
 const discard = new Set([
   'setCanvasDimensions',

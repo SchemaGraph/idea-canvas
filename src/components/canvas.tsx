@@ -1,4 +1,4 @@
-import { select, ValueFn } from 'd3-selection';
+import { select, ValueFn, Selection } from 'd3-selection';
 import {
   zoom as d3Zoom,
   ZoomBehavior,
@@ -9,9 +9,7 @@ import { values } from 'mobx';
 import { observer } from 'mobx-react';
 import * as React from 'react';
 import styled from 'styled-components';
-
 import { IStore, Zoom } from '../store';
-import { colors } from '../theme/theme';
 import { connect } from '../utils';
 import {
   ArrowView,
@@ -21,7 +19,7 @@ import {
 import { BoxView } from './box-view';
 import { ConnectingArrowView } from './connecting-arrow-view';
 import { INITIAL_HEIGHT, INITIAL_WIDTH, IBox } from './models';
-import { TOOL_ADD_NODE, TOOL_NONE, TOOL_PAN } from './toolbar/constants';
+import { TOOL_ADD_NODE, TOOL_NONE } from './toolbar/constants';
 
 function zoomTransformToZoom(zt: { x: number; y: number; k: number }): Zoom {
   return {
@@ -48,15 +46,6 @@ function layerStyles() {
   `;
 }
 
-const DevInfo = styled.div`
-  position: absolute;
-  top: 0;
-  right: 0;
-  padding: 0.5rem;
-  background-color: rgba(255, 255, 255, 0.9);
-  color: rgba(0, 0, 0, 0.9);
-  font-size: 18px;
-`;
 
 interface WithTool {
   tool?: string;
@@ -91,7 +80,6 @@ const SvgLayer = styled.svg`
 
 function getScaleStyle(z: Zoom) {
   const { scale, offsetX, offsetY } = z;
-  const inv = (100 / scale).toFixed(4);
   return {
     // width: `calc(${inv}% + ${offsetX}px)`, // not necessary with overflow: visible
     // height: `calc(${inv}% + ${offsetY}px)`,
@@ -140,12 +128,12 @@ class CanvasVanilla extends React.Component<Props, State> {
         }
         return !event.button;
       })
-      .on('zoom', this.zoomed.bind(this));
+      .on('zoom', this.zoomed.bind(this as any));
   }
   attachZoom() {
     if (this.container.current) {
       // Error appeared with updated typings
-      select(this.container.current).call(this.zoom);
+      select(this.container.current).call(this.zoom as any);
     }
   }
   deAttachZoom() {
@@ -182,7 +170,7 @@ class CanvasVanilla extends React.Component<Props, State> {
     if (scale !== k || offsetX !== x || offsetY !== y) {
       // Error appeared with updated typings
       this.zoom.transform(
-        select(this.container.current),
+        select(this.container.current) as any,
         zoomIdentity.translate(offsetX, offsetY).scale(scale)
       );
     }

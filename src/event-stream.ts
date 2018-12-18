@@ -1,4 +1,4 @@
-import { IJsonPatch } from 'mobx-state-tree';
+import { IJsonPatch, ISerializedActionCall } from 'mobx-state-tree';
 import { merge, Observable, of } from 'rxjs';
 import {
   debounceTime,
@@ -10,8 +10,11 @@ import {
   take,
   takeUntil,
 } from 'rxjs/operators';
-import { Entry } from './patch-manager';
-
+export interface Entry {
+  patches: ReadonlyArray<IJsonPatch>;
+  inversePatches: ReadonlyArray<IJsonPatch>;
+  action: ISerializedActionCall;
+}
 export function setupPatchStream($stream: Observable<Entry>) {
   const $optimized = $stream.pipe(
     exhaustMap(x => {

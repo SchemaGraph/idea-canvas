@@ -1,17 +1,10 @@
-import { values } from 'mobx';
 import {
-  applyPatch,
   applySnapshot,
   onSnapshot,
   types,
 } from 'mobx-state-tree';
 import { Subject } from 'rxjs';
-import { debounceTime, tap } from 'rxjs/operators';
-import {
-  deserializeRemotePatches,
-  flattenPatches,
-  MyApolloClient,
-} from './appsync/client';
+import { debounceTime } from 'rxjs/operators';
 import {
   Arrow,
   arrows,
@@ -29,9 +22,7 @@ import {
   TOOL_NONE,
   TOOL_PAN,
   TOOL_REMOVE_NODE,
-  TOOL_LAYERS,
 } from './components/toolbar/constants';
-import { PatchManager } from './patch-manager';
 import { defaultContextColor } from './theme/theme';
 import { uuid } from './utils';
 import { getCloseEnoughBox } from './utils/vec';
@@ -52,7 +43,6 @@ export interface Zoom {
 }
 
 let connectableBoxes: IBox[] = [];
-const contextCounts: {[k: string]: number} = {};
 export const Store = types
   .model('Store', {
     boxes,
@@ -306,26 +296,6 @@ export const Store = types
     },
   }));
 
-export async function remoteLoad(
-  store: IStore,
-  graphId: string,
-  client: MyApolloClient<any>,
-  dev = true
-) {
-  let initialVersion = 0;
-  const {
-    data: { getGraph },
-  } = await client.getGraph(graphId);
-  if (!getGraph) {
-    const r = await client.createGraph(graphId);
-  }
-  if (getGraph && getGraph.patches && getGraph.patches.length > 0) {
-    const { patches, version } = deserializeRemotePatches(getGraph.patches);
-    initialVersion = version;
-    applyPatch(store, flattenPatches(patches.map(p => p.payload)));
-  }
-  return new PatchManager(store, client, graphId, initialVersion, dev);
-}
 
 export function initStore() {
   const store = Store.create();

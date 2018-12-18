@@ -1,8 +1,8 @@
 import { inject } from 'mobx-react';
 import { IJsonPatch, IMiddlewareEvent, IPatchRecorder } from 'mobx-state-tree';
 import short from 'short-uuid';
-import { Entry } from '../patch-manager';
 import { IStore, IStores } from '../store';
+import { Entry } from '../event-stream';
 
 export function connect<T>(m: (store: IStore, props: T) => T) {
   return inject<IStores, T, any, T>(({ store }, props) => m(store, props));
