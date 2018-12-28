@@ -1,4 +1,4 @@
-import { types } from 'mobx-state-tree';
+import { types, getSnapshot } from 'mobx-state-tree';
 import { ConnectingArrow, IBox, Box } from './components/models';
 import {
   TOOL_ADD_NODE,
@@ -12,6 +12,8 @@ import { Graph } from './graph-store';
 import { UndoManager } from './undo-manager';
 
 const SelectionType = types.maybeNull(types.string);
+
+export const INITIAL_BOX_ID = 'initial-box';
 
 export type CreateBoxAction = (
   name: string,
@@ -82,8 +84,8 @@ export const Application = types
     clearSelection() {
       self.selection = null;
     },
-    setEditing(target: string | null) {
-      self.editing = target;
+    setEditing(id: string | null) {
+      self.editing = id;
     },
     setDeepEditing(target: string | null) {
       self.deepEditing = target;
@@ -123,17 +125,15 @@ export const Application = types
   }))
   .actions(self => ({
     createBox(x: number, y: number) {
-      // const xx = x || (self.canvasWidth / 2 - 37 - self.offsetX) / self.scale;
-      // const yy = y || (50 - self.offsetY) / self.scale;
-      self.initialBox = Box.create({ x, y, id: 'initial-box' });
-      self.setEditing(self.initialBox.id);
+      self.initialBox = Box.create({ x, y, id: INITIAL_BOX_ID });
+      self.editing = self.initialBox.id;
     },
     commitBox(name: string) {
       if (self.initialBox && typeof name === 'string' && name.length > 0) {
         const { x, y } = self.initialBox;
         self.graph.addBox(x, y, name);
       }
-      self.initialBox = null;
+      self.editing = null;
     },
     select(target: string | null) {
       const tool = self.tool;

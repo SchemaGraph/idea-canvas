@@ -32,13 +32,12 @@ export const Graph = types
     contexts: Contexts,
   })
   .actions(self => ({
-    addBox(x: number, y: number, name?: string) {
+    addBox(x: number, y: number, name: string) {
       const box = Box.create({
         name,
         x,
         y,
         id: uuid(),
-        initialized: name ? true : false,
       });
       self.boxes.put(box);
       return box;

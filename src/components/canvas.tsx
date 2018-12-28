@@ -9,7 +9,7 @@ import { values } from 'mobx';
 import { observer } from 'mobx-react';
 import * as React from 'react';
 import styled from 'styled-components';
-import { IStore, Zoom } from '../store';
+import { IStore, Zoom, INITIAL_BOX_ID } from '../store';
 import { connect } from '../utils';
 import {
   ArrowView,
@@ -20,6 +20,7 @@ import { BoxView } from './box-view';
 import { ConnectingArrowView } from './connecting-arrow-view';
 import { INITIAL_HEIGHT, INITIAL_WIDTH, IBox } from './models';
 import { TOOL_ADD_NODE, TOOL_NONE } from './toolbar/constants';
+import { EditBoxView } from './edit-box-view';
 
 function zoomTransformToZoom(zt: { x: number; y: number; k: number }): Zoom {
   return {
@@ -224,10 +225,15 @@ class CanvasVanilla extends React.Component<Props, State> {
   };
 
   public render() {
-    const { zoom, connecting, tool, initialBox } = this.store;
+    const { zoom, connecting, tool, initialBox, editing } = this.store;
     const { boxes, arrows } = this.store.graph;
     // const zoom = zoomTransformToZoom(this.state.zoomTransform || { x: 0, y: 0, k: 1 });
     // const { scale, offsetX, offsetY } = zoom;
+    const editBox = editing
+      ? editing === INITIAL_BOX_ID
+        ? initialBox
+        : boxes.get(editing)
+      : undefined;
     return (
       <OuterContainer
         innerRef={this.container}
@@ -253,11 +259,11 @@ class CanvasVanilla extends React.Component<Props, State> {
             {/* {connecting && arrowCandidate && <ArrowView arrow={arrowCandidate}/>} */}
           </SvgLayer>
           {values(boxes)
-            .filter(box => isVisible(box))
+            .filter(box => isVisible(box) && editing !== box.id)
             .map(box => (
               <BoxView box={box} key={box.id} zoom={zoom} />
             ))}
-          {initialBox && <BoxView box={initialBox} zoom={zoom} />}
+          {editBox && <EditBoxView box={editBox} zoom={zoom} />}
         </MainContainer>
       </OuterContainer>
     );

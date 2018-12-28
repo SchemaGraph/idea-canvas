@@ -29,18 +29,11 @@ export const Box = types
     y: 0,
     width: INITIAL_WIDTH,
     height: INITIAL_HEIGHT,
-    initialized: false,
   })
   .actions(self => ({
     move(dx: number, dy: number) {
       self.x += dx;
       self.y += dy;
-    },
-    initialize(name?: string) {
-      self.initialized = true;
-      if (name && name.length > 0) {
-        self.name = name;
-      }
     },
     setName(newName?: string) {
       self.name = newName;

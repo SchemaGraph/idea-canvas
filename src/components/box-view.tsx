@@ -3,7 +3,7 @@ import { observer } from 'mobx-react';
 import * as React from 'react';
 import { DraggableCore, DraggableEventHandler } from 'react-draggable';
 import { Animate } from 'react-move';
-import styled, { OuterStyledProps } from 'styled-components';
+import styled from 'styled-components';
 import { Zoom } from '../store';
 import { colors } from '../theme/theme';
 import { connect } from '../utils';
@@ -19,13 +19,11 @@ interface Props {
   startConnecting: (from: IBox, to: P) => void;
   updateConnecting: (to: P) => void;
   endConnecting: () => void;
-  commitBox: (name: string) => void;
-  onSelect?: (id: string) => void;
+  onSelect: (id: string) => void;
   selected?: boolean;
-  onEditing?: (id: string | null) => void;
-  onDeepEditing?: (id: string | null) => void;
-  editing?: boolean;
-  withoutUndo: <T>(fn: () => T) => T;
+  onEditing: (id: string | null) => void;
+  onDeepEditing: (id: string | null) => void;
+  withoutUndo: <T>(fn: () => T | void) => T | void;
   startUndoGroup: () => void;
   stopUndoGroup: () => void;
 }
@@ -66,22 +64,17 @@ const BoxDiv = styled.div`
 function getStyle(
   x: number,
   y: number,
-  box: IBox,
+  _box: IBox,
   context?: IContext,
   opacity = 1,
   isDragging?: boolean
 ): React.CSSProperties {
-  const { initialized, width } = box;
   return {
     transform: `translate(${x}px,${y}px)`,
     opacity,
     backgroundColor: context ? context.color : 'transparent',
-    width: !initialized ? width : undefined,
     transition: !isDragging ? 'transform 0.2s ease-out' : undefined,
   };
-}
-interface LabelProps {
-  editing?: boolean;
 }
 const Label = styled.div`
   display: inline-block;
@@ -90,34 +83,23 @@ const Label = styled.div`
   color: rgba(255, 255, 255, 0.85);
   font-weight: 700;
   font-size: 16px;
-  visibility: ${({ editing }: LabelProps) => (editing ? 'hidden' : 'visible')};
 `;
 
-const LabelInput = (
-  props: OuterStyledProps<React.InputHTMLAttributes<HTMLInputElement>>
-) => {
-  return <Input type="text" {...props} />;
-};
-const Input = styled.input`
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  display: block;
-  width: 80%;
-  z-index: 1;
-  text-align: center;
-  background-color: transparent;
-  outline-style: none;
-  box-shadow: none;
-  border-color: transparent;
-  color: rgba(255, 255, 255, 0.85);
-  font-weight: 700;
-  font-size: 16px;
-`;
+const emptyFn = () => {};
 
 class BoxViewVanilla extends React.Component<Props, State> {
-  private inputRef = React.createRef<HTMLInputElement>();
+  public static defaultProps: Partial<Props> = {
+    startConnecting: emptyFn,
+    updateConnecting: emptyFn,
+    endConnecting: emptyFn,
+    onSelect: emptyFn,
+    onEditing: emptyFn,
+    onDeepEditing: emptyFn,
+    selected: false,
+    withoutUndo: <T extends any>(_fn?: () => T) => {},
+    startUndoGroup: emptyFn,
+    stopUndoGroup: emptyFn,
+  };
   private boxRef = React.createRef<HTMLDivElement>();
   private ripple = React.createRef<Ripple>();
   private dragStart?: {
@@ -126,54 +108,12 @@ class BoxViewVanilla extends React.Component<Props, State> {
     instant: number;
   };
 
-  public state: State = {
-    label: undefined,
-  };
-
-  constructor(props: Props) {
-    super(props);
-  }
-
   public dblClickHandler: React.MouseEventHandler<HTMLDivElement> = _e => {
     const {
       onEditing,
       box: { id },
     } = this.props;
-    onEditing!(id);
-  };
-
-  public onChangeHandler: React.ChangeEventHandler<HTMLInputElement> = e => {
-    this.setState({ label: e.target.value });
-  };
-
-  public finishLabelEditing = () => {
-    const { label } = this.state;
-    const {
-      onEditing,
-      commitBox,
-      box: { name, setName, initialized },
-    } = this.props;
-    onEditing!(null);
-
-    if (!initialized) {
-      commitBox(label!);
-    } else if (label !== name) {
-      setName(label);
-    }
-  };
-
-  public onBlurHandler: React.FocusEventHandler<HTMLInputElement> = _e => {
-    // we want to let the click-handlers run first
-    setTimeout(this.finishLabelEditing, 100);
-  };
-
-  public onKeyPressHandler: React.KeyboardEventHandler<
-    HTMLInputElement
-  > = e => {
-    e.stopPropagation();
-    if (e.key === 'Enter' || e.key === 'Esc') {
-      this.finishLabelEditing();
-    }
+    onEditing(id);
   };
 
   public start: DraggableEventHandler = (_e, { x, y }) => {
@@ -184,7 +124,7 @@ class BoxViewVanilla extends React.Component<Props, State> {
       zoom: { scale },
       startUndoGroup,
     } = this.props;
-    // setIsDragging!(box.id);
+    // setIsDragging(box.id);
     startUndoGroup();
     this.dragStart = {
       initialPosition: { x, y },
@@ -205,7 +145,7 @@ class BoxViewVanilla extends React.Component<Props, State> {
           this.isItDragging() === false &&
           this.pressedFor() > longPressDuration
         ) {
-          this.props.onDeepEditing!(this.props.box.id);
+          this.props.onDeepEditing(this.props.box.id);
         }
       }
     }
@@ -239,7 +179,7 @@ class BoxViewVanilla extends React.Component<Props, State> {
 
   public stop: DraggableEventHandler = () => {
     const { connect: connectTool, endConnecting } = this.props;
-    // setIsDragging!();
+    // setIsDragging();
     this.props.stopUndoGroup();
 
     if (this.dragStart) {
@@ -280,25 +220,14 @@ class BoxViewVanilla extends React.Component<Props, State> {
       onSelect,
       box: { id },
     } = this.props;
-    onSelect!(id);
+    onSelect(id);
   };
 
   public componentDidMount() {
-    const { editing, box } = this.props;
-    this.setState({
-      label: box.name,
-    });
-    if (editing && this.inputRef.current) {
-      return this.inputRef.current.focus();
-    }
     this.measure();
   }
 
   public componentDidUpdate() {
-    const { editing } = this.props;
-    if (editing && this.inputRef.current) {
-      return this.inputRef.current.focus();
-    }
     this.measure();
   }
 
@@ -311,12 +240,10 @@ class BoxViewVanilla extends React.Component<Props, State> {
       setDimensions,
       setWidth,
       setHeight,
-      initialized,
     } = this.props.box;
     const { withoutUndo } = this.props;
     // console.log('MAYBE MEASURING');
-    if (ref && initialized && !this.props.editing) {
-      // Don't measure if not initialized
+    if (ref) {
       const { offsetWidth, offsetHeight } = ref;
       // console.log('MEASURED', clientWidth, clientHeight);
       const dW = width - offsetWidth;
@@ -332,20 +259,7 @@ class BoxViewVanilla extends React.Component<Props, State> {
   }
 
   public render() {
-    const { box, editing, selected } = this.props;
-    const { label } = this.state;
-
-    const input = (
-      <LabelInput
-        type="text"
-        value={label || ''}
-        innerRef={this.inputRef}
-        onChange={this.onChangeHandler}
-        onBlur={this.onBlurHandler}
-        onKeyUp={this.onKeyPressHandler}
-      />
-    );
-
+    const { box, selected } = this.props;
     const { name, context } = box;
     return (
       <Animate
@@ -381,8 +295,7 @@ class BoxViewVanilla extends React.Component<Props, State> {
               onDoubleClick={this.dblClickHandler}
               selected={selected || false}
             >
-              <Label editing={editing}>{name || `\xa0`}</Label>
-              {editing ? input : null}
+              <Label>{name || `\xa0`}</Label>
               <Ripple duration={500} ref={this.ripple} />
             </BoxDiv>
           </DraggableCore>
@@ -403,9 +316,7 @@ export const BoxView = connect<Props>((store, { box, zoom }) => ({
   onEditing: store.setEditing,
   onDeepEditing: store.setDeepEditing,
   selected: store.selection === box.id,
-  editing: store.editing === box.id,
-  commitBox: store.commitBox,
   withoutUndo: store.undoManager.withoutUndo,
   startUndoGroup: store.undoManager.startGroup,
   stopUndoGroup: store.undoManager.stopGroup,
-}))(observer(BoxViewVanilla as any));
+}))(observer(BoxViewVanilla));
