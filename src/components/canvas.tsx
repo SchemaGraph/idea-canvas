@@ -46,7 +46,6 @@ function layerStyles() {
   `;
 }
 
-
 interface WithTool {
   tool?: string;
 }
@@ -150,6 +149,11 @@ class CanvasVanilla extends React.Component<Props, State> {
     if (container) {
       // TO PREVENT SCROLLING ON MOBILE
       container.ontouchmove = () => false;
+      console.log(
+        'canvas mount',
+        container.clientWidth,
+        container.clientHeight
+      );
       this.store.setCanvasDimensions(
         container.clientWidth,
         container.clientHeight

@@ -4,12 +4,14 @@ import { Tabs, Tab, Icon, Button, Divider } from '@blueprintjs/core';
 import { colors, mobileOnly } from '../theme/theme';
 import { connect } from '../utils';
 import { Properties } from './properties-form';
+import { SourceCode } from './source-code';
 interface ContainerProps {
   show?: boolean;
 }
 const SidebarContainer = styled.div`
   height: 100%;
-  width: 200px;
+  overflow: hidden;
+  width: 400px;
   padding: 1rem;
   background-color: ${colors.blue.darken(0.15).string()};
   transform: ${({ show }: ContainerProps) => `translate(${show ? 0 : '0'}, 0)`};
@@ -36,13 +38,20 @@ interface Props {
 }
 class SidebarBase extends React.Component<Props> {
   public render() {
-    if (!this.props.visible) {
-      return null;
-    }
+    // if (!this.props.visible) {
+    //   console.log(this.props);
+    //   return null;
+    // }
+    // console.log(this.props);
     return (
       <SidebarContainer>
         <SidebarDivider />
-        <Tabs animate={true} id="sidebar" defaultSelectedTabId="properties">
+        <Tabs animate={true} id="sidebar" defaultSelectedTabId="source">
+          <Tab
+            id="source"
+            title={<Icon icon="code" />}
+            panel={<SourceCode/>}
+          />
           <Tab
             id="properties"
             title={<Icon icon="settings" />}

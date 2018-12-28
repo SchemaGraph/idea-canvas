@@ -11,3 +11,17 @@ html, body, #___gatsby, #___gatsby > div, #___gatsby > div > div {
 div[class^="Properties__Container"] span[class^="bp3-popover"] {
   display: block;
 }
+
+div[class^="sidebar-right"] .bp3-tabs  {
+  height: 100%;
+}
+
+div[class^="sidebar-right"] .bp3-tab-panel  {
+  height: 100%;
+}
+
+
+/* .CodeMirror {
+  height: 90%;
+  overflow: hidden;
+} */
