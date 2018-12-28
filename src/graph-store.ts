@@ -103,3 +103,11 @@ export const Graph = types
   }));
 export type IGraph = typeof Graph.Type;
 export type IGraphSnapshot = typeof Graph.SnapshotType;
+
+export function emptyGraph(): IGraphSnapshot {
+  return {
+    boxes: {},
+    arrows: [],
+    contexts: {},
+  };
+}

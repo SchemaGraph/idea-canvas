@@ -10,7 +10,7 @@ import {
   take,
   takeUntil,
 } from 'rxjs/operators';
-export interface Entry {
+interface Entry {
   patches: ReadonlyArray<IJsonPatch>;
   inversePatches: ReadonlyArray<IJsonPatch>;
   action: ISerializedActionCall;

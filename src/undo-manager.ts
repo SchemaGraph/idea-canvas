@@ -2,185 +2,90 @@ import {
   addMiddleware,
   applyPatch,
   createActionTrackingMiddleware,
-  getEnv,
-  getPath,
   IJsonPatch,
   IMiddlewareEvent,
   IPatchRecorder,
   recordPatches,
-  types,
   IAnyStateTreeNode,
+  getSnapshot,
 } from 'mobx-state-tree';
 import { IDisposer } from 'mobx-state-tree/dist/utils';
-import { Observable, Observer, of, Subject, Subscription } from 'rxjs';
-import {
-  exhaustMap,
-  filter,
-  map,
-  mergeMap,
-  take,
-  tap,
-  toArray,
-} from 'rxjs/operators';
-import { setupPatchStream, Entry } from './event-stream';
-import { IStore } from './store';
-import { logEntry, logPatch } from './utils';
-import { Redo } from 'styled-icons/material';
+import { observable, action, flow } from 'mobx';
+
+import { logPatch } from './utils';
+import { IGraph, IGraphSnapshot, emptyGraph } from './graph-store';
 
 export interface Context {
   recorder: IPatchRecorder;
   actionId: string;
 }
+interface StatePatches {
+  patches: ReadonlyArray<IJsonPatch>;
+  inversePatches: ReadonlyArray<IJsonPatch>;
+}
 
-const discard = new Set([
-  'move',
-  'setWidth',
-  'setDimensions',
-  'setHeight',
-  'setWidth',
-]);
-
-export const ObservableUndoManager = types
-  .model('UndoManager', {
-    canUndo: false,
-    canRedo: false,
-  })
-  .actions(self => {
-    let undoManager: UndoManager | undefined;
-    return {
-      setCanUndo(x: boolean) {
-        self.canUndo = x;
-      },
-      setCanRedo(x: boolean) {
-        self.canRedo = x;
-      },
-      undo() {
-        if (undoManager) {
-          undoManager.undo();
-        }
-      },
-      redo() {
-        if (undoManager) {
-          undoManager.redo();
-        }
-      },
-      afterCreate() {
-        undoManager = getEnv(self).undoManager;
-        if (!undoManager) {
-          throw new Error('Provide the undoManager in the context');
-        } else {
-          undoManager.$now.subscribe(({ canUndo, canRedo }) => {
-            (self as any).setCanUndo(canUndo);
-            (self as any).setCanRedo(canRedo);
-          });
-        }
-      },
-    };
-  });
-
-type EEntry = Entry & { recorder: IPatchRecorder; event: IMiddlewareEvent };
+type Entry = StatePatches & {
+  action: string;
+  tree: IAnyStateTreeNode;
+};
 
 interface UndoState {
   undo: () => void;
   redo: () => void;
 }
 
-function replaceLast(path: string, last: string) {
-  const pathParts = path.split('/');
-  pathParts.pop();
-  pathParts.push(last);
-  return pathParts.join('/');
-}
-
-function addLast(path: string, last: string) {
-  const pathParts = path.split('/');
-  pathParts.push(last);
-  return pathParts.join('/');
-}
-
-function createUndoState(x: EEntry) {
+function createUndoState(
+  tree: IAnyStateTreeNode,
+  actionName: string,
+  patches: StatePatches
+) {
   return {
     undo() {
-      let patches: ReadonlyArray<IJsonPatch>;
-      switch (x.event.name) {
-        case 'commitPosition':
-          patches = [
-            {
-              op: 'replace',
-              path: addLast(x.action.path!, 'x'),
-              value: x.action.args![0][0],
-            },
-            {
-              op: 'replace',
-              path: addLast(x.action.path!, 'y'),
-              value: x.action.args![0][1],
-            },
-          ];
-          applyPatch(x.event.tree, patches);
-          break;
-        default:
-          patches = x.inversePatches.slice().reverse();
-      }
-      console.log(patches);
-      applyPatch(x.event.tree, patches);
+      console.log('UNDOING', actionName);
+      applyPatch(tree, patches.inversePatches.slice().reverse());
     },
     redo() {
-      let patches: ReadonlyArray<IJsonPatch>;
-      switch (x.event.name) {
-        case 'commitPosition':
-          patches = [
-            {
-              op: 'replace',
-              path: addLast(x.action.path!, 'x'),
-              value: x.action.args![1][0],
-            },
-            {
-              op: 'replace',
-              path: addLast(x.action.path!, 'y'),
-              value: x.action.args![1][1],
-            },
-          ];
-          break;
-        default:
-          patches = x.patches.slice();
-      }
-      console.log(patches);
-      applyPatch(x.event.tree, patches);
+      console.log('REDOING', actionName);
+      applyPatch(tree, patches.patches.slice());
     },
   };
 }
+export interface IUndoManager {
+  canUndo: boolean;
+  canRedo: boolean;
+  undo: () => void;
+  redo: () => void;
+}
 
-export class UndoManager {
-  private now = 0;
+export class UndoManager implements IUndoManager {
+  @observable
+  public now = 0;
+  @observable
+  public snapshot: IGraphSnapshot = emptyGraph();
+
   private currentRecorder?: IPatchRecorder;
   private patchingInProgress = false;
+  private grouping = false;
+  private groupEntries: Entry[] = [];
+  private skipping = false;
 
-  private readonly observer: Observer<EEntry>;
-  private readonly middlewareSubscription: IDisposer;
-  private readonly store: IAnyStateTreeNode;
-  private readonly dev: boolean;
+  public readonly middlewareSubscription: IDisposer;
   private readonly history: UndoState[] = [];
-  public readonly $now = new Subject<{ canUndo: boolean; canRedo: boolean }>();
 
-  constructor(store: IAnyStateTreeNode, dev = true) {
-    // NOTE: [plugin-transform-typescript] constructor auto-assign not
-    // working with plugin-transform-classes #7074
-    // https://github.com/babel/babel/issues/7074
-    this.dev = dev;
-    this.store = store;
-    const middleware = createActionTrackingMiddleware<Context>({
-      filter: this.filter,
-      onStart: this.onStart,
-      onResume: this.onResume,
-      onSuspend: this.onSuspend,
-      onSuccess: this.onSuccess,
-      onFail: this.onFail,
-    });
-    this.middlewareSubscription = addMiddleware(store, middleware, false);
-
-    const subject = new Subject<Entry>();
-    this.observer = subject;
-    // this.subscribeToLocalPatches(setupPatchStream(subject));
+  constructor(private readonly store: IGraph, private readonly dev = true) {
+    this.middlewareSubscription = addMiddleware(
+      store,
+      createActionTrackingMiddleware<Context>({
+        filter: this.filter,
+        onStart: this.onStart,
+        onResume: this.onResume,
+        onSuspend: this.onSuspend,
+        onSuccess: this.onSuccess,
+        onFail: this.onFail,
+      }),
+      false
+    );
+    this.setNow(0);
   }
 
   private log(msg: string, ...args: any[]) {
@@ -200,52 +105,18 @@ export class UndoManager {
     }
   }
 
-  // private subscribeToLocalPatches($stream: Observable<EEntry>) {
-  //   const $a = $stream.pipe(
-  //     filter(({ patches }) => patches.length > 0 && !this.patchingInProgress)
-  //   );
-  //   return $a
-  //     .pipe(
-  //       exhaustMap(x => {
-  //         if (x.action.name === 'createBox') {
-  //           return $a.pipe(
-  //             // tap(console.log),
-  //             filter(
-  //               y =>
-  //                 y.action.name === 'initialize' ||
-  //                 y.action.name === 'setEditing'
-  //             ),
-  //             take(2),
-  //             toArray(),
-  //             map(y => join([x, ...y]))
-  //           );
-  //         }
-  //         return of(x);
-  //       })
-  //     )
-  //     .subscribe(
-  //       this.addUndoState,
-  //       error => {
-  //         this.log('LOCAL SUBSCRIPTION FAILED');
-  //         this.logError(error);
-  //       },
-  //       () => {
-  //         this.log('LOCAL SUBSCRIPTION COMPLETED');
-  //       }
-  //     );
-  // }
-
+  @action.bound
   private setNow(newNow: number) {
     this.log('NOW', newNow);
     this.now = newNow;
-    this.$now.next({ canUndo: this.canUndo(), canRedo: this.canRedo() });
+    this.snapshot = getSnapshot(this.store);
   }
 
-  private addUndoState = (x: EEntry) => {
-    this.log('ADDUNDOSTATE', x.action.name);
+  private addUndoState = ({ tree, action, patches, inversePatches }: Entry) => {
+    this.log('ADDUNDOSTATE', action);
     const h = this.history;
     h.splice(this.now); // deletes forks
-    h.push(createUndoState(x));
+    h.push(createUndoState(tree, action, { patches, inversePatches }));
     this.setNow(h.length);
   };
 
@@ -279,19 +150,54 @@ export class UndoManager {
     }
   };
 
-  public canUndo() {
+  public startGroup = () => {
+    this.grouping = true;
+  };
+  public stopGroup = () => {
+    this.grouping = false;
+    if (this.groupEntries.length > 0) {
+      this.addUndoState(simplifyEntries(this.groupEntries));
+      this.groupEntries = [];
+    }
+  };
+
+  public withoutUndo = <T>(fn: () => T) => {
+    try {
+      this.skipping = true;
+      // flagSkipping = true;
+      return fn();
+    } finally {
+      // flagSkipping = false;
+      this.skipping = false;
+    }
+  };
+  public withoutUndoFlow = (generatorFn: () => any) => {
+    const self = this;
+    return flow(function*() {
+      self.skipping = true;
+      // flagSkipping = true;
+      const result = yield* generatorFn();
+      // flagSkipping = false;
+      self.skipping = false;
+      return result;
+    });
+  };
+
+  public get canUndo() {
     return this.now > 0;
   }
 
-  public canRedo() {
+  public get canRedo() {
     return this.now < this.history.length;
   }
 
   private filter = ({ name, context }: IMiddlewareEvent) => {
+    this.log(name.toUpperCase());
     const verdict =
       !this.currentRecorder &&
-      !discard.has(name) &&
+      // !discard.has(name) &&
       !this.patchingInProgress &&
+      !this.skipping &&
       context !== this; // don't undo / redo undo redo :)
     return verdict;
   };
@@ -312,34 +218,20 @@ export class UndoManager {
     // this.log('ONSUSPEND', actionId);
   };
 
-  private onSuccess = (event: IMiddlewareEvent, { recorder }: Context) => {
-    // this.log('ONSUSPEND', actionId);
-    if (
-      recorder &&
-      recorder.patches.length > 0 &&
-      this.observer &&
-      !this.patchingInProgress
-    ) {
-      // this.log('ONSUCCESS', actionId);
-      // logAction(recorder, action);
-      const entry = {
-        patches: recorder.patches,
-        inversePatches: recorder.inversePatches,
-        action: {
-          name: event.name,
-          args: event.args,
-          path: getPath(event.context),
-        },
-        recorder,
-        event,
-      };
-      // console.log(entry);
-      // console.log(event.context);
-      // console.log(event.tree);
-      // this.observer.next(entry);
-      this.addUndoState(entry);
-    } else {
-      // this.log(recorder.patches.length, this.observer);
+  private onSuccess = (
+    { tree, name }: IMiddlewareEvent,
+    { recorder }: Context
+  ) => {
+    if (recorder && recorder.patches.length > 0 && !this.patchingInProgress) {
+      if (this.grouping) {
+        this.groupEntries.push({
+          tree,
+          action: name,
+          ...recorder,
+        });
+      } else {
+        this.addUndoState({ tree, action: name, ...recorder });
+      }
     }
     this.currentRecorder = undefined;
   };
@@ -355,13 +247,74 @@ export class UndoManager {
   };
 }
 
-function join([a, ...rest]: Entry[]) {
+function simplifyEntries(entries: Entry[]): Entry {
+  const combined = entries.reduce((s, c) => {
+    const N = c.patches.length;
+    s.patches = s.patches.concat(c.patches);
+    s.inversePatches = s.inversePatches.concat(c.inversePatches);
+    s.trees = s.trees.concat(new Array(N).fill(c.tree));
+    s.actions = s.actions.concat(new Array(N).fill(c.action));
+    return s;
+  }, emptyState());
+  const cache: {
+    [k: string]: { prev: any; last: any; indices: number[] };
+  } = {};
+  // combine 'replace':s for the same path
+  for (let i = 0; i < combined.patches.length; i++) {
+    const { path, op, value } = combined.patches[i];
+    if (op === 'replace') {
+      const c = cache[path];
+      if (c) {
+        c.last = value;
+        c.indices.push(i);
+      } else {
+        cache[path] = {
+          prev: combined.inversePatches[i].value,
+          last: value,
+          indices: [i],
+        };
+      }
+    }
+  }
+  let remove: number[] = [];
+  for (const path in cache) {
+    const { prev, last, indices } = cache[path];
+    if (indices.length > 1) {
+      const k = indices.shift()!;
+      combined.patches[k] = {
+        path,
+        op: 'replace',
+        value: last,
+      };
+      combined.inversePatches[k] = {
+        path,
+        op: 'replace',
+        value: prev,
+      };
+      remove = remove.concat(indices);
+    }
+  }
+  const removeSet = new Set(remove);
   return {
-    patches: a.patches.concat(...rest.map(b => b.patches)),
-    inversePatches: a.inversePatches.concat(...rest.map(b => b.inversePatches)),
-    action: {
-      name: [a.action.name, ...rest.map(b => b.action.name)].join('|'),
-      args: [],
-    },
+    patches: combined.patches.filter((_v, i) => !removeSet.has(i)),
+    inversePatches: combined.inversePatches.filter(
+      (_v, i) => !removeSet.has(i)
+    ),
+    tree: combined.trees[0], // trust that they are all from the same store
+    action: combined.actions[0],
+  };
+}
+
+function emptyState(): {
+  patches: IJsonPatch[];
+  inversePatches: IJsonPatch[];
+  actions: string[];
+  trees: IAnyStateTreeNode[];
+} {
+  return {
+    patches: [],
+    inversePatches: [],
+    actions: [],
+    trees: [],
   };
 }

@@ -19,13 +19,15 @@ interface Props {
   startConnecting: (from: IBox, to: P) => void;
   updateConnecting: (to: P) => void;
   endConnecting: () => void;
-  setIsDragging?: (boxId?: string) => void;
   commitBox: (name: string) => void;
   onSelect?: (id: string) => void;
   selected?: boolean;
   onEditing?: (id: string | null) => void;
   onDeepEditing?: (id: string | null) => void;
   editing?: boolean;
+  withoutUndo: <T>(fn: () => T) => T,
+  startUndoGroup: () => void,
+  stopUndoGroup: () => void,
 }
 interface State {
   label?: string;
@@ -177,12 +179,13 @@ class BoxViewVanilla extends React.Component<Props, State> {
   public start: DraggableEventHandler = (_e, { x, y }) => {
     const {
       box,
-      setIsDragging,
       connect: connectTool,
       startConnecting,
       zoom: { scale },
+      startUndoGroup,
     } = this.props;
-    setIsDragging!(box.id);
+    // setIsDragging!(box.id);
+    startUndoGroup();
     this.dragStart = {
       initialPosition: { x, y },
       instant: Date.now(),
@@ -236,12 +239,13 @@ class BoxViewVanilla extends React.Component<Props, State> {
 
   public stop: DraggableEventHandler = () => {
     const {
-      setIsDragging,
       connect: connectTool,
       endConnecting,
       box,
     } = this.props;
-    setIsDragging!();
+    // setIsDragging!();
+    this.props.stopUndoGroup();
+
     if (this.dragStart) {
       const wasDragging = this.isItDragging();
       if (!wasDragging && this.pressedFor() < longPressDuration) {
@@ -250,8 +254,8 @@ class BoxViewVanilla extends React.Component<Props, State> {
       if (wasDragging && !connectTool) {
         // This is mainly to signal that this position is somehow stable
         // console.log('setposition')
-        const {x, y} = this.dragStart.initialPosition;
-        box.commitPosition([x, y], [box.x, box.y]);
+        // const {x, y} = this.dragStart.initialPosition;
+        // box.commitPosition([x, y], [box.x, box.y]);
       }
 
       this.dragStart = undefined;
@@ -319,6 +323,7 @@ class BoxViewVanilla extends React.Component<Props, State> {
       setHeight,
       initialized,
     } = this.props.box;
+    const {withoutUndo} = this.props;
     // console.log('MAYBE MEASURING');
     if (ref && initialized && !this.props.editing) {
       // Don't measure if not initialized
@@ -327,11 +332,11 @@ class BoxViewVanilla extends React.Component<Props, State> {
       const dW = width - offsetWidth;
       const dH = height - offsetHeight;
       if (dW && dH) {
-        setDimensions(offsetWidth, offsetHeight);
+        withoutUndo(() => setDimensions(offsetWidth, offsetHeight));
       } else if (dW) {
-        setWidth(offsetWidth);
+        withoutUndo(() => setWidth(offsetWidth));
       } else if (dH) {
-        setHeight(dH);
+        withoutUndo(() => setHeight(dH));
       }
     }
   }
@@ -409,6 +414,8 @@ export const BoxView = connect<Props>((store, { box, zoom }) => ({
   onDeepEditing: store.setDeepEditing,
   selected: store.selection === box.id,
   editing: store.editing === box.id,
-  setIsDragging: store.setDragging,
   commitBox: store.commitBox,
+  withoutUndo: store.undoManager.withoutUndo,
+  startUndoGroup: store.undoManager.startGroup,
+  stopUndoGroup: store.undoManager.stopGroup,
 }))(observer(BoxViewVanilla as any));

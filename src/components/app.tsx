@@ -6,7 +6,7 @@ import { Canvas } from '../components/canvas';
 import { Toolbar } from '../components/toolbar';
 import Layout from '../layouts';
 import { IStore } from '../store';
-import { attachUndoManager, IUndoManager, UndoRedo } from './time-traveller';
+import { UndoRedo } from './time-traveller';
 import { TOOL_ADD_NODE } from './toolbar/constants';
 import { ContextList } from './context-list';
 import { Sidebar, Mainbar, MenuButton } from './sidebar-right';
@@ -48,7 +48,7 @@ export const App: React.SFC<StraightProps> = ({
     // Select the 'ADD' tool as the default one for an empty diagram
     store.setTool(TOOL_ADD_NODE);
   }
-  const undoManager = undoredo ? attachUndoManager(store.graph) : undefined;
+  const undoManager = store.undoManager; // undoredo ? attachUndoManager(store.graph) : undefined;
   return (
     <Provider store={store}>
       <Layout location={location}>

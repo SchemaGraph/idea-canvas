@@ -1,6 +1,7 @@
 import { applySnapshot, onSnapshot, types } from 'mobx-state-tree';
-import { Subject } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { fromStream } from 'mobx-utils';
+import { Subject, Observable } from 'rxjs';
+import { debounceTime, tap } from 'rxjs/operators';
 import { ConnectingArrow, IBox, Box } from './components/models';
 import {
   TOOL_ADD_NODE,
@@ -10,7 +11,9 @@ import {
   TOOL_REMOVE_NODE,
 } from './components/toolbar/constants';
 import { getCloseEnoughBox } from './utils/vec';
-import { Graph } from './graph-store';
+import { Graph, IGraphSnapshot } from './graph-store';
+import { IDisposer } from 'mobx-state-tree/dist/utils';
+import { UndoManager } from './undo-manager';
 
 const SelectionType = types.maybeNull(types.string);
 
@@ -58,10 +61,10 @@ export const Application = types
     },
     get isMobile(): boolean {
       const { canvasWidth, canvasHeight } = self;
+      console.log(canvasWidth, canvasHeight);
       if (canvasWidth === -1 || canvasHeight === -1) {
         return true;
       }
-      console.log(canvasWidth, canvasHeight);
       return canvasWidth >= 320 && canvasWidth <= 480;
     },
   }))
@@ -188,7 +191,32 @@ export const Application = types
       }
       self.connecting = null;
     },
-  }));
+  }))
+  .extend(self => {
+    let undo: UndoManager | undefined;
+
+    function afterCreate() {
+      console.log('afterCreate');
+      undo = new UndoManager(self.graph);
+    }
+
+    function beforeDestroy() {
+      if (undo) {
+        undo.middlewareSubscription();
+      }
+    }
+    return {
+      actions: {
+        afterCreate,
+        beforeDestroy,
+      },
+      views: {
+        get undoManager() {
+          return undo!;
+        },
+      },
+    };
+  });
 
 export function initStore() {
   // const graph = Graph.create();
@@ -204,43 +232,26 @@ const snapshotSaver = (key: string) => (snapshot: IStoreSnapshot) => {
       scale: 1,
       offsetX: 0,
       offsetY: 0,
+      canvasWidth: -1,
+      canvasHeight: -1,
       tool: TOOL_NONE,
     })
   );
 };
 
-const snapshotStream = new Subject<IStoreSnapshot>();
-
 export function localLoad(store: IStore, localStorageKey = 'ideacanvas-graph') {
-  if (typeof localStorage !== 'undefined') {
-    const cached = localStorage.getItem(localStorageKey);
-    const saver = snapshotSaver(localStorageKey);
-    if (cached) {
-      try {
-        const snapshot = JSON.parse(cached);
-        applySnapshot(store, snapshot);
-      } catch (error) {
-        console.error(error);
-      }
-    }
-    onSnapshot(store, snapshot => {
-      if (localStorage) {
-        snapshotStream.next(snapshot);
-      }
-    });
-    snapshotStream
-      .pipe(
-        debounceTime(400)
-        // tap(_ => console.log('SAVING TO LOCALSTORAGE'))
-      )
-      .subscribe(
-        saver,
-        e => {
-          console.error(e);
-        },
-        () => console.log('snaphsotStream completed')
-      );
-  }
+  // if (typeof localStorage !== 'undefined') {
+  //   const cached = localStorage.getItem(localStorageKey);
+  //   // const saver = snapshotSaver(localStorageKey);
+  //   if (cached) {
+  //     try {
+  //       const snapshot = JSON.parse(cached);
+  //       applySnapshot(store, snapshot);
+  //     } catch (error) {
+  //       console.error(error);
+  //     }
+  //   }
+  // }
 
   return store;
 }

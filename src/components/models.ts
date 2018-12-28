@@ -27,7 +27,6 @@ export const Box = types
     context: types.maybe(types.reference(Context)),
     x: 0,
     y: 0,
-    committed: 0, // to keep track of the positions on dragend
     width: INITIAL_WIDTH,
     height: INITIAL_HEIGHT,
     initialized: false,
@@ -36,9 +35,6 @@ export const Box = types
     move(dx: number, dy: number) {
       self.x += dx;
       self.y += dy;
-    },
-    commitPosition(from: [number, number], to: [number, number]) {
-      self.committed += 1;
     },
     initialize(name?: string) {
       self.initialized = true;
@@ -71,6 +67,7 @@ export const Arrow = types.model('Arrow', {
   from: types.reference(Box),
   to: types.reference(Box),
 });
+
 export type IArrow = typeof Arrow.Type;
 export const ArrowRef = types.reference(Arrow);
 export const Boxes = types.map(Box);
