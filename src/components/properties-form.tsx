@@ -194,11 +194,7 @@ class PropertiesBase extends React.Component<P> {
       setContextInputValue,
       toggleContextInput,
     } = this.props.store!;
-    const {
-      boxes,
-      arrows,
-      contexts,
-    } = this.props.store!.graph;
+    const { boxes, arrows, contexts } = this.props.store!.graph;
     let content: React.ReactNode;
     const id = this.props.id;
     if (id) {

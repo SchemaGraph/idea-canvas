@@ -32,8 +32,12 @@ export function centroid({ x, y, width, height }: Rectangle): P {
   return [x + width / 2, y + height / 2];
 }
 
-export function getCloseEnoughBox(point: P, bs: IterableIterator<IBox>, r = 10) {
-  let closest: [number, IBox] | undefined = undefined;
+export function getCloseEnoughBox(
+  point: P,
+  bs: IterableIterator<IBox>,
+  r = 10
+) {
+  let closest: [number, IBox] | undefined = undefined;
   for (const box of bs) {
     const d = pointToRect(point, box);
 

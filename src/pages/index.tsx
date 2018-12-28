@@ -3,16 +3,12 @@ import { CognitoAuth } from 'amazon-cognito-auth-js';
 import * as React from 'react';
 import { App } from '../components/app';
 import { initStore, localClear, localLoad } from '../store';
-import {
-  getCognitoAuth,
-  CognitoOptions,
-} from '../utils/auth';
+import { getCognitoAuth, CognitoOptions } from '../utils/auth';
 import { graphql } from 'gatsby';
 
 // tslint:disable-next-line:no-submodule-imports
 import '../normalize.css';
 import '../styles.css';
-
 
 function replaceState(url: string, title?: string) {
   if (history) {

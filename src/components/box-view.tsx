@@ -5,7 +5,7 @@ import { DraggableCore, DraggableEventHandler } from 'react-draggable';
 import { Animate } from 'react-move';
 import styled, { OuterStyledProps } from 'styled-components';
 import { Zoom } from '../store';
-import { colors, fadedAlpha } from '../theme/theme';
+import { colors } from '../theme/theme';
 import { connect } from '../utils';
 import { P } from '../utils/vec';
 import { IBox, IContext } from './models';
@@ -25,9 +25,9 @@ interface Props {
   onEditing?: (id: string | null) => void;
   onDeepEditing?: (id: string | null) => void;
   editing?: boolean;
-  withoutUndo: <T>(fn: () => T) => T,
-  startUndoGroup: () => void,
-  stopUndoGroup: () => void,
+  withoutUndo: <T>(fn: () => T) => T;
+  startUndoGroup: () => void;
+  stopUndoGroup: () => void;
 }
 interface State {
   label?: string;
@@ -151,7 +151,7 @@ class BoxViewVanilla extends React.Component<Props, State> {
     const {
       onEditing,
       commitBox,
-      box: { name, setName, initialized, initialize },
+      box: { name, setName, initialized },
     } = this.props;
     onEditing!(null);
 
@@ -238,11 +238,7 @@ class BoxViewVanilla extends React.Component<Props, State> {
   };
 
   public stop: DraggableEventHandler = () => {
-    const {
-      connect: connectTool,
-      endConnecting,
-      box,
-    } = this.props;
+    const { connect: connectTool, endConnecting } = this.props;
     // setIsDragging!();
     this.props.stopUndoGroup();
 
@@ -250,12 +246,6 @@ class BoxViewVanilla extends React.Component<Props, State> {
       const wasDragging = this.isItDragging();
       if (!wasDragging && this.pressedFor() < longPressDuration) {
         this.select();
-      }
-      if (wasDragging && !connectTool) {
-        // This is mainly to signal that this position is somehow stable
-        // console.log('setposition')
-        // const {x, y} = this.dragStart.initialPosition;
-        // box.commitPosition([x, y], [box.x, box.y]);
       }
 
       this.dragStart = undefined;
@@ -323,7 +313,7 @@ class BoxViewVanilla extends React.Component<Props, State> {
       setHeight,
       initialized,
     } = this.props.box;
-    const {withoutUndo} = this.props;
+    const { withoutUndo } = this.props;
     // console.log('MAYBE MEASURING');
     if (ref && initialized && !this.props.editing) {
       // Don't measure if not initialized

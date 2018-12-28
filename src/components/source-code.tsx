@@ -1,23 +1,10 @@
 import * as React from 'react';
 import styled from 'styled-components';
-import {
-  H5,
-  FormGroup,
-  InputGroup,
-  Button,
-  MenuItem,
-  Label,
-  Icon,
-  ButtonGroup,
-  Divider,
-} from '@blueprintjs/core';
-import { colors } from '../theme/theme';
 import { connect } from '../utils';
-import { IStore } from '../store';
 import { observer } from 'mobx-react';
 import { IGraph, IGraphSnapshot } from '../graph-store';
 import { Controlled as CodeMirror } from 'react-codemirror2';
-import { getSnapshot, onSnapshot, applySnapshot } from 'mobx-state-tree';
+import { applySnapshot } from 'mobx-state-tree';
 import 'codemirror/lib/codemirror.css';
 import 'codemirror/theme/material.css';
 import 'codemirror/mode/javascript/javascript';
@@ -108,7 +95,7 @@ class SourceCodeBase extends React.Component<Props, State> {
           value={this.state.serialized}
           onBeforeChange={this.handleChange}
           options={{
-            mode: { name: 'javascript'},
+            mode: { name: 'javascript' },
             lineNumbers: true,
             theme: 'material',
           }}

@@ -50,7 +50,7 @@ class SidebarBase extends React.Component<Props> {
           <Tab
             id="source"
             title={<Icon icon="code" />}
-            panel={<SourceCode/>}
+            panel={<SourceCode />}
           />
           <Tab
             id="properties"

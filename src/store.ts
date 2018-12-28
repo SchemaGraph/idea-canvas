@@ -1,7 +1,4 @@
-import { applySnapshot, onSnapshot, types } from 'mobx-state-tree';
-import { fromStream } from 'mobx-utils';
-import { Subject, Observable } from 'rxjs';
-import { debounceTime, tap } from 'rxjs/operators';
+import { types } from 'mobx-state-tree';
 import { ConnectingArrow, IBox, Box } from './components/models';
 import {
   TOOL_ADD_NODE,
@@ -11,8 +8,7 @@ import {
   TOOL_REMOVE_NODE,
 } from './components/toolbar/constants';
 import { getCloseEnoughBox } from './utils/vec';
-import { Graph, IGraphSnapshot } from './graph-store';
-import { IDisposer } from 'mobx-state-tree/dist/utils';
+import { Graph } from './graph-store';
 import { UndoManager } from './undo-manager';
 
 const SelectionType = types.maybeNull(types.string);
@@ -224,22 +220,7 @@ export function initStore() {
   return store;
 }
 
-const snapshotSaver = (key: string) => (snapshot: IStoreSnapshot) => {
-  localStorage.setItem(
-    key,
-    JSON.stringify({
-      ...snapshot,
-      scale: 1,
-      offsetX: 0,
-      offsetY: 0,
-      canvasWidth: -1,
-      canvasHeight: -1,
-      tool: TOOL_NONE,
-    })
-  );
-};
-
-export function localLoad(store: IStore, localStorageKey = 'ideacanvas-graph') {
+export function localLoad(store: IStore) {
   // if (typeof localStorage !== 'undefined') {
   //   const cached = localStorage.getItem(localStorageKey);
   //   // const saver = snapshotSaver(localStorageKey);
