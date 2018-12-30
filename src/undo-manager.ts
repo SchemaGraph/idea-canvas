@@ -191,11 +191,10 @@ export class UndoManager implements IUndoManager {
     return this.now < this.history.length;
   }
 
-  private filter = ({ name, context }: IMiddlewareEvent) => {
-    this.log(name.toUpperCase());
+  private filter = ({ context }: IMiddlewareEvent) => {
+    // this.log(name.toUpperCase());
     const verdict =
       !this.currentRecorder &&
-      // !discard.has(name) &&
       !this.patchingInProgress &&
       !this.skipping &&
       context !== this; // don't undo / redo undo redo :)
@@ -212,10 +211,10 @@ export class UndoManager implements IUndoManager {
   };
 
   private onResume = (_call: IMiddlewareEvent, _c: Context) => {
-    // this.log('ONRESUME', actionId);
+    // this.log('ONRESUME');
   };
   private onSuspend = (_call: IMiddlewareEvent, _c: Context) => {
-    // this.log('ONSUSPEND', actionId);
+    // this.log('ONSUSPEND');
   };
 
   private onSuccess = (

@@ -27,10 +27,6 @@ interface Props {
   startUndoGroup: () => void;
   stopUndoGroup: () => void;
 }
-interface State {
-  label?: string;
-  connectorEnd?: [number, number];
-}
 
 interface BoxDivProps {
   selected: boolean;
@@ -87,7 +83,7 @@ const Label = styled.div`
 
 const emptyFn = () => {};
 
-class BoxViewVanilla extends React.Component<Props, State> {
+class BoxViewVanilla extends React.Component<Props> {
   public static defaultProps: Partial<Props> = {
     startConnecting: emptyFn,
     updateConnecting: emptyFn,

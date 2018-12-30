@@ -21,6 +21,9 @@ import { ConnectingArrowView } from './connecting-arrow-view';
 import { INITIAL_HEIGHT, INITIAL_WIDTH, IBox } from './models';
 import { TOOL_ADD_NODE, TOOL_NONE } from './toolbar/constants';
 import { EditBoxView } from './edit-box-view';
+import { CircleView } from './circle-view';
+import { NodeView } from './node-view';
+import { FastArrowView } from './fast-arrow-view';
 
 function zoomTransformToZoom(zt: { x: number; y: number; k: number }): Zoom {
   return {
@@ -192,6 +195,7 @@ class CanvasVanilla extends React.Component<Props, State> {
     const { clearSelection, createBox, zoom, tool, editing } = this.store;
     const { scale, offsetX, offsetY } = zoom;
     // only handle clicks that actually originate from the canvas
+    // console.log('canvasClick', this.isCanvasClick(e), e.target);
     if (!this.isCanvasClick(e)) {
       return;
     }
@@ -251,18 +255,26 @@ class CanvasVanilla extends React.Component<Props, State> {
               <MarkerSelectedArrowDef />
             </defs>
             {arrows
-              .filter(a => isVisible(a.from) && isVisible(a.to))
+              .filter(a => isVisible(a.source) && isVisible(a.target))
               .map(arrow => (
-                <ArrowView arrow={arrow} key={arrow.id} />
+                <FastArrowView arrow={arrow} key={arrow.id} />
               ))}
             {connecting && <ConnectingArrowView arrow={connecting} />}
-            {/* {connecting && arrowCandidate && <ArrowView arrow={arrowCandidate}/>} */}
           </SvgLayer>
           {values(boxes)
             .filter(box => isVisible(box) && editing !== box.id)
             .map(box => (
-              <BoxView box={box} key={box.id} zoom={zoom} />
+              <NodeView
+                box={box}
+                key={box.id}
+                zoom={zoom}
+                measureWidth
+                measureHeight
+              >
+                <CircleView box={box} key={box.id} zoom={zoom} />
+              </NodeView>
             ))}
+
           {editBox && <EditBoxView box={editBox} zoom={zoom} />}
         </MainContainer>
       </OuterContainer>

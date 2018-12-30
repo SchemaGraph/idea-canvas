@@ -15,13 +15,15 @@ interface PathProps {
 const ARROW_SELECTED_ID = 'arrow-selected';
 const ARROW_ID = 'arrow';
 
+const strokeColor = ({ selected }: PathProps) =>
+  (selected ? colors.orange : colors.white).alpha(0.8).string();
+const markerEnd = ({ selected }: PathProps) =>
+  selected ? `url(#${ARROW_SELECTED_ID})` : `url(#${ARROW_ID})`;
 export const Path = styled.path`
-  stroke-width: 2;
+  stroke-width: 1;
   cursor: pointer;
-  marker-end: ${p =>
-    p.selected ? `url(#${ARROW_SELECTED_ID})` : `url(#${ARROW_ID})`};
-  stroke: ${({ selected }: PathProps) =>
-    (selected ? colors.orange : colors.white).toString()}};
+  marker-end: ${markerEnd};
+  stroke: ${strokeColor};
   fill: none;
 `;
 const GhostPath = styled.path`
@@ -37,6 +39,12 @@ interface Props {
   onSelect?: (id: string) => void;
   selected?: boolean;
 }
+
+function slope(x: number, y: number, minX = 1e-3) {
+  const xx = Math.abs(x) < minX ? minX : x;
+  return y / xx;
+}
+
 export function tweak(
   start: P,
   to: Rectangle,
@@ -49,12 +57,12 @@ export function tweak(
   // the middle of the *target* box, when origo is at *start*
   const m = a(end, scale(start, -1));
   const [cx, cy] = m;
-  // angle of the connector line
-  const alpha = Math.atan(Math.abs(cy / cx));
-  // angle of the box diagonal
-  const beta = Math.atan(h / w);
+  // |k| of the connector line
+  const k = Math.abs(slope(cx, cy));
+  // |k| of the box diagonal
+  const k1 = Math.abs(slope(w, h));
   // top, right, bottom, left
-  const side = alpha > beta ? (cy > 0 ? 1 : 3) : cx < 0 ? 2 : 4;
+  const side = k > k1 ? (cy > 0 ? 1 : 3) : cx < 0 ? 2 : 4;
   // rotate in 90-degree increments clockwise
   const rotation: V = [
     [[1, 0], [0, 1]] as V,
@@ -79,6 +87,7 @@ export function tweak(
 
   return {
     side,
+    k,
     start,
     end: a(a(newEnd, m), start),
     control: a(a(control, m), start),
@@ -91,7 +100,7 @@ export function positionLink(s: P, e: P, c1: P, c2: P) {
   }`;
 }
 const ArrowViewVanilla: React.SFC<Props> = ({ arrow, onSelect, selected }) => {
-  const { from, to, id } = arrow;
+  const { source: from, target: to, id } = arrow;
   if (!from || !to) {
     return null;
   }
@@ -99,9 +108,19 @@ const ArrowViewVanilla: React.SFC<Props> = ({ arrow, onSelect, selected }) => {
     onSelect!(id);
   };
   // tries to compute the closest point on the *border* of the box
-  const { end, control: c2 } = tweak(centroid(from), to, 7, 70);
-  const { end: start, control: c1 } = tweak(centroid(to), from, 0, 30);
-
+  const { end, control: c2, side: toSide, k: toK } = tweak(
+    centroid(from),
+    to,
+    3,
+    70
+  );
+  const { end: start, control: c1, side: fromSide, k: fromK } = tweak(
+    centroid(to),
+    from,
+    0,
+    70
+  );
+  // console.log(fromK.toFixed(1), toK.toFixed(1));
   const data = { d: positionLink(start, end, c1, c2), opacity: 0 };
   return (
     <Animate
@@ -126,6 +145,7 @@ const ArrowViewVanilla: React.SFC<Props> = ({ arrow, onSelect, selected }) => {
           <GhostPath d={d as string} onClick={select} />
           {/* <circle cx={start[0]} cy={start[1]} r={3} fill="red" />
           <circle cx={end[0]} cy={end[1]} r={3} fill="red" /> */}
+          {/* {debug(from, to, c1, c2)} */}
         </g>
       )}
     </Animate>
@@ -142,7 +162,7 @@ function debug(from: IBox, to: IBox, c1: P, c2: P) {
       <circle cx={c2[0]} cy={c2[1]} r={3} fill="red" />
       <path
         d={`M ${mStart[0]} ${mStart[1]} L ${mEnd[0]} ${mEnd[1]}`}
-        stroke="blue"
+        stroke="red"
         fill="none"
       />
       <rect
@@ -150,6 +170,15 @@ function debug(from: IBox, to: IBox, c1: P, c2: P) {
         y={to.y}
         width={to.width}
         height={to.height}
+        fill="none"
+        stroke="red"
+        strokeWidth="1"
+      />
+      <rect
+        x={from.x}
+        y={from.y}
+        width={from.width}
+        height={from.height}
         fill="none"
         stroke="red"
         strokeWidth="1"

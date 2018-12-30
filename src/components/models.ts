@@ -27,8 +27,8 @@ export const Box = types
     context: types.maybe(types.reference(Context)),
     x: 0,
     y: 0,
-    width: INITIAL_WIDTH,
-    height: INITIAL_HEIGHT,
+    width: -1,
+    height: -1,
   })
   .actions(self => ({
     move(dx: number, dy: number) {
@@ -57,8 +57,8 @@ export const BoxRef = types.reference(Box);
 export type IBoxRef = typeof BoxRef;
 export const Arrow = types.model('Arrow', {
   id: types.identifier,
-  from: types.reference(Box),
-  to: types.reference(Box),
+  source: types.reference(Box),
+  target: types.reference(Box),
 });
 
 export type IArrow = typeof Arrow.Type;

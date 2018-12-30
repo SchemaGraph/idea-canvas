@@ -2,7 +2,7 @@ import { Router } from '@reach/router';
 import { CognitoAuth } from 'amazon-cognito-auth-js';
 import * as React from 'react';
 import { App } from '../components/app';
-import { initStore, localClear, localLoad } from '../store';
+import { initStore, localClear } from '../store';
 import { getCognitoAuth, CognitoOptions } from '../utils/auth';
 import { graphql } from 'gatsby';
 
@@ -20,9 +20,14 @@ const LocalApp: React.SFC<{ auth: CognitoAuth; location?: Location }> = ({
   auth,
   location,
 }) => {
-  const store = initStore();
-  localLoad(store);
-  return <App store={store} auth={auth} undoredo={true} location={location} />;
+  return (
+    <App
+      store={initStore(false)}
+      auth={auth}
+      undoredo={true}
+      location={location}
+    />
+  );
 };
 
 const NewLocalApp: React.SFC<{ auth: CognitoAuth; location?: Location }> = ({

@@ -44,7 +44,7 @@ export const Graph = types
     },
     removeBox(box: IBox) {
       const removeArrows = self.arrows.filter(
-        a => a.to.id === box.id || a.from.id === box.id
+        a => a.target.id === box.id || a.source.id === box.id
       );
       if (removeArrows) {
         removeArrows.map(a => self.arrows.remove(a));
@@ -80,22 +80,22 @@ export const Graph = types
       }
       self.contexts.delete(context.name);
     },
-    addArrow(from: string, to: string) {
+    addArrow(source: string, target: string) {
       const existing = self.arrows.find(
-        a => a.from.id === from && a.to.id === to
+        a => a.source.id === source && a.target.id === target
       );
       if (existing) {
         return;
       }
-      const fromBox = self.boxes.get(from);
-      const toBox = self.boxes.get(to);
+      const fromBox = self.boxes.get(source);
+      const toBox = self.boxes.get(target);
       if (!fromBox || !toBox) {
         return;
       }
       const arrow = Arrow.create({
         id: uuid(),
-        from,
-        to,
+        source: source,
+        target: target,
       });
       self.arrows.push(arrow);
     },
