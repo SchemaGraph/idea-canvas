@@ -3,9 +3,9 @@ import { observer } from 'mobx-react';
 import * as React from 'react';
 import { Animate } from 'react-move';
 import styled, { OuterStyledProps } from 'styled-components';
-import { Zoom, INITIAL_BOX_ID } from '../store';
+import { Zoom, INITIAL_BOX_ID } from '../models/store';
 import { connect } from '../utils';
-import { IBox } from './models';
+import { IBox } from '../models/models';
 
 interface Props {
   box: IBox;

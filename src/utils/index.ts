@@ -1,8 +1,8 @@
 import { inject } from 'mobx-react';
 import { IJsonPatch, IMiddlewareEvent, IPatchRecorder } from 'mobx-state-tree';
 import short from 'short-uuid';
-import { IStore, IStores } from '../store';
-import { Entry } from '../event-stream';
+import { IStore, IStores } from '../models/store';
+import { Entry } from '../models/undo-manager';
 
 export function connect<T>(m: (store: IStore, props: T) => T) {
   return inject<IStores, T, any, T>(({ store }, props) => m(store, props));
@@ -26,8 +26,7 @@ export function logAction(recorder: IPatchRecorder, event: IMiddlewareEvent) {
 }
 
 export function logEntry({ action, patches }: Entry) {
-  const { name } = action;
-  console.log(name);
+  console.log(action);
   patches.forEach(p => logPatch(p));
 }
 

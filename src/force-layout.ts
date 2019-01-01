@@ -4,14 +4,13 @@ import {
   forceX,
   forceY,
   forceLink,
-  forceCenter,
   Simulation,
   SimulationNodeDatum,
   SimulationLinkDatum,
 } from 'd3-force';
-import { Box, Arrow, IBox, IArrow } from './components/models';
-import { IGraphSnapshot, IGraph } from './graph-store';
-import { UndoManager } from './undo-manager';
+import { Box, Arrow, IBox, IArrow } from './models/models';
+import { IGraph } from './models/graph-store';
+import { UndoManager } from './models/undo-manager';
 import { values } from 'mobx';
 import { getSnapshot } from 'mobx-state-tree';
 
@@ -55,7 +54,7 @@ export function getForceSimulation(
   simulation.on('tick', () => {
     // console.log('tick');
     ticks++;
-    for (const { x, y, fx, fy, id } of simulation.nodes()) {
+    for (const { x, y, id } of simulation.nodes()) {
       const node = graph.boxes.get(id);
       if (node && x && y) {
         // console.log(id, x - node.x, y - node.y, fx, fy);

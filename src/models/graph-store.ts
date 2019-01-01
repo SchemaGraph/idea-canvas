@@ -8,9 +8,9 @@ import {
   Contexts,
   IArrow,
   IBox,
-} from './components/models';
-import { defaultContextColor } from './theme/theme';
-import { uuid } from './utils';
+} from './models';
+import { defaultContextColor } from '../theme/theme';
+import { uuid } from '../utils';
 
 export type CreateBoxAction = (
   name: string,
@@ -42,7 +42,7 @@ export const Graph = types
       self.boxes.put(box);
       return box;
     },
-    removeBox(box: IBox | string) {
+    removeBox(box: IBox | string) {
       const id = typeof box === 'string' ? box : box.id;
       const removeArrows = self.arrows.filter(
         a => a.target.id === id || a.source.id === id

@@ -1,8 +1,8 @@
 import * as React from 'react';
 import styled from 'styled-components';
-import { connect } from '../utils';
+import { connect } from '../../utils';
 import { observer } from 'mobx-react';
-import { IGraph, IGraphSnapshot } from '../graph-store';
+import { IGraph, IGraphSnapshot } from '../../models/graph-store';
 import { Controlled as CodeMirror } from 'react-codemirror2';
 import { applySnapshot } from 'mobx-state-tree';
 import 'codemirror/lib/codemirror.css';

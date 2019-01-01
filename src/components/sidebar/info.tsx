@@ -1,13 +1,12 @@
 import * as React from 'react';
 import styled from 'styled-components';
-import { CloseIcon, InfoIcon } from './icons';
-import IconCursor from './toolbar/icon-cursor';
-import IconFit from './toolbar/icon-fit';
-import IconPan from './toolbar/icon-pan';
-import IconPlus from './toolbar/icon-plus';
-import IconConnect from './toolbar/icon-plus-arrow';
-import IconRemove from './toolbar/icon-remove';
-import IconSignout from './toolbar/icon-signout';
+import { CloseIcon, InfoIcon } from '../icons';
+import IconCursor from '../toolbar/icon-cursor';
+import IconFit from '../toolbar/icon-fit';
+import IconPlus from '../toolbar/icon-plus';
+import IconConnect from '../toolbar/icon-plus-arrow';
+import IconRemove from '../toolbar/icon-remove';
+import IconSignout from '../toolbar/icon-signout';
 
 interface ContainerProps {
   show?: boolean;

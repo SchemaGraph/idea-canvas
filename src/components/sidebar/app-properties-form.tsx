@@ -1,24 +1,11 @@
 import * as React from 'react';
 import styled from 'styled-components';
 import {
-  H5,
   FormGroup,
-  InputGroup,
-  Button,
   Switch,
-  MenuItem,
-  Label,
-  Icon,
-  ButtonGroup,
-  Divider,
   Slider,
 } from '@blueprintjs/core';
-import { Select, ItemRenderer, ItemPredicate } from '@blueprintjs/select';
-import { colors } from '../theme/theme';
-import { connect } from '../utils';
-import { IStore } from '../store';
-import { IContexts, IBox, IContext } from './models';
-import { ContextIcon } from './context-list';
+import { connect } from '../../utils';
 import { observer } from 'mobx-react';
 
 interface Props {

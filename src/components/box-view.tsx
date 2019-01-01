@@ -4,11 +4,11 @@ import * as React from 'react';
 import { DraggableCore, DraggableEventHandler } from 'react-draggable';
 import { Animate } from 'react-move';
 import styled from 'styled-components';
-import { Zoom } from '../store';
+import { Zoom } from '../models/store';
 import { colors } from '../theme/theme';
 import { connect } from '../utils';
 import { P } from '../utils/vec';
-import { IBox, IContext } from './models';
+import { IBox, IContext } from '../models/models';
 import { Ripple } from './ripple';
 import { TOOL_CONNECT } from './toolbar/constants';
 

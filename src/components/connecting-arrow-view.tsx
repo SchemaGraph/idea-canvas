@@ -4,7 +4,7 @@ import * as React from 'react';
 import { Animate } from 'react-move';
 import { centroid, P } from '../utils/vec';
 import { Path, positionLink, tweak } from './arrow-view';
-import { IConnectingArrow } from './models';
+import { IConnectingArrow } from '../models/models';
 interface Props {
   arrow: IConnectingArrow;
 }

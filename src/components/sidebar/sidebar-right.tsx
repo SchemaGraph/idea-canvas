@@ -1,8 +1,8 @@
 import * as React from 'react';
 import styled from 'styled-components';
 import { Tabs, Tab, Icon, Button, Divider } from '@blueprintjs/core';
-import { colors, mobileOnly } from '../theme/theme';
-import { connect } from '../utils';
+import { colors, mobileOnly } from '../../theme/theme';
+import { connect } from '../../utils';
 import { Properties } from './properties-form';
 import { SourceCode } from './source-code';
 import { AppProperties } from './app-properties-form';

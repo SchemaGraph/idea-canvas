@@ -1,14 +1,11 @@
-import { style } from 'd3-selection';
 import { observer } from 'mobx-react';
 import * as React from 'react';
 import styled from 'styled-components';
-import { IStore } from '../store';
-import { UndoManager, IUndoManager } from '../undo-manager';
-import { POSITION_TOP, TOOL_ADD_NODE, TOOL_NONE } from './toolbar/constants';
+import { IUndoManager } from '../models/undo-manager';
+import { POSITION_TOP } from './toolbar/constants';
 import IconBack from './toolbar/icon-back';
 import IconForward from './toolbar/icon-forward';
 import ToolbarButton from './toolbar/toolbar-button';
-import { IAnyStateTreeNode } from 'mobx-state-tree';
 
 const Toolbar = styled.div`
   position: absolute;

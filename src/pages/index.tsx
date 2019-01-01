@@ -2,7 +2,7 @@ import { Router } from '@reach/router';
 import { CognitoAuth } from 'amazon-cognito-auth-js';
 import * as React from 'react';
 import { App } from '../components/app';
-import { initStore, localClear } from '../store';
+import { initStore, localClear } from '../models/store';
 import { getCognitoAuth, CognitoOptions } from '../utils/auth';
 import { graphql } from 'gatsby';
 

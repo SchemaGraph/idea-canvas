@@ -2,7 +2,7 @@ import { observer } from 'mobx-react';
 import * as React from 'react';
 import styled from 'styled-components';
 import { connect } from '../utils';
-import { IContexts, IContext } from './models';
+import { IContexts, IContext } from '../models/models';
 import { values } from 'mobx';
 import { Tag, Icon, ITagProps } from '@blueprintjs/core';
 import Color from 'color';

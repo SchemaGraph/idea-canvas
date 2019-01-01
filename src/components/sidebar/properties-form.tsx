@@ -12,12 +12,12 @@ import {
   Divider,
 } from '@blueprintjs/core';
 import { Select, ItemRenderer, ItemPredicate } from '@blueprintjs/select';
-import { colors } from '../theme/theme';
-import { connect } from '../utils';
-import { IStore } from '../store';
-import { IContexts, IBox, IContext } from './models';
-import { ContextIcon } from './context-list';
 import { observer } from 'mobx-react';
+import { IStore } from '../../models/store';
+import { IBox, IContext, IContexts } from '../../models/models';
+import { ContextIcon } from '../context-list';
+import { colors } from '../../theme/theme';
+import { connect } from '../../utils';
 
 const ContextSelect = Select.ofType<undefined | IContext>();
 const Container = styled.div``;

@@ -1,9 +1,9 @@
 import { observer } from 'mobx-react';
 import * as React from 'react';
 import styled from 'styled-components';
-import { Zoom } from '../store';
+import { Zoom } from '../models/store';
 import { colors } from '../theme/theme';
-import { IBox } from './models';
+import { IBox } from '../models/models';
 
 interface Props {
   box: IBox;

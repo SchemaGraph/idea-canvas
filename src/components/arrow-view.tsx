@@ -6,7 +6,7 @@ import styled from 'styled-components';
 import { colors } from '../theme/theme';
 import { connect } from '../utils';
 import { a, centroid, mult, P, Rectangle, scale, V } from '../utils/vec';
-import { IArrow, IBox } from './models';
+import { IArrow, IBox } from '../models/models';
 
 interface PathProps {
   selected?: boolean;

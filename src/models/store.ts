@@ -1,19 +1,19 @@
 import { types, getSnapshot, applySnapshot, flow } from 'mobx-state-tree';
-import { ConnectingArrow, IBox, Box, Arrow } from './components/models';
+import { ConnectingArrow, IBox, Box, Arrow } from './models';
 import {
   TOOL_ADD_NODE,
   TOOL_CONNECT,
   TOOL_NONE,
   TOOL_PAN,
   TOOL_REMOVE_NODE,
-} from './components/toolbar/constants';
-import { getCloseEnoughBox } from './utils/vec';
+} from '../components/toolbar/constants';
+import { getCloseEnoughBox } from '../utils/vec';
 import { Graph, IGraphSnapshot, emptyGraph } from './graph-store';
 import { UndoManager } from './undo-manager';
 import { autorun, IReactionDisposer, observable, values } from 'mobx';
 import fetch from 'unfetch';
-import { defaultContextColor } from './theme/theme';
-import { getForceSimulation, GraphSimulation } from './force-layout';
+import { defaultContextColor } from '../theme/theme';
+import { getForceSimulation, GraphSimulation } from '../force-layout';
 
 const SelectionType = types.maybeNull(types.string);
 
@@ -312,7 +312,7 @@ export const Application = types
       } else if (N < n && data) {
         const tobeAdded = new Set<string>();
         for (let i = N - 1; i < n; i++) {
-          const {id, group} = data.nodes[i];
+          const { id, group } = data.nodes[i];
           const gid = group.toString();
           if (boxes.has(id)) {
             continue;
@@ -322,7 +322,9 @@ export const Application = types
           }
 
           tobeAdded.add(id);
-          self.undoManager.withoutUndo(() => boxes.put(getLesMiserableBox(id, gid)));
+          self.undoManager.withoutUndo(() =>
+            boxes.put(getLesMiserableBox(id, gid))
+          );
         }
         data.links
           .map(({ source, target }) => ({
@@ -399,7 +401,7 @@ function getLesMiserableBox(id: string, context?: string, W = 600, H = 600) {
     y: Math.round(Math.random() * H),
     width: 20,
     height: 20,
-    context
+    context,
   };
 }
 

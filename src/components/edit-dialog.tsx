@@ -2,7 +2,7 @@ import * as React from 'react';
 import styled from 'styled-components';
 import { Button, Dialog, Classes } from '@blueprintjs/core';
 import { connect } from '../utils';
-import { Properties } from './properties-form';
+import { Properties } from './sidebar/properties-form';
 interface Props {
   id?: string;
   onClose?: () => void;

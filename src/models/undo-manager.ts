@@ -12,7 +12,7 @@ import {
 import { IDisposer } from 'mobx-state-tree/dist/utils';
 import { observable, action, flow } from 'mobx';
 
-import { logPatch } from './utils';
+import { logPatch } from '../utils';
 import { IGraph, IGraphSnapshot, emptyGraph } from './graph-store';
 
 export interface Context {
@@ -24,7 +24,7 @@ interface StatePatches {
   inversePatches: ReadonlyArray<IJsonPatch>;
 }
 
-type Entry = StatePatches & {
+export type Entry = StatePatches & {
   action: string;
   tree: IAnyStateTreeNode;
 };

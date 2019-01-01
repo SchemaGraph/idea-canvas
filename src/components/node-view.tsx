@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { DraggableEventHandler } from 'react-draggable';
-import { Zoom } from '../store';
+import { Zoom } from '../models/store';
 import { connect } from '../utils';
-import { IBox } from './models';
+import { IBox } from '../models/models';
 import { DraggableNode } from './draggable-node';
 import { P } from '../utils/vec';
 import { TOOL_CONNECT } from './toolbar/constants';

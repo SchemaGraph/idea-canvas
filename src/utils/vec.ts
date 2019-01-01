@@ -1,4 +1,4 @@
-import { IBox } from '../components/models';
+import { IBox } from '../models/models';
 
 export type P = [number, number];
 export type V = [P, P];

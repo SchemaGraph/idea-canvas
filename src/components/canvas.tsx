@@ -1,4 +1,4 @@
-import { select, ValueFn, Selection } from 'd3-selection';
+import { select, ValueFn } from 'd3-selection';
 import {
   zoom as d3Zoom,
   ZoomBehavior,
@@ -9,22 +9,16 @@ import { values } from 'mobx';
 import { observer } from 'mobx-react';
 import * as React from 'react';
 import styled from 'styled-components';
-import { IStore, Zoom, INITIAL_BOX_ID } from '../store';
+import { IStore, Zoom, INITIAL_BOX_ID } from '../models/store';
 import { connect } from '../utils';
-import {
-  ArrowView,
-  MarkerArrowDef,
-  MarkerSelectedArrowDef,
-} from './arrow-view';
-import { BoxView } from './box-view';
+import { MarkerArrowDef, MarkerSelectedArrowDef } from './arrow-view';
 import { ConnectingArrowView } from './connecting-arrow-view';
-import { INITIAL_HEIGHT, INITIAL_WIDTH, IBox } from './models';
+import { INITIAL_HEIGHT, INITIAL_WIDTH, IBox } from '../models/models';
 import { TOOL_ADD_NODE, TOOL_NONE } from './toolbar/constants';
 import { EditBoxView } from './edit-box-view';
 import { CircleView } from './circle-view';
 import { NodeView } from './node-view';
 import { FastArrowView } from './fast-arrow-view';
-import { SvgCircleView } from './circle-view-svg';
 import { FastBoxView } from './fast-box-view';
 
 function zoomTransformToZoom(zt: { x: number; y: number; k: number }): Zoom {
