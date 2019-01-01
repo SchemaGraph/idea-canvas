@@ -20,6 +20,8 @@ export type SimulationLink = typeof Arrow.CreationType &
   SimulationLinkDatum<SimulationNode>;
 export type GraphSimulation = Simulation<SimulationNode, SimulationLink>;
 
+let currentSimulation: GraphSimulation | undefined;
+
 export function getForceSimulation(
   graph: IGraph,
   width: number,
@@ -29,8 +31,14 @@ export function getForceSimulation(
   const nodes = values(graph.boxes).map((b: IBox) => ({
     ...getSnapshot(b, false),
   }));
+  if (currentSimulation) {
+    currentSimulation.stop();
+  }
   const links = graph.arrows.map((b: IArrow) => ({ ...getSnapshot(b, false) }));
-  const simulation = forceSimulation<SimulationNode, SimulationLink>(nodes)
+  const simulation = (currentSimulation = forceSimulation<
+    SimulationNode,
+    SimulationLink
+  >(nodes)
     .alphaMin(0.1)
     .force(
       'link',
@@ -40,7 +48,7 @@ export function getForceSimulation(
     )
     .force('charge', forceManyBody().strength(() => -720))
     .force('x', forceX(width / 2))
-    .force('y', forceY(height / 2));
+    .force('y', forceY(height / 2)));
 
   // undo.startGroup();
   let ticks = 0;

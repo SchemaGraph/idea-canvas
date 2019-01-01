@@ -10,7 +10,7 @@ import {
 import { getCloseEnoughBox } from './utils/vec';
 import { Graph, IGraphSnapshot, emptyGraph } from './graph-store';
 import { UndoManager } from './undo-manager';
-import { autorun, IReactionDisposer, observable } from 'mobx';
+import { autorun, IReactionDisposer, observable, values } from 'mobx';
 import fetch from 'unfetch';
 import { defaultContextColor } from './theme/theme';
 import { getForceSimulation, GraphSimulation } from './force-layout';
@@ -41,6 +41,8 @@ export interface Zoom {
   offsetY: number;
 }
 
+let data: LesMiserables | undefined;
+
 export const Application = types
   .model('Application', {
     graph: Graph,
@@ -59,6 +61,8 @@ export const Application = types
     canvasWidth: -1,
     canvasHeight: -1,
     showSidebar: true,
+    circles: false,
+    numNodes: 60,
   })
   .views(self => ({
     get zoom(): Zoom {
@@ -208,13 +212,13 @@ export const Application = types
   .extend(self => {
     let undo: UndoManager | undefined;
     let autorunDisposer: IReactionDisposer | undefined;
-    const simulation = observable.box<GraphSimulation>(); // GraphSimulation | undefined;
+    const simulation = observable.box<GraphSimulation | undefined>(); // GraphSimulation | undefined;
     async function afterCreate() {
       console.log('afterCreate');
       undo = new UndoManager(self.graph);
       const saver = snapshotSaver(LOCAL_STORAGE_KEY);
-      applySnapshot(self.graph, await loadLesMiserables());
-      simulation.set(getForceSimulation(self.graph, self.canvasWidth - 400, self.canvasHeight, undo));
+      data = await loadLesMiserables();
+      applySnapshot(self.graph, getN(self.numNodes, data));
 
       autorunDisposer = autorun(
         () => {
@@ -225,6 +229,30 @@ export const Application = types
         },
         { delay: 200 }
       );
+    }
+
+    function runSimulation() {
+      if (undo) {
+        simulation.set(
+          getForceSimulation(
+            self.graph,
+            self.canvasWidth - 400,
+            self.canvasHeight,
+            undo
+          )
+        );
+      }
+    }
+
+    function stopSimulation() {
+      const s = simulation.get();
+      if (s) {
+        s.stop();
+      }
+    }
+
+    function discardSimulation() {
+      simulation.set(undefined);
     }
 
     function beforeDestroy() {
@@ -240,6 +268,9 @@ export const Application = types
       actions: {
         afterCreate,
         beforeDestroy,
+        runSimulation,
+        stopSimulation,
+        discardSimulation,
       },
       views: {
         get undoManager() {
@@ -250,7 +281,67 @@ export const Application = types
         },
       },
     };
-  });
+  })
+  .actions(self => ({
+    enableSimulation(enabled: boolean) {
+      if (enabled) {
+        self.runSimulation();
+      } else {
+        self.stopSimulation();
+        self.discardSimulation();
+      }
+    },
+    useCircles(enabled: boolean) {
+      self.circles = enabled;
+
+      values(self.graph.boxes).forEach((b: IBox) =>
+        self.undoManager.withoutUndo(() => b.setDimensions(20, 20))
+      );
+    },
+    setNodeNumber(n: number) {
+      self.numNodes = n;
+      const { boxes, arrows, contexts } = self.graph;
+      const N = boxes.size;
+      if (N > n && data) {
+        for (let i = n - 1; i < N; i++) {
+          // tobeRemoved.add(data.nodes[i].id);
+          self.undoManager.withoutUndo(() =>
+            self.graph.removeBox(data!.nodes[i].id)
+          );
+        }
+      } else if (N < n && data) {
+        const tobeAdded = new Set<string>();
+        for (let i = N - 1; i < n; i++) {
+          const {id, group} = data.nodes[i];
+          const gid = group.toString();
+          if (boxes.has(id)) {
+            continue;
+          }
+          if (!contexts.has(gid)) {
+            continue;
+          }
+
+          tobeAdded.add(id);
+          self.undoManager.withoutUndo(() => boxes.put(getLesMiserableBox(id, gid)));
+        }
+        data.links
+          .map(({ source, target }) => ({
+            id: `${source}|${target}`,
+            source,
+            target,
+          }))
+          .filter(
+            ({ source, target }) =>
+              boxes.has(source) &&
+              boxes.has(target) &&
+              (tobeAdded.has(source) || tobeAdded.has(target))
+          )
+          .forEach(a =>
+            self.undoManager.withoutUndo(() => arrows.push(Arrow.create(a)))
+          );
+      }
+    },
+  }));
 
 export function initStore(useLocalStorage = true) {
   // const graph = Graph.create();
@@ -297,26 +388,32 @@ async function loadLesMiserables() {
     'https://gist.githubusercontent.com/mbostock/4062045/raw/5916d145c8c048a6e3086915a6be464467391c62/miserables.json'
   );
   const data: LesMiserables = await response.json();
+  return data;
+}
+
+function getLesMiserableBox(id: string, context?: string, W = 600, H = 600) {
+  return {
+    id,
+    name: id,
+    x: Math.round(Math.random() * W),
+    y: Math.round(Math.random() * H),
+    width: 20,
+    height: 20,
+    context
+  };
+}
+
+function getN(N: number, data: LesMiserables) {
   const groups = new Set<string>();
   const nodes = new Set<string>();
   const graph = emptyGraph();
-  const W = 600;
-  const H = 600;
   for (const { id, group } of data.nodes) {
-    if (nodes.size >= 30) {
+    if (nodes.size >= N) {
       continue;
     }
     const gid = group.toString();
     nodes.add(id);
-    graph.boxes[id] = {
-      id,
-      name: id,
-      x: Math.round(Math.random() * W),
-      y: Math.round(Math.random() * H),
-      context: undefined,
-      width: 20,
-      height: 20,
-    };
+    graph.boxes[id] = getLesMiserableBox(id);
     if (!groups.has(gid) && groups.size < 10) {
       const i = groups.size;
       groups.add(gid);
@@ -340,6 +437,5 @@ async function loadLesMiserables() {
       source,
       target,
     }));
-  console.log(graph.arrows);
   return graph;
 }

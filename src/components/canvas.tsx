@@ -24,6 +24,8 @@ import { EditBoxView } from './edit-box-view';
 import { CircleView } from './circle-view';
 import { NodeView } from './node-view';
 import { FastArrowView } from './fast-arrow-view';
+import { SvgCircleView } from './circle-view-svg';
+import { FastBoxView } from './fast-box-view';
 
 function zoomTransformToZoom(zt: { x: number; y: number; k: number }): Zoom {
   return {
@@ -229,10 +231,11 @@ class CanvasVanilla extends React.Component<Props, State> {
   };
 
   public render() {
-    const { zoom, connecting, tool, initialBox, editing } = this.store;
+    const { zoom, connecting, tool, initialBox, editing, circles } = this.store;
     const { boxes, arrows } = this.store.graph;
     // const zoom = zoomTransformToZoom(this.state.zoomTransform || { x: 0, y: 0, k: 1 });
     // const { scale, offsetX, offsetY } = zoom;
+    const Node = circles ? CircleView : FastBoxView;
     const editBox = editing
       ? editing === INITIAL_BOX_ID
         ? initialBox
@@ -260,6 +263,19 @@ class CanvasVanilla extends React.Component<Props, State> {
                 <FastArrowView arrow={arrow} key={arrow.id} />
               ))}
             {connecting && <ConnectingArrowView arrow={connecting} />}
+            {/* {values(boxes)
+              .filter(box => isVisible(box) && editing !== box.id)
+              .map(box => (
+                <NodeView
+                  box={box}
+                  key={box.id}
+                  zoom={zoom}
+                  measureWidth
+                  measureHeight
+                >
+                  <SvgCircleView box={box} key={box.id} zoom={zoom} />
+                </NodeView>
+              ))} */}
           </SvgLayer>
           {values(boxes)
             .filter(box => isVisible(box) && editing !== box.id)
@@ -271,7 +287,7 @@ class CanvasVanilla extends React.Component<Props, State> {
                 measureWidth
                 measureHeight
               >
-                <CircleView box={box} key={box.id} zoom={zoom} />
+                <Node box={box} key={box.id} zoom={zoom} />
               </NodeView>
             ))}
 

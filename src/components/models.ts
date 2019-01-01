@@ -27,8 +27,8 @@ export const Box = types
     context: types.maybe(types.reference(Context)),
     x: 0,
     y: 0,
-    width: -1,
-    height: -1,
+    width: 20,
+    height: 20,
   })
   .actions(self => ({
     move(dx: number, dy: number) {

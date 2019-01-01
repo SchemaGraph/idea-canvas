@@ -42,14 +42,15 @@ export const Graph = types
       self.boxes.put(box);
       return box;
     },
-    removeBox(box: IBox) {
+    removeBox(box: IBox | string) {
+      const id = typeof box === 'string' ? box : box.id;
       const removeArrows = self.arrows.filter(
-        a => a.target.id === box.id || a.source.id === box.id
+        a => a.target.id === id || a.source.id === id
       );
       if (removeArrows) {
         removeArrows.map(a => self.arrows.remove(a));
       }
-      self.boxes.delete(box.id);
+      self.boxes.delete(id);
     },
     removeArrow(arrow: IArrow) {
       self.arrows.remove(arrow);

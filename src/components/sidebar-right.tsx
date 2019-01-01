@@ -5,13 +5,14 @@ import { colors, mobileOnly } from '../theme/theme';
 import { connect } from '../utils';
 import { Properties } from './properties-form';
 import { SourceCode } from './source-code';
+import { AppProperties } from './app-properties-form';
 interface ContainerProps {
   show?: boolean;
 }
 const SidebarContainer = styled.div`
   height: 100%;
   overflow: hidden;
-  width: 400px;
+  width: 200px;
   padding: 1rem;
   background-color: ${colors.blue.darken(0.15).string()};
   transform: ${({ show }: ContainerProps) => `translate(${show ? 0 : '0'}, 0)`};
@@ -43,10 +44,12 @@ class SidebarBase extends React.Component<Props> {
     //   return null;
     // }
     // console.log(this.props);
+    const { selection } = this.props;
+    const selected = selection ? 'properties' : 'properties';
     return (
       <SidebarContainer>
         <SidebarDivider />
-        <Tabs animate={true} id="sidebar" defaultSelectedTabId="source">
+        <Tabs animate={false} id="sidebar" defaultSelectedTabId={selected}>
           <Tab
             id="source"
             title={<Icon icon="code" />}
@@ -55,9 +58,11 @@ class SidebarBase extends React.Component<Props> {
           <Tab
             id="properties"
             title={<Icon icon="settings" />}
-            panel={<Properties id={this.props.selection || undefined} />}
+            panel={
+              selection ? <Properties id={selection} /> : <AppProperties />
+            }
           />
-          <Tab id="info" title={<Icon icon="info-sign" />} />
+          {/* <Tab id="info" title={<Icon icon="info-sign" />} /> */}
         </Tabs>
       </SidebarContainer>
     );
