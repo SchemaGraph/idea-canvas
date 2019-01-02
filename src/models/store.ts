@@ -13,7 +13,11 @@ import { UndoManager } from './undo-manager';
 import { autorun, IReactionDisposer, observable, values } from 'mobx';
 import fetch from 'unfetch';
 import { defaultContextColor } from '../theme/theme';
-import { getForceSimulation, GraphSimulation } from '../force-layout';
+import {
+  getForceSimulation,
+  GraphSimulation,
+  attachSimulationToGraph,
+} from '../force-layout';
 
 const SelectionType = types.maybeNull(types.string);
 
@@ -234,14 +238,21 @@ export const Application = types
     function runSimulation() {
       if (undo) {
         simulation.set(
-          getForceSimulation(
+          attachSimulationToGraph(
+            getForceSimulation(
+              self.graph,
+              self.canvasWidth - 400,
+              self.canvasHeight
+            ),
             self.graph,
-            self.canvasWidth - 400,
-            self.canvasHeight,
             undo
           )
         );
       }
+    }
+
+    function setSimulation(s: GraphSimulation) {
+      simulation.set(s);
     }
 
     function stopSimulation() {
@@ -271,6 +282,7 @@ export const Application = types
         runSimulation,
         stopSimulation,
         discardSimulation,
+        setSimulation,
       },
       views: {
         get undoManager() {

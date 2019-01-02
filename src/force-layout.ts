@@ -24,8 +24,7 @@ let currentSimulation: GraphSimulation | undefined;
 export function getForceSimulation(
   graph: IGraph,
   width: number,
-  height: number,
-  undo: UndoManager
+  height: number
 ): GraphSimulation {
   const nodes = values(graph.boxes).map((b: IBox) => ({
     ...getSnapshot(b, false),
@@ -38,18 +37,27 @@ export function getForceSimulation(
     SimulationNode,
     SimulationLink
   >(nodes)
-    .alphaMin(0.1)
+    // .alphaMin(0.1)
     .force(
       'link',
       forceLink<SimulationNode, SimulationLink>(links)
         .id(d => d.id)
-        .distance(() => 120)
+        .distance(() => 60)
     )
-    .force('charge', forceManyBody().strength(() => -720))
+    .force('charge', forceManyBody().strength(() => -500))
     .force('x', forceX(width / 2))
     .force('y', forceY(height / 2)));
 
   // undo.startGroup();
+  return simulation;
+}
+
+undo: UndoManager;
+export function attachSimulationToGraph(
+  simulation: GraphSimulation,
+  graph: IGraph,
+  undo: UndoManager
+) {
   let ticks = 0;
   simulation.on('tick', () => {
     // console.log('tick');
@@ -69,3 +77,21 @@ export function getForceSimulation(
   });
   return simulation;
 }
+
+export function updateOnEnd(
+  simulation: GraphSimulation,
+  graph: IGraph,
+  undo: UndoManager
+) {
+  simulation.on('end', () => {
+    for (const { x, y, id } of simulation.nodes()) {
+      const node = graph.boxes.get(id);
+      if (node && x && y) {
+        // console.log(id, x - node.x, y - node.y, fx, fy);
+        undo.withoutUndo(() => node.move(x - node.x, y - node.y));
+      }
+    }
+  });
+  return simulation;
+}
+

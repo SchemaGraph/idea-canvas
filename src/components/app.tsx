@@ -13,6 +13,7 @@ import { Sidebar, Mainbar, MenuButton } from './sidebar/sidebar-right';
 import styled from 'styled-components';
 import { mobileOnly } from '../theme/theme';
 import { EditDialog } from './edit-dialog';
+import { SimulationCanvas } from './simulation-canvas';
 
 interface StraightProps {
   store: IStore;
@@ -53,7 +54,7 @@ export const App: React.SFC<StraightProps> = ({
     <Provider store={store}>
       <Layout location={location}>
         <Mainbar>
-          <Canvas />
+          <SimulationCanvas />
           {/* <MButton /> */}
           <Toolbar
             onSignOut={handleSignout}

@@ -17,7 +17,6 @@ export const Path = styled.path`
   fill: none;
 `;
 
-// const boxHeight = 60;
 interface Props {
   arrow: IArrow;
 }
@@ -81,15 +80,19 @@ export function positionLink(s: P, e: P, c1: P, c2: P) {
     e[1]
   }`;
 }
-const ArrowViewVanilla: React.FC<Props> = ({ arrow }) => {
-  const { source: from, target: to } = arrow;
-  if (!from || !to) {
-    return null;
-  }
+
+export function arrowPath(source: Rectangle, target: Rectangle) {
+  const { end, control: c2 } = tweak(centroid(source), target, 3, 70);
+  const { end: start, control: c1 } = tweak(centroid(target), source, 0, 70);
+  return positionLink(start, end, c1, c2);
+}
+
+type FinalProps = Props & React.SVGAttributes<SVGPathElement>;
+
+const ArrowViewVanilla: React.FC<FinalProps> = ({ arrow, ...rest }) => {
+  const { source, target } = arrow;
   // tries to compute the closest point on the *border* of the box
-  const { end, control: c2 } = tweak(centroid(from), to, 3, 70);
-  const { end: start, control: c1 } = tweak(centroid(to), from, 0, 70);
-  return <Path d={positionLink(start, end, c1, c2)} />;
+  return <Path d={arrowPath(source, target)} {...rest} />;
 };
 
 export const FastArrowView = observer(ArrowViewVanilla);
