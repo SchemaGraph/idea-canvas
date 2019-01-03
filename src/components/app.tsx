@@ -14,8 +14,12 @@ import styled from 'styled-components';
 import { mobileOnly } from '../theme/theme';
 import { EditDialog } from './edit-dialog';
 import { SimulationCanvas } from './simulation-canvas';
-
-interface StraightProps {
+import SplitPane from '../utils/splitter';
+import { connect } from '../utils';
+import { FunctionComponent, useRef, useEffect } from 'react';
+import useComponentSize from '@rehooks/component-size';
+import { observer } from 'mobx-react-lite';
+interface Props {
   store: IStore;
   auth: CognitoAuth;
   location?: Location;
@@ -32,30 +36,55 @@ const MButton = styled(MenuButton)`
     `};
 `;
 
-export const App: React.SFC<StraightProps> = ({
+const WrapWithPanes: FunctionComponent<{
+  isMobile: boolean;
+  empty: boolean;
+}> = ({ empty, isMobile, children }) => {
+  if (empty) {
+    return null;
+  }
+
+  if (isMobile) {
+    return <>{children}</>;
+  }
+  return (
+    <SplitPane sizes={[100, 0]} minSize={[400, 170]}>
+      <Mainbar>{children}</Mainbar>
+      <Sidebar />
+    </SplitPane>
+  );
+};
+
+const AppBase: FunctionComponent<Props> = ({
   store,
   auth,
   undoredo,
   dev,
   location,
 }) => {
+  console.log('MAIN');
+  const layoutRef = useRef<HTMLDivElement>(null);
+  const { width, height } = useComponentSize(layoutRef);
+  useEffect(
+    () => {
+      store.setAppDimensions(width, height);
+    },
+    [width, height]
+  );
+
   const handleSignout = () => {
     if (auth.isUserSignedIn()) {
       // also redirects
       auth.signOut();
     }
   };
-  if (store.graph.boxes.size === 0) {
-    // Select the 'ADD' tool as the default one for an empty diagram
-    store.setTool(TOOL_ADD_NODE);
-  }
-  const undoManager = store.undoManager; // undoredo ? attachUndoManager(store.graph) : undefined;
+  const { undoManager, isMobile } = store;
+
   return (
     <Provider store={store}>
-      <Layout location={location}>
-        <Mainbar>
+      <Layout location={location} ref={layoutRef}>
+        <WrapWithPanes isMobile={!!isMobile} empty={isMobile === undefined || width === 0 || height === 0}>
           <SimulationCanvas />
-          {/* <MButton /> */}
           <Toolbar
             onSignOut={handleSignout}
             signedIn={auth && auth.isUserSignedIn()}
@@ -63,10 +92,13 @@ export const App: React.SFC<StraightProps> = ({
           <ContextList />
           {undoManager && <UndoRedo manager={undoManager} />}
           {dev && <DevTools />}
-          {<EditDialog />}
-        </Mainbar>
-        <Sidebar />
+        </WrapWithPanes>
       </Layout>
     </Provider>
   );
 };
+
+export const App = connect<Props>((store, props) => ({
+  store,
+  ...props,
+}))(observer(AppBase));

@@ -64,6 +64,8 @@ export const Application = types
     newContextInputValue: '',
     canvasWidth: -1,
     canvasHeight: -1,
+    appWidth: -1,
+    appHeight: -1,
     showSidebar: true,
     circles: false,
     numNodes: 60,
@@ -78,13 +80,13 @@ export const Application = types
         offsetY,
       };
     },
-    get isMobile(): boolean {
-      const { canvasWidth, canvasHeight } = self;
-      console.log(canvasWidth, canvasHeight);
-      if (canvasWidth === -1 || canvasHeight === -1) {
-        return true;
+    get isMobile(): boolean | undefined {
+      const { appWidth: w, appHeight: h } = self;
+      console.log(w, h);
+      if (w === -1 || h === -1) {
+        return undefined;
       }
-      return canvasWidth >= 320 && canvasWidth <= 480;
+      return w >= 320 && w <= 480;
     },
   }))
   .actions(self => ({
@@ -99,8 +101,18 @@ export const Application = types
       self.offsetY = offsetY;
     },
     setCanvasDimensions(w: number, h: number) {
-      self.canvasWidth = w;
-      self.canvasHeight = h;
+      if (w > 0 && h > 0) {
+        console.log('CANVAS', w, h);
+        self.canvasWidth = w;
+        self.canvasHeight = h;
+      }
+    },
+    setAppDimensions(w: number, h: number) {
+      if (w > 0 && h > 0) {
+        console.log('APP', w, h);
+        self.appWidth = w;
+        self.appHeight = h;
+      }
     },
     clearSelection() {
       self.selection = null;

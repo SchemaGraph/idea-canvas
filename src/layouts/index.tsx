@@ -25,9 +25,9 @@ function getTitle(location?: Location) {
     .join(' ');
   return <title>{title}</title>;
 }
-const MainLayout: React.SFC<Props> = ({ children, location }) => (
+const MainLayout = React.forwardRef<HTMLDivElement, Props>( ({ children, location }, ref) => (
   <ThemeProvider theme={theme}>
-    <Root className="bp3-dark">
+    <Root className="bp3-dark" innerRef={ref as any}>
       <Helmet
         defaultTitle={`IdeaCanvas`}
         titleTemplate={`%s | IdeaCanvas`}
@@ -48,7 +48,7 @@ const MainLayout: React.SFC<Props> = ({ children, location }) => (
       {children}
     </Root>
   </ThemeProvider>
-);
+));
 injectGlobal`
   ${global}
 `;
