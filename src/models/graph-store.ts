@@ -32,6 +32,15 @@ export const Graph = types
     contexts: Contexts,
   })
   .actions(self => ({
+    batchMove(nodes: {x?: number, y?: number, id: string}[]) {
+      for (const { x, y, id } of nodes) {
+        const node = self.boxes.get(id);
+        if (node && x && y) {
+          // console.log(id, x - node.x, y - node.y, fx, fy);
+          node.move(x - node.x, y - node.y);
+        }
+      }
+    },
     addBox(x: number, y: number, name: string) {
       const box = Box.create({
         name,

@@ -84,7 +84,7 @@ const AppBase: FunctionComponent<Props> = ({
     <Provider store={store}>
       <Layout location={location} ref={layoutRef}>
         <WrapWithPanes isMobile={!!isMobile} empty={isMobile === undefined || width === 0 || height === 0}>
-          <SimulationCanvas />
+          <Canvas />
           <Toolbar
             onSignOut={handleSignout}
             signedIn={auth && auth.isUserSignedIn()}

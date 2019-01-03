@@ -26,6 +26,7 @@ const LocalApp: React.SFC<{ auth: CognitoAuth; location?: Location }> = ({
       auth={auth}
       undoredo={true}
       location={location}
+      dev={false}
     />
   );
 };

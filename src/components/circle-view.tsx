@@ -1,13 +1,11 @@
 import * as React from 'react';
 import styled from 'styled-components';
-import { Zoom } from '../models/store';
 import { colors } from '../theme/theme';
 import { IBox } from '../models/models';
 import { observer } from 'mobx-react';
 
 interface Props {
   box: IBox;
-  zoom: Zoom;
   selected?: boolean;
 }
 interface CircleDivProps {
@@ -64,11 +62,12 @@ const Label = styled.div`
 type FinalProps = Props & React.HTMLAttributes<HTMLDivElement>;
 
 const CircleViewBase = React.forwardRef<HTMLDivElement, FinalProps>(
-  ({ box, selected, children, zoom, style, ...rest }, ref) => (
+  ({ box, selected, children, style, className, ...rest }, ref) => (
     <CircleDiv
       style={{ ...getStyle(box, 0.8), ...(style || {}) }}
       selected={!!selected}
       innerRef={ref as any}
+      className={'node-circle' + (className ? ' ' + className : '') }
       {...rest}
     >
       <Label>{box.name || `\xa0`}</Label>
@@ -77,5 +76,8 @@ const CircleViewBase = React.forwardRef<HTMLDivElement, FinalProps>(
   )
 );
 // export const CircleView = CircleViewBase;
+
+export const selector = '.node-circle';
+export type NodeType = HTMLDivElement;
 
 export const CircleView = observer(CircleViewBase);

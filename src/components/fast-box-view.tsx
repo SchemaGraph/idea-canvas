@@ -1,15 +1,8 @@
 import { observer } from 'mobx-react';
 import * as React from 'react';
 import styled from 'styled-components';
-import { Zoom } from '../models/store';
 import { colors } from '../theme/theme';
 import { IBox } from '../models/models';
-
-interface Props {
-  box: IBox;
-  zoom: Zoom;
-  selected?: boolean;
-}
 
 interface BoxDivProps {
   selected: boolean;
@@ -61,14 +54,20 @@ const Label = styled.div`
   font-size: 16px;
 `;
 
+interface Props {
+  box: IBox;
+  selected?: boolean;
+}
+
 type FinalProps = Props & React.HTMLAttributes<HTMLDivElement>;
 
 const BoxViewBase = React.forwardRef<HTMLDivElement, FinalProps>(
-  ({ box, selected, children, zoom, style, ...rest }, ref) => (
+  ({ box, selected, children, className, style, ...rest }, ref) => (
     <BoxDiv
       style={{ ...getStyle(box, 0.8), ...(style || {}) }}
       selected={!!selected}
       innerRef={ref as any}
+      className={'node-box' + (className ? ' ' + className : '')}
       {...rest}
     >
       <Label>{box.name || `\xa0`}</Label>
@@ -76,6 +75,8 @@ const BoxViewBase = React.forwardRef<HTMLDivElement, FinalProps>(
     </BoxDiv>
   )
 );
-// export const BoxView = BoxViewBase;
+
+export const selector = '.node-box';
+export type NodeType = HTMLDivElement;
 
 export const FastBoxView = observer(BoxViewBase);

@@ -117,7 +117,7 @@ class BoxViewVanilla extends React.Component<Props> {
       box,
       connect: connectTool,
       startConnecting,
-      zoom: { scale },
+      zoom: { k: scale },
       startUndoGroup,
     } = this.props;
     // setIsDragging(box.id);
@@ -196,7 +196,7 @@ class BoxViewVanilla extends React.Component<Props> {
       box,
       connect: connectTool,
       updateConnecting,
-      zoom: { scale },
+      zoom: { k: scale },
     } = this.props;
     if (connectTool) {
       updateConnecting([x / scale, y / scale]);

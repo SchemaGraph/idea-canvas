@@ -3,13 +3,12 @@ import { observer } from 'mobx-react';
 import * as React from 'react';
 import { Animate } from 'react-move';
 import styled, { OuterStyledProps } from 'styled-components';
-import { Zoom, INITIAL_BOX_ID } from '../models/store';
+import { INITIAL_BOX_ID } from '../models/store';
 import { connect } from '../utils';
 import { IBox } from '../models/models';
 
 interface Props {
   box: IBox;
-  zoom: Zoom;
   submit: (name: string) => void;
   discard: () => void;
 }
@@ -37,7 +36,7 @@ const BoxDiv = styled.div`
 `;
 
 function getStyle(
-  { x, y, width, height }: IBox,
+  { x, y, width }: IBox,
   opacity = 1
 ): React.CSSProperties {
   return {
@@ -71,6 +70,11 @@ const Input = styled.input`
 `;
 
 class BoxViewVanilla extends React.Component<Props, State> {
+
+  static defaultProps = {
+    submit: () => {},
+    discard: () => {},
+  }
   private inputRef = React.createRef<HTMLInputElement>();
   private boxRef = React.createRef<HTMLDivElement>();
 
@@ -161,8 +165,7 @@ class BoxViewVanilla extends React.Component<Props, State> {
   }
 }
 
-export const EditBoxView = connect<Props>((store, { box, zoom }) => ({
-  zoom,
+export const EditBoxView = connect<Props>((store, { box }) => ({
   box,
   submit: (name: string) => {
     if (box.id === INITIAL_BOX_ID) {
@@ -173,4 +176,4 @@ export const EditBoxView = connect<Props>((store, { box, zoom }) => ({
     }
   },
   discard: () => store.setEditing(null),
-}))(observer(BoxViewVanilla as any));
+}))(observer(BoxViewVanilla));

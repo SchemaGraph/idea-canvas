@@ -1,13 +1,10 @@
 import * as React from 'react';
 import styled from 'styled-components';
-import { Zoom } from '../models/store';
-import { colors } from '../theme/theme';
 import { IBox } from '../models/models';
 import { observer } from 'mobx-react';
 
 interface Props {
   box: IBox;
-  zoom: Zoom;
   selected?: boolean;
 }
 
@@ -22,7 +19,7 @@ type FinalProps = Props & React.SVGAttributes<SVGCircleElement>;
 
 const CircleViewBase = React.forwardRef<SVGCircleElement, FinalProps>(
   (
-    { box: { x, y, width, context }, selected, children, zoom, style, ...rest },
+    { box: { x, y, width, context }, selected, children, style, ...rest },
     ref
   ) => (
     <g stroke="#fff" strokeWidth={BORDER}>

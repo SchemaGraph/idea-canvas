@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { DraggableEventHandler } from 'react-draggable';
-import { Zoom } from '../models/store';
 import { connect } from '../utils';
 import { IBox } from '../models/models';
 import { DraggableNode } from './draggable-node';
@@ -8,10 +7,11 @@ import { P } from '../utils/vec';
 import { TOOL_CONNECT } from './toolbar/constants';
 import { observer } from 'mobx-react';
 import { GraphSimulation, SimulationNode } from '../force-layout';
+import { ZoomTransform } from 'd3-zoom';
 
 interface Props {
   box: IBox;
-  zoom: Zoom;
+  zoomTransform: () => ZoomTransform;
   onSelect: (id: string) => void;
   selected: boolean;
   onEdit: (id: string | null) => void;
@@ -94,9 +94,10 @@ class NodeViewBase extends React.Component<Props> {
   private move: DraggableEventHandler = (_e, { deltaX, deltaY, x, y }) => {
     const {
       box,
-      zoom: { scale },
+      zoomTransform,
       simulation,
     } = this.props;
+    const {k: scale} = zoomTransform();
     if (simulation) {
       const node = this.simulationNode;
       if (node) {
@@ -115,16 +116,18 @@ class NodeViewBase extends React.Component<Props> {
     const {
       box,
       startConnecting,
-      zoom: { scale },
+      zoomTransform,
     } = this.props;
+    const {k: scale} = zoomTransform();
     startConnecting(box, [x / scale, y / scale]);
   };
 
   private updateConnecting: DraggableEventHandler = (_e, { x, y }) => {
     const {
       updateConnecting,
-      zoom: { scale },
+      zoomTransform,
     } = this.props;
+    const {k: scale} = zoomTransform();
     updateConnecting([x / scale, y / scale]);
   };
 
@@ -167,10 +170,13 @@ class NodeViewBase extends React.Component<Props> {
     const dW = width - offsetWidth;
     const dH = height - offsetHeight;
     if (dW && dH && measureWidth && measureHeight) {
+      console.log('measured');
       withoutUndo(() => setDimensions(offsetWidth, offsetHeight));
     } else if (dW && measureWidth) {
+      console.log('measured');
       withoutUndo(() => setWidth(offsetWidth));
     } else if (dH && measureHeight) {
+      console.log('measured');
       withoutUndo(() => setHeight(dH));
     }
   }
@@ -218,4 +224,5 @@ export const NodeView = connect<Props>((store, props) => ({
   startUndoGroup: store.undoManager.startGroup,
   stopUndoGroup: store.undoManager.stopGroup,
   simulation: store.simulation,
+  zoomTransform: store.getZoomTransform,
 }))(observer(NodeViewBase));

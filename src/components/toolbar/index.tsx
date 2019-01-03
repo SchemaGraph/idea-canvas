@@ -16,10 +16,10 @@ const ToolbarVanilla: React.SFC<Props> = ({ store, onSignOut, signedIn }) => {
   const {
     tool,
     setTool,
-    setZoom,
+    setToolbarZoom,
   } = store!;
   const onFit = () => {
-    setZoom({ scale: 1, offsetX: 0, offsetY: 0 });
+    setToolbarZoom({ k: 1, x: 0, y: 0 });
   };
 
   return (

@@ -96,3 +96,7 @@ const ArrowViewVanilla: React.FC<FinalProps> = ({ arrow, ...rest }) => {
 };
 
 export const FastArrowView = observer(ArrowViewVanilla);
+
+export const FastArrowView2: React.FC<React.SVGAttributes<SVGPathElement>> = p => {
+  return <Path {...p} />;
+};

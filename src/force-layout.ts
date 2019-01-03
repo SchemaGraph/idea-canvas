@@ -28,6 +28,7 @@ export function getForceSimulation(
 ): GraphSimulation {
   const nodes = values(graph.boxes).map((b: IBox) => ({
     ...getSnapshot(b, false),
+    context: b.context ? getSnapshot(b.context, false) : undefined,
   }));
   if (currentSimulation) {
     currentSimulation.stop();
@@ -84,14 +85,7 @@ export function updateOnEnd(
   undo: UndoManager
 ) {
   simulation.on('end', () => {
-    for (const { x, y, id } of simulation.nodes()) {
-      const node = graph.boxes.get(id);
-      if (node && x && y) {
-        // console.log(id, x - node.x, y - node.y, fx, fy);
-        undo.withoutUndo(() => node.move(x - node.x, y - node.y));
-      }
-    }
+    undo.withoutUndo(() => graph.batchMove(simulation.nodes()));
   });
   return simulation;
 }
-

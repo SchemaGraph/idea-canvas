@@ -16,8 +16,9 @@ import { defaultContextColor } from '../theme/theme';
 import {
   getForceSimulation,
   GraphSimulation,
-  attachSimulationToGraph,
+  updateOnEnd,
 } from '../force-layout';
+import { zoomIdentity } from 'd3-zoom';
 
 const SelectionType = types.maybeNull(types.string);
 
@@ -40,12 +41,18 @@ export type CreateBoxAction = (
 ) => void;
 
 export interface Zoom {
-  scale: number;
-  offsetX: number;
-  offsetY: number;
+  k: number;
+  x: number;
+  y: number;
 }
 
 let data: LesMiserables | undefined;
+
+const ZoomType = types.frozen({ x: 0, y: 0, k: 1 });
+
+// take it out here to prevent accidentally notifying every
+// object on zoom
+let zoom: Zoom = { x: 0, y: 0, k: 1 };
 
 export const Application = types
   .model('Application', {
@@ -56,9 +63,7 @@ export const Application = types
     deepEditing: SelectionType,
     connecting: types.maybeNull(ConnectingArrow),
     initialBox: types.maybeNull(Box),
-    scale: 1,
-    offsetX: 0,
-    offsetY: 0,
+    toolbarZoom: ZoomType,
     tool: TOOL_NONE,
     newContextInput: false,
     newContextInputValue: '',
@@ -71,16 +76,7 @@ export const Application = types
     numNodes: 60,
   })
   .views(self => ({
-    get zoom(): Zoom {
-      const { scale, offsetX, offsetY } = self;
-      // console.log('getZoom', scale, offsetX, offsetY);
-      return {
-        scale,
-        offsetX,
-        offsetY,
-      };
-    },
-    get isMobile(): boolean | undefined {
+    get isMobile(): boolean | undefined {
       const { appWidth: w, appHeight: h } = self;
       console.log(w, h);
       if (w === -1 || h === -1) {
@@ -93,12 +89,11 @@ export const Application = types
     setDragging(dragging: any) {
       self.dragging = dragging;
     },
-    setZoom(z: Zoom) {
-      const { scale, offsetX, offsetY } = z;
-      // console.log('setZoom', scale, offsetX, offsetY);
-      self.scale = scale;
-      self.offsetX = offsetX;
-      self.offsetY = offsetY;
+    setZoom(z: Zoom) { // this is updated by D3 zoombehavior in ZoomCanvas
+      zoom = z;
+    },
+    setToolbarZoom(z: Zoom) { // this is updated by the tools in the toolbar
+      self.toolbarZoom = z;
     },
     setCanvasDimensions(w: number, h: number) {
       if (w > 0 && h > 0) {
@@ -250,12 +245,8 @@ export const Application = types
     function runSimulation() {
       if (undo) {
         simulation.set(
-          attachSimulationToGraph(
-            getForceSimulation(
-              self.graph,
-              self.canvasWidth - 400,
-              self.canvasHeight
-            ),
+          updateOnEnd(
+            getForceSimulation(self.graph, self.canvasWidth, self.canvasHeight),
             self.graph,
             undo
           )
@@ -271,10 +262,14 @@ export const Application = types
       const s = simulation.get();
       if (s) {
         s.stop();
+        if (undo) {
+          undo.withoutUndo(() => self.graph.batchMove(s.nodes()));
+        }
       }
     }
 
     function discardSimulation() {
+      stopSimulation();
       simulation.set(undefined);
     }
 
@@ -287,6 +282,7 @@ export const Application = types
         autorunDisposer();
       }
     }
+
     return {
       actions: {
         afterCreate,
@@ -295,6 +291,11 @@ export const Application = types
         stopSimulation,
         discardSimulation,
         setSimulation,
+        // won't update automatically
+        getZoomTransform() {
+          const { x, y, k } = zoom;
+          return zoomIdentity.scale(k).translate(x, y);
+        },
       },
       views: {
         get undoManager() {
