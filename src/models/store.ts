@@ -1,5 +1,20 @@
-import { types, getSnapshot, applySnapshot, flow } from 'mobx-state-tree';
-import { ConnectingArrow, IBox, Box, Arrow } from './models';
+import {
+  types,
+  getSnapshot,
+  applySnapshot,
+  flow,
+  clone,
+} from 'mobx-state-tree';
+import {
+  ConnectingArrow,
+  IBox,
+  Box,
+  Arrow,
+  Boxes,
+  Arrows,
+  IArrow,
+  IContext,
+} from './models';
 import {
   TOOL_ADD_NODE,
   TOOL_CONNECT,
@@ -8,7 +23,7 @@ import {
   TOOL_REMOVE_NODE,
 } from '../components/toolbar/constants';
 import { getCloseEnoughBox } from '../utils/vec';
-import { Graph, IGraphSnapshot, emptyGraph } from './graph-store';
+import { Graph, IGraphSnapshot, emptyGraph, IGraph } from './graph-store';
 import { UndoManager } from './undo-manager';
 import { autorun, IReactionDisposer, observable, values } from 'mobx';
 import fetch from 'unfetch';
@@ -19,6 +34,8 @@ import {
   updateOnEnd,
 } from '../force-layout';
 import { zoomIdentity } from 'd3-zoom';
+
+const lesMisData: LesMiserables = require('../lesmiserables.json');
 
 const SelectionType = types.maybeNull(types.string);
 
@@ -50,15 +67,82 @@ let data: LesMiserables | undefined;
 
 const ZoomType = types.frozen({ x: 0, y: 0, k: 1 });
 
+function subCloneBox(source: IBox) {
+  const node = source.$treenode;
+  return {
+    ...node.snapshot,
+    id: focusId(source.id),
+  } as IBoxSnapshot;
+}
+
+function subCloneArrow(source: IArrow) {
+  const node = source.$treenode;
+  return {
+    ...node.snapshot,
+    source: focusId(source.source.id),
+    target: focusId(source.target.id),
+    id: focusId(source.id),
+  } as IArrowSnapshot;
+}
+
+export function focusId(id: string) {
+  return 'subclone-' + id;
+}
+
+export function mainId(id: string) {
+  return id.replace(/^subclone-/, '');
+}
+
+
 // take it out here to prevent accidentally notifying every
 // object on zoom
 let zoom: Zoom = { x: 0, y: 0, k: 1 };
 
+type IBoxSnapshot = typeof Box.SnapshotType;
+type IArrowSnapshot = typeof Arrow.SnapshotType;
+
+const FocusGraph = types.model('FocusGraph', {
+  id: types.identifier,
+  graph: Graph,
+  focus: types.reference(Box),
+});
+
+function getFocusGraph(focus: string, graph: IGraph) {
+  const boxes: { [k: string]: IBoxSnapshot } = {
+    [focusId(focus)]: subCloneBox(graph.boxes.get(focus)!),
+  };
+  const arrows: IArrowSnapshot[] = [];
+  const boxIds = new Set<string>();
+  for (const a of graph.arrows) {
+    const { source: s, target: t, id: aid } = a;
+    if (s.id === focus || t.id === focus) {
+      const id = s.id === focus ? t.id : s.id;
+      boxIds.add(id);
+      const clone = subCloneBox(graph.boxes.get(id)!);
+      boxes[clone.id] = clone;
+      arrows.push(subCloneArrow(a));
+    }
+  }
+  // add the arrows between 'friends'
+  // for (const a of graph.arrows) {
+  //   if (boxIds.has(a.source.id) && boxIds.has(a.target.id)) {
+  //     arrows.push(subCloneArrow(a));
+  //   }
+  // }
+  return FocusGraph.create({
+    graph: { boxes, arrows },
+    id: 'focusgraph',
+    focus: focusId(focus),
+  });
+}
+
 export const Application = types
   .model('Application', {
     graph: Graph,
+    focusGraph: types.maybeNull(FocusGraph),
     dragging: SelectionType,
     selection: SelectionType,
+    focus: SelectionType,
     editing: SelectionType,
     deepEditing: SelectionType,
     connecting: types.maybeNull(ConnectingArrow),
@@ -72,7 +156,7 @@ export const Application = types
     appWidth: -1,
     appHeight: -1,
     showSidebar: true,
-    circles: false,
+    circles: true,
     numNodes: 60,
   })
   .views(self => ({
@@ -89,10 +173,12 @@ export const Application = types
     setDragging(dragging: any) {
       self.dragging = dragging;
     },
-    setZoom(z: Zoom) { // this is updated by D3 zoombehavior in ZoomCanvas
+    setZoom(z: Zoom) {
+      // this is updated by D3 zoombehavior in ZoomCanvas
       zoom = z;
     },
-    setToolbarZoom(z: Zoom) { // this is updated by the tools in the toolbar
+    setToolbarZoom(z: Zoom) {
+      // this is updated by the tools in the toolbar
       self.toolbarZoom = z;
     },
     setCanvasDimensions(w: number, h: number) {
@@ -117,6 +203,13 @@ export const Application = types
     },
     setDeepEditing(target: string | null) {
       self.deepEditing = target;
+    },
+    setFocus(id: string | null) {
+      if (id && id !== self.focus) {
+        console.log('setting focusgraph');
+        self.focusGraph = getFocusGraph(id, self.graph);
+      }
+      self.focus = id;
     },
     toggleContextInput() {
       self.newContextInput = !self.newContextInput;
@@ -179,7 +272,11 @@ export const Application = types
             self.selection = target;
           }
         } else {
-          self.selection = target;
+          if (target && self.focus) {
+            self.setFocus(mainId(target));
+          } else {
+            self.selection = target;
+          }
         }
       }
       if (tool === TOOL_REMOVE_NODE && target) {
@@ -411,11 +508,11 @@ interface LesMiserables {
   links: Array<{ source: string; target: string; value: number }>;
 }
 async function loadLesMiserables() {
-  const response = await fetch(
-    'https://gist.githubusercontent.com/mbostock/4062045/raw/5916d145c8c048a6e3086915a6be464467391c62/miserables.json'
-  );
-  const data: LesMiserables = await response.json();
-  return data;
+  // const response = await fetch(
+  //   'https://gist.githubusercontent.com/mbostock/4062045/raw/5916d145c8c048a6e3086915a6be464467391c62/miserables.json'
+  // );
+  // const data: LesMiserables = await response.json();
+  return Promise.resolve(lesMisData);
 }
 
 function getLesMiserableBox(id: string, context?: string, W = 600, H = 600) {

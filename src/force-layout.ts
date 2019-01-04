@@ -7,6 +7,7 @@ import {
   Simulation,
   SimulationNodeDatum,
   SimulationLinkDatum,
+  forceCenter,
 } from 'd3-force';
 import { Box, Arrow, IBox, IArrow } from './models/models';
 import { IGraph } from './models/graph-store';
@@ -26,25 +27,32 @@ export function getForceSimulation(
   width: number,
   height: number
 ): GraphSimulation {
-  const nodes = values(graph.boxes).map((b: IBox) => ({
-    ...getSnapshot(b, false),
-    context: b.context ? getSnapshot(b.context, false) : undefined,
-  }));
+  const nodes = values(graph.boxes).map(
+    (b: IBox) =>
+      ({
+        ...getSnapshot(b, false),
+        context: b.context ? getSnapshot(b.context, false) : undefined,
+      } as SimulationNode)
+  );
   if (currentSimulation) {
     currentSimulation.stop();
   }
-  const links = graph.arrows.map((b: IArrow) => ({ ...getSnapshot(b, false) }));
+  const links = graph.arrows.map(
+    (b: IArrow) => ({ ...getSnapshot(b, false) } as SimulationLink)
+  );
+
+  const lf = forceLink<SimulationNode, SimulationLink>(links)
+    .id(d => d.id)
+    .distance(() => 60);
+  // const strength = lf.strength();
+  // lf.strength((l, i, ls) => strength(l, i, ls) * 0.001);
+
   const simulation = (currentSimulation = forceSimulation<
     SimulationNode,
     SimulationLink
   >(nodes)
-    // .alphaMin(0.1)
-    .force(
-      'link',
-      forceLink<SimulationNode, SimulationLink>(links)
-        .id(d => d.id)
-        .distance(() => 60)
-    )
+    .alphaMin(0.1)
+    .force('link', lf)
     .force('charge', forceManyBody().strength(() => -500))
     .force('x', forceX(width / 2))
     .force('y', forceY(height / 2)));
@@ -53,7 +61,65 @@ export function getForceSimulation(
   return simulation;
 }
 
-undo: UndoManager;
+export function getFocusSimulation(
+  boxes: IBox[], // assume the focus is on the box at index 0
+  arrows: IArrow[],
+  width: number,
+  height: number
+) {
+  const origo = [width / 2, height / 2];
+  const nodes = boxes.map(
+    (b: IBox) =>
+      ({
+        ...getSnapshot(b, false),
+        context: b.context ? getSnapshot(b.context, false) : undefined,
+      } as SimulationNode)
+  );
+  const links = arrows.map(
+    (b: IArrow) =>
+      ({
+        ...getSnapshot(b, false),
+        // target: getSnapshot(b.target, false),
+        // source: getSnapshot(b.source, false),
+      } as SimulationLink)
+  );
+
+  // Fix into origo
+  const s = nodes[0];
+  s.fx = origo[0] - (s.width || 0) / 2;
+  s.fy = origo[1] - (s.height || 0) / 2;
+
+  if (currentSimulation) {
+    currentSimulation.stop();
+  }
+
+  const lf = forceLink<SimulationNode, SimulationLink>(links)
+    .id(d => d.id)
+    .distance(() => 120);
+
+  const simulation = (currentSimulation = forceSimulation<
+    SimulationNode,
+    SimulationLink
+  >(nodes)
+    .alphaMin(0.1)
+    .force('link', lf)
+    .force('charge', forceManyBody().strength(() => -100))
+    //    .force('center', forceCenter(...origo)));
+    .force('x', forceX(width / 2))
+    .force('y', forceY(height / 2)));
+
+  // const strength = lf.strength();
+  // lf.strength((l, i, ls) => strength(l, i, ls) * 0.001);
+  // this modifies the links and is needed if the
+  // link force is not attached to the simulation
+  // lf.initialize(nodes);
+
+  return {
+    simulation,
+    links,
+  };
+}
+
 export function attachSimulationToGraph(
   simulation: GraphSimulation,
   graph: IGraph,
@@ -85,6 +151,7 @@ export function updateOnEnd(
   undo: UndoManager
 ) {
   simulation.on('end', () => {
+    console.log('updateOnEnd');
     undo.withoutUndo(() => graph.batchMove(simulation.nodes()));
   });
   return simulation;

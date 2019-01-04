@@ -147,8 +147,8 @@ const ZoomCanvasBase: FunctionComponent<FinalProps> = ({
           .call(z.transform, zoomIdentity.translate(x, y).scale(k));
       }
     },
-    [outerRef.current, lastZoom.current, zoomBehavior.current],
-    [toolbarZoom]
+    [() => outerRef.current, () => lastZoom.current, () => zoomBehavior.current],
+    [toolbarZoom, setZoom]
   );
 
   const clickHandler = useCallback<React.MouseEventHandler<HTMLDivElement>>(

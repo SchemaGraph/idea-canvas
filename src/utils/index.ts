@@ -38,13 +38,16 @@ export function uuid() {
 }
 
 
-function checkArgs<T extends any[]>(args: T): args is RequiredAndNonNull<T> {
-  for (const v of args) {
+function checkArgs<T extends any[]>(args: T) {
+  const a = [];
+  for (let v of args) {
+    v = typeof v === 'function' ? v() : v;
     if (v === null || v === undefined) {
       return false;
     }
+    a.push(v);
   }
-  return true;
+  return a;
 }
 
 type RequiredAndNonNull<T> = {
@@ -54,19 +57,19 @@ type RequiredAndNonNull<T> = {
 // https://github.com/Microsoft/TypeScript/issues/27179#issuecomment-422606990
 export function useConditionalEffect<T>(
   effectA: (a: NonNullable<T>) => void | (() => void),
-  args: [T],
+  args: [T | (() => T)],
   inputs?: InputIdentityList,
   effectB?: EffectCallback
 ): void;
 export function useConditionalEffect<T, S>(
   effectA: (a: NonNullable<T>, b: NonNullable<S>) => void | (() => void),
-  args: [T, S],
+  args: [T | (() => T), S | (() => S)],
   inputs?: InputIdentityList,
   effectB?: EffectCallback
 ): void;
 export function useConditionalEffect<T, S, V>(
   effectA: (a: NonNullable<T>, b: NonNullable<S>, c: NonNullable<V>) => void | (() => void),
-  args: [T, S, V],
+  args: [T | (() => T), S | (() => S), V | (() => V)],
   inputs?: InputIdentityList,
   effectB?: EffectCallback
 ): void;
@@ -78,8 +81,9 @@ export function useConditionalEffect(
   effectB?: EffectCallback
 ) {
   useEffect(() => {
-    if (checkArgs(args)) {
-      return effectA(...args);
+    const a = checkArgs(args);
+    if (a) {
+      return effectA(...a);
     } else if (effectB) {
       return effectB();
     }
