@@ -2,11 +2,11 @@ import React, { FunctionComponent, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import 'd3-transition';
 
-import { IStore } from '../models/store';
-import { connect } from '../utils';
-import { TOOL_ADD_NODE, TOOL_NONE } from './toolbar/constants';
+import { IStore } from '../../models/store';
+import { connect } from '../../utils';
+import { TOOL_ADD_NODE, TOOL_NONE } from '../toolbar/constants';
 import { ZoomCanvas } from './zoom-canvas';
-import { INITIAL_WIDTH, INITIAL_HEIGHT } from '../models/models';
+import { INITIAL_WIDTH, INITIAL_HEIGHT } from '../../models/models';
 
 interface Props {
   store?: IStore;

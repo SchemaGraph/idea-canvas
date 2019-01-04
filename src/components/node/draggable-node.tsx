@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { DraggableCore, DraggableEventHandler } from 'react-draggable';
-import { connect } from '../utils';
+import { connect } from '../../utils';
 
 interface Props {
   startUndoGroup: () => void;

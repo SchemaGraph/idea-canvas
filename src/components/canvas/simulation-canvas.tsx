@@ -5,21 +5,21 @@ import { values } from 'mobx';
 import { select } from 'd3-selection';
 import { ForceLink } from 'd3-force';
 
-import { IStore, INITIAL_BOX_ID } from '../models/store';
-import { connect, useConditionalEffect } from '../utils';
-import { MarkerArrowDef, MarkerSelectedArrowDef } from './arrow-view';
-import { FastArrowView, arrowPath } from './fast-arrow-view';
-import { ConnectingArrowView } from './connecting-arrow-view';
-import { NodeView } from './node-view';
+import { IStore, INITIAL_BOX_ID } from '../../models/store';
+import { connect, useConditionalEffect } from '../../utils';
+import { MarkerArrowDef, MarkerSelectedArrowDef } from '../node/arrow-view';
+import { FastArrowView, arrowPath } from '../node/fast-arrow-view';
+import { ConnectingArrowView } from '../node/connecting-arrow-view';
+import { NodeView } from '../node/node-view';
 import {
   GraphSimulation,
   SimulationNode,
   SimulationLink,
-} from '../force-layout';
-import { CircleView } from './circle-view';
-import { FastBoxView } from './fast-box-view';
-import { EditBoxView } from './edit-box-view';
-import { IBox } from '../models/models';
+} from '../../force-layout';
+import { CircleView } from '../node/circle-view';
+import { FastBoxView } from '../node/fast-box-view';
+import { EditBoxView } from '../edit-box-view';
+import { IBox } from '../../models/models';
 
 function layerStyles() {
   return `

@@ -9,17 +9,17 @@ import { values } from 'mobx';
 import { observer } from 'mobx-react';
 import * as React from 'react';
 import styled from 'styled-components';
-import { IStore, Zoom, INITIAL_BOX_ID } from '../models/store';
-import { connect } from '../utils';
-import { MarkerArrowDef, MarkerSelectedArrowDef } from './arrow-view';
-import { ConnectingArrowView } from './connecting-arrow-view';
-import { INITIAL_HEIGHT, INITIAL_WIDTH, IBox } from '../models/models';
-import { TOOL_ADD_NODE, TOOL_NONE } from './toolbar/constants';
-import { EditBoxView } from './edit-box-view';
-import { CircleView } from './circle-view';
-import { NodeView } from './node-view';
-import { FastArrowView } from './fast-arrow-view';
-import { FastBoxView } from './fast-box-view';
+import { IStore, Zoom, INITIAL_BOX_ID } from '../../models/store';
+import { connect } from '../../utils';
+import { MarkerArrowDef, MarkerSelectedArrowDef } from '../node/arrow-view';
+import { ConnectingArrowView } from '../node/connecting-arrow-view';
+import { INITIAL_HEIGHT, INITIAL_WIDTH, IBox } from '../../models/models';
+import { TOOL_ADD_NODE, TOOL_NONE } from '../toolbar/constants';
+import { EditBoxView } from '../edit-box-view';
+import { CircleView } from '../node/circle-view';
+import { NodeView } from '../node/node-view';
+import { FastArrowView } from '../node/fast-arrow-view';
+import { FastBoxView } from '../node/fast-box-view';
 
 function zoomTransformToZoom(zt: { x: number; y: number; k: number }): Zoom {
   return {

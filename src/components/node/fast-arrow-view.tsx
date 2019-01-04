@@ -1,9 +1,9 @@
 import { observer } from 'mobx-react';
 import * as React from 'react';
 import styled from 'styled-components';
-import { colors } from '../theme/theme';
-import { a, centroid, mult, P, Rectangle, scale, V } from '../utils/vec';
-import { IArrow } from '../models/models';
+import { colors } from '../../theme/theme';
+import { a, centroid, mult, P, Rectangle, scale, V } from '../../utils/vec';
+import { IArrow } from '../../models/models';
 
 const ARROW_ID = 'arrow';
 

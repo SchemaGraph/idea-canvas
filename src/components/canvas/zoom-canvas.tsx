@@ -12,9 +12,9 @@ import { zoom as d3Zoom, ZoomBehavior, zoomIdentity } from 'd3-zoom';
 import { select } from 'd3-selection';
 import 'd3-transition';
 
-import { Zoom } from '../models/store';
-import { connect, useConditionalEffect } from '../utils';
-import { TOOL_ADD_NODE } from './toolbar/constants';
+import { Zoom } from '../../models/store';
+import { connect, useConditionalEffect } from '../../utils';
+import { TOOL_ADD_NODE } from '../toolbar/constants';
 
 const allowedZoomEvents = new Set([
   'mousedown',

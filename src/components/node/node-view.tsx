@@ -1,12 +1,12 @@
 import * as React from 'react';
 import { DraggableEventHandler } from 'react-draggable';
-import { connect } from '../utils';
-import { IBox } from '../models/models';
+import { connect } from '../../utils';
+import { IBox } from '../../models/models';
 import { DraggableNode } from './draggable-node';
-import { P } from '../utils/vec';
-import { TOOL_CONNECT } from './toolbar/constants';
+import { P } from '../../utils/vec';
+import { TOOL_CONNECT } from '../toolbar/constants';
 import { observer } from 'mobx-react';
-import { GraphSimulation, SimulationNode } from '../force-layout';
+import { GraphSimulation, SimulationNode } from '../../force-layout';
 import { ZoomTransform } from 'd3-zoom';
 
 interface Props {

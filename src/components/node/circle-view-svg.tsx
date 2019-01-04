@@ -1,6 +1,6 @@
 import * as React from 'react';
 import styled from 'styled-components';
-import { IBox } from '../models/models';
+import { IBox } from '../../models/models';
 import { observer } from 'mobx-react';
 
 interface Props {
