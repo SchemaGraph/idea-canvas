@@ -201,11 +201,11 @@ const PropertiesBase: FunctionComponent<P> = ({ store, id: originalId }) => {
           )}
         </div>
       </FormGroup>
-      <Switch
+      {/* <Switch
         checked={focus === id}
         onChange={focusViewHandler}
         label="Focus"
-      />
+      /> */}
     </>
   );
 };

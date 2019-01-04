@@ -1,10 +1,6 @@
 import * as React from 'react';
 import styled from 'styled-components';
-import {
-  FormGroup,
-  Switch,
-  Slider,
-} from '@blueprintjs/core';
+import { FormGroup, Switch, Slider } from '@blueprintjs/core';
 import { connect } from '../../utils';
 import { observer } from 'mobx-react';
 
@@ -35,7 +31,7 @@ const AppPropertiesBase: React.FC<Props> & {
         onChange={onChangeSwitch('circles')}
         label="Circles"
       />
-      <FormGroup label="N" labelFor="nodes">
+      {/* <FormGroup label="N" labelFor="nodes">
         <Slider
           min={1}
           max={77}
@@ -44,7 +40,7 @@ const AppPropertiesBase: React.FC<Props> & {
           onChange={N[1]}
           value={N[0]}
         />
-      </FormGroup>
+      </FormGroup> */}
     </Container>
   );
 };
