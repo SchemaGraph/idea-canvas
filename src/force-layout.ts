@@ -148,11 +148,15 @@ export function attachSimulationToGraph(
 export function updateOnEnd(
   simulation: GraphSimulation,
   graph: IGraph,
-  undo: UndoManager
+  withoutUndo?: (a: () => void) => void
 ) {
   simulation.on('end', () => {
     console.log('updateOnEnd');
-    undo.withoutUndo(() => graph.batchMove(simulation.nodes()));
+    if (withoutUndo) {
+      withoutUndo(() => graph.batchMove(simulation.nodes()));
+    } else {
+      graph.batchMove(simulation.nodes());
+    }
   });
   return simulation;
 }

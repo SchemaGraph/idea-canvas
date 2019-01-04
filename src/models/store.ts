@@ -345,7 +345,6 @@ export const Application = types
           updateOnEnd(
             getForceSimulation(self.graph, self.canvasWidth, self.canvasHeight),
             self.graph,
-            undo
           )
         );
       }

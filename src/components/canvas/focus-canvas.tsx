@@ -86,7 +86,7 @@ const FocusCanvasBase: FunctionComponent<Props> = ({ store }) => {
         width,
         height
       );
-      runD3Simulation(svg, updateOnEnd(simulation, graph, undo), links);
+      runD3Simulation(svg, updateOnEnd(simulation, graph, undo.withoutUndo), links);
     },
     [() => svgRef.current],
     [focusGraph]
