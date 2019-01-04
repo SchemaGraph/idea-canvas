@@ -1,5 +1,5 @@
 import React from 'react';
-import Split from 'split.js';
+import Split from '../utils/split';
 import styled from 'styled-components';
 
 const Container = styled.div`
