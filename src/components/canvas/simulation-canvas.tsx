@@ -72,7 +72,7 @@ const SimulationCanvasBase: FunctionComponent<Props> = ({ store }) => {
       simulationStarted.current = 1;
       runD3Simulation(svg, simulation);
     },
-    [svgRef.current, simulation],
+    [() => svgRef.current, simulation],
     [simulation]
   );
 

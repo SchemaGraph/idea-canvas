@@ -1,8 +1,7 @@
 import * as React from 'react';
-import { DraggableEventHandler } from 'react-draggable';
+import { DraggableCore, DraggableEventHandler } from 'react-draggable';
 import { connect } from '../../utils';
 import { IBox } from '../../models/models';
-import { DraggableNode } from './draggable-node';
 import { P } from '../../utils/vec';
 import { TOOL_CONNECT } from '../toolbar/constants';
 import { observer } from 'mobx-react';
@@ -275,13 +274,13 @@ class NodeViewBase extends React.Component<Props> {
       selected,
     });
     return (
-      <DraggableNode
+      <DraggableCore
         onDrag={this.move}
         onStart={this.dragStart}
         onStop={this.dragEnd}
       >
         {child}
-      </DraggableNode>
+      </DraggableCore>
     );
   }
 }

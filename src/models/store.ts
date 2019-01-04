@@ -1,19 +1,14 @@
 import {
   types,
-  getSnapshot,
   applySnapshot,
   flow,
-  clone,
 } from 'mobx-state-tree';
 import {
   ConnectingArrow,
   IBox,
   Box,
   Arrow,
-  Boxes,
-  Arrows,
   IArrow,
-  IContext,
 } from './models';
 import {
   TOOL_ADD_NODE,
@@ -27,7 +22,6 @@ import { getCloseEnoughBox } from '../utils/vec';
 import { Graph, IGraphSnapshot, emptyGraph, IGraph } from './graph-store';
 import { UndoManager } from './undo-manager';
 import { autorun, IReactionDisposer, observable, values } from 'mobx';
-import fetch from 'unfetch';
 import { defaultContextColor } from '../theme/theme';
 import {
   getForceSimulation,
@@ -121,7 +115,7 @@ function getFocusGraph(
   const arrows: IArrowSnapshot[] = [];
   const boxIds = new Set<string>();
   for (const a of graph.arrows) {
-    const { source: s, target: t, id: aid } = a;
+    const { source: s, target: t } = a;
     if (s.id === focus || t.id === focus) {
       const id = s.id === focus ? t.id : s.id;
       boxIds.add(id);
@@ -213,7 +207,6 @@ export const Application = types
     },
     clearSelection() {
       self.selection = null;
-      self.focus = null;
     },
     setEditing(id: string | null) {
       self.editing = id;
@@ -260,7 +253,12 @@ export const Application = types
   .actions(self => ({
     setTool(tool: string) {
       // console.log(tool.toUpperCase());
-      self.tool = tool;
+      if (tool === TOOL_FILTER && self.tool === TOOL_FILTER) {
+        self.setFocus(null);
+        self.tool = TOOL_NONE;
+      } else {
+        self.tool = tool;
+      }
       if (tool === TOOL_ADD_NODE) {
         self.clearSelection();
       }
@@ -349,7 +347,7 @@ export const Application = types
     async function afterCreate() {
       console.log('afterCreate');
       undo = new UndoManager(self.graph);
-      const saver = snapshotSaver(LOCAL_STORAGE_KEY);
+      // const saver = snapshotSaver(LOCAL_STORAGE_KEY);
 
       autorunDisposer = autorun(
         () => {

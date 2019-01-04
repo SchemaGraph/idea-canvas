@@ -157,6 +157,9 @@ const ZoomCanvasBase: FunctionComponent<FinalProps> = ({
         (e.target === outerRef.current || e.target === mainRef.current) &&
         onCanvasClick
       ) {
+        // TODO: For some reason we get a click here
+        // when a node is clicked in in the focus view
+        // console.log(e.nativeEvent);
         onCanvasClick(e);
       }
     },
