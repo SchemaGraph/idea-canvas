@@ -57,6 +57,7 @@ const Label = styled.div`
 interface Props {
   box: IBox;
   selected?: boolean;
+  focused?: boolean;
 }
 
 type FinalProps = Props & React.HTMLAttributes<HTMLDivElement>;

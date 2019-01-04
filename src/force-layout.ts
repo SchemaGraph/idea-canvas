@@ -104,9 +104,9 @@ export function getFocusSimulation(
     .alphaMin(0.1)
     .force('link', lf)
     .force('charge', forceManyBody().strength(() => -100))
-    //    .force('center', forceCenter(...origo)));
-    .force('x', forceX(width / 2))
-    .force('y', forceY(height / 2)));
+    .force('center', forceCenter(...origo)));
+    // .force('x', forceX(width / 2))
+    // .force('y', forceY(height / 2)));
 
   // const strength = lf.strength();
   // lf.strength((l, i, ls) => strength(l, i, ls) * 0.001);

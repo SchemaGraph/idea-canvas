@@ -21,6 +21,7 @@ import {
   TOOL_NONE,
   TOOL_PAN,
   TOOL_REMOVE_NODE,
+  TOOL_FILTER,
 } from '../components/toolbar/constants';
 import { getCloseEnoughBox } from '../utils/vec';
 import { Graph, IGraphSnapshot, emptyGraph, IGraph } from './graph-store';
@@ -67,10 +68,12 @@ let data: LesMiserables | undefined;
 
 const ZoomType = types.frozen({ x: 0, y: 0, k: 1 });
 
-function subCloneBox(source: IBox) {
+function subCloneBox(source: IBox, width: number, height: number) {
   const node = source.$treenode;
   return {
     ...node.snapshot,
+    x: width / 2,
+    y: height / 2,
     id: focusId(source.id),
   } as IBoxSnapshot;
 }
@@ -93,7 +96,6 @@ export function mainId(id: string) {
   return id.replace(/^subclone-/, '');
 }
 
-
 // take it out here to prevent accidentally notifying every
 // object on zoom
 let zoom: Zoom = { x: 0, y: 0, k: 1 };
@@ -107,9 +109,14 @@ const FocusGraph = types.model('FocusGraph', {
   focus: types.reference(Box),
 });
 
-function getFocusGraph(focus: string, graph: IGraph) {
+function getFocusGraph(
+  focus: string,
+  graph: IGraph,
+  width: number,
+  height: number
+) {
   const boxes: { [k: string]: IBoxSnapshot } = {
-    [focusId(focus)]: subCloneBox(graph.boxes.get(focus)!),
+    [focusId(focus)]: subCloneBox(graph.boxes.get(focus)!, width, height),
   };
   const arrows: IArrowSnapshot[] = [];
   const boxIds = new Set<string>();
@@ -118,7 +125,7 @@ function getFocusGraph(focus: string, graph: IGraph) {
     if (s.id === focus || t.id === focus) {
       const id = s.id === focus ? t.id : s.id;
       boxIds.add(id);
-      const clone = subCloneBox(graph.boxes.get(id)!);
+      const clone = subCloneBox(graph.boxes.get(id)!, width, height);
       boxes[clone.id] = clone;
       arrows.push(subCloneArrow(a));
     }
@@ -184,6 +191,15 @@ export const Application = types
     setCanvasDimensions(w: number, h: number) {
       if (w > 0 && h > 0) {
         console.log('CANVAS', w, h);
+        if (self.canvasHeight === -1 && self.canvasWidth === -1) {
+          loadLesMiserables().then(data =>
+            {
+              applySnapshot(self.graph, getN(self.numNodes, data, w, h));
+              (self as any).runSimulation();
+            }
+          );
+        }
+
         self.canvasWidth = w;
         self.canvasHeight = h;
       }
@@ -197,6 +213,7 @@ export const Application = types
     },
     clearSelection() {
       self.selection = null;
+      self.focus = null;
     },
     setEditing(id: string | null) {
       self.editing = id;
@@ -207,7 +224,12 @@ export const Application = types
     setFocus(id: string | null) {
       if (id && id !== self.focus) {
         console.log('setting focusgraph');
-        self.focusGraph = getFocusGraph(id, self.graph);
+        self.focusGraph = getFocusGraph(
+          id,
+          self.graph,
+          self.canvasWidth,
+          self.canvasHeight
+        );
       }
       self.focus = id;
     },
@@ -271,12 +293,15 @@ export const Application = types
           if (!selection && target) {
             self.selection = target;
           }
-        } else {
-          if (target && self.focus) {
+        } else if (tool === TOOL_FILTER) {
+          if (target) {
             self.setFocus(mainId(target));
+            // self.selection = focusId(target);
           } else {
-            self.selection = target;
+            self.setFocus(null);
           }
+        } else {
+          self.selection = target;
         }
       }
       if (tool === TOOL_REMOVE_NODE && target) {
@@ -325,8 +350,6 @@ export const Application = types
       console.log('afterCreate');
       undo = new UndoManager(self.graph);
       const saver = snapshotSaver(LOCAL_STORAGE_KEY);
-      data = await loadLesMiserables();
-      applySnapshot(self.graph, getN(self.numNodes, data));
 
       autorunDisposer = autorun(
         () => {
@@ -344,7 +367,7 @@ export const Application = types
         simulation.set(
           updateOnEnd(
             getForceSimulation(self.graph, self.canvasWidth, self.canvasHeight),
-            self.graph,
+            self.graph
           )
         );
       }
@@ -514,19 +537,25 @@ async function loadLesMiserables() {
   return Promise.resolve(lesMisData);
 }
 
-function getLesMiserableBox(id: string, context?: string, W = 600, H = 600) {
+function getLesMiserableBox(
+  id: string,
+  context?: string,
+  W = 600,
+  H = 600,
+  margin = [0, 0]
+) {
   return {
     id,
     name: id,
-    x: Math.round(Math.random() * W),
-    y: Math.round(Math.random() * H),
+    x: Math.round(Math.random() * W) + margin[0],
+    y: Math.round(Math.random() * H) + margin[1],
     width: 20,
     height: 20,
     context,
   };
 }
 
-function getN(N: number, data: LesMiserables) {
+function getN(N: number, data: LesMiserables, w: number, h: number) {
   const groups = new Set<string>();
   const nodes = new Set<string>();
   const graph = emptyGraph();
@@ -536,7 +565,7 @@ function getN(N: number, data: LesMiserables) {
     }
     const gid = group.toString();
     nodes.add(id);
-    graph.boxes[id] = getLesMiserableBox(id);
+    graph.boxes[id] = getLesMiserableBox(id, undefined, w, h - 50, [25, 25]);
     if (!groups.has(gid) && groups.size < 10) {
       const i = groups.size;
       groups.add(gid);

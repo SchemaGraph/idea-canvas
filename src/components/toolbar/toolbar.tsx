@@ -8,6 +8,7 @@ import {
   TOOL_CONNECT,
   TOOL_NONE,
   TOOL_REMOVE_NODE,
+  TOOL_FILTER,
 } from './constants';
 
 import IconCursor from './icon-cursor';
@@ -18,6 +19,7 @@ import IconRemove from './icon-remove';
 import IconSignout from './icon-signout';
 import ToolbarButton from './toolbar-button';
 import { ToolbarDivider } from './toolbar-divider';
+import IconFilter from './icon-filter';
 
 interface Props {
   tool: string;
@@ -125,6 +127,15 @@ export const Toolbar: React.SFC<Props> = ({
         onClick={handleChangeTool(TOOL_CONNECT)}
       >
         <IconConnect />
+      </ToolbarButton>
+      <ToolbarButton
+        toolbarPosition={position}
+        active={tool === TOOL_FILTER}
+        name="select-tool-FILTER"
+        title="Drilldown"
+        onClick={handleChangeTool(TOOL_FILTER)}
+      >
+        <IconFilter />
       </ToolbarButton>
 
       <ToolbarDivider />

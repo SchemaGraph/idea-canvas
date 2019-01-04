@@ -4,10 +4,6 @@ import { colors } from '../../theme/theme';
 import { IBox } from '../../models/models';
 import { observer } from 'mobx-react';
 
-interface Props {
-  box: IBox;
-  selected?: boolean;
-}
 interface CircleDivProps {
   selected: boolean;
 }
@@ -53,24 +49,36 @@ const Label = styled.div`
   right: 20px;
   display: inline-block;
   text-align: center;
-  z-index: 1;
-  color: rgba(255, 255, 255, 0.85);
+  z-index: ${({ focused }) => (focused ? '10' : '1')};
+  color: ${({ focused }) =>
+    focused ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.85)'};
   font-weight: 400;
-  font-size: 12px;
-  /* transform: translate(-50%); */
+  font-size: ${({ focused }: { focused: boolean }) =>
+    focused ? '16px' : '12px'};
+  /* text-stroke: ${({ focused }) => (focused ? '1px black' : '0px')}; */
+   text-shadow: ${({ focused }) =>
+     focused
+       ? `
+       2px 4px 3px rgba(0,0,0,0.3);`
+       : 'none'};
 `;
 type FinalProps = Props & React.HTMLAttributes<HTMLDivElement>;
 
+interface Props {
+  box: IBox;
+  selected?: boolean;
+  focused?: boolean;
+}
 const CircleViewBase = React.forwardRef<HTMLDivElement, FinalProps>(
-  ({ box, selected, children, style, className, ...rest }, ref) => (
+  ({ box, selected, children, style, className, focused, ...rest }, ref) => (
     <CircleDiv
       style={{ ...getStyle(box, 0.8), ...(style || {}) }}
       selected={!!selected}
       innerRef={ref as any}
-      className={'node-circle' + (className ? ' ' + className : '') }
+      className={'node-circle' + (className ? ' ' + className : '')}
       {...rest}
     >
-      <Label>{box.name || `\xa0`}</Label>
+      <Label focused={!!focused}>{box.name || `\xa0`}</Label>
       {children}
     </CircleDiv>
   )

@@ -4,7 +4,7 @@ import 'd3-transition';
 
 import { IStore } from '../../models/store';
 import { connect } from '../../utils';
-import { TOOL_ADD_NODE, TOOL_NONE } from '../toolbar/constants';
+import { TOOL_ADD_NODE, TOOL_NONE, TOOL_FILTER } from '../toolbar/constants';
 import { ZoomCanvas } from './zoom-canvas';
 import { INITIAL_WIDTH, INITIAL_HEIGHT } from '../../models/models';
 
@@ -38,7 +38,7 @@ const ClickableCanvasBase: FunctionComponent<FinalProps> = ({
           (e.clientY - offsetY - INITIAL_HEIGHT / 2) / scale
         );
       }
-      if (tool === TOOL_NONE) {
+      if (tool === TOOL_NONE || tool === TOOL_FILTER) {
         clearSelection();
       }
     },

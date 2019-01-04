@@ -56,6 +56,7 @@ const FocusCanvasBase: FunctionComponent<Props> = ({ store }) => {
     circles,
     editing,
     undoManager: undo,
+    select,
   } = store;
   const { graph, focus: selectedNode } = focusGraph;
 
@@ -73,8 +74,10 @@ const FocusCanvasBase: FunctionComponent<Props> = ({ store }) => {
   const simulationStarted = useRef<number>(0);
 
   const Node = circles ? CircleView : FastBoxView;
-  const nodeProps = { measureHeight: !circles, measureWidth: !circles };
+  const nodeProps = {
 
+  };
+  const onClick = (id: string) => () => select(id);
   useConditionalEffect(
     svg => {
       simulationStarted.current = 1;
@@ -86,12 +89,16 @@ const FocusCanvasBase: FunctionComponent<Props> = ({ store }) => {
         width,
         height
       );
-      runD3Simulation(svg, updateOnEnd(simulation, graph, undo.withoutUndo), links);
+      runD3Simulation(
+        svg,
+        updateOnEnd(simulation, graph, undo.withoutUndo),
+        links
+      );
     },
     [() => svgRef.current],
     [focusGraph]
   );
-
+  const box0 = selectedNode;
   return (
     <>
       <SvgLayer innerRef={svgRef}>
@@ -99,21 +106,27 @@ const FocusCanvasBase: FunctionComponent<Props> = ({ store }) => {
           <MarkerArrowDef />
           <MarkerSelectedArrowDef />
         </defs>
-        {arrows.map(arrow => (
-          <FastArrowView
-            arrow={arrow}
-            key={arrow.id}
-            data-linkid={linkId(arrow)}
-          />
-        ))}
+        {arrows
+          .filter(a => isVisible(a.source) && isVisible(a.target))
+          .map(arrow => (
+            <FastArrowView
+              arrow={arrow}
+              key={arrow.id}
+              data-linkid={linkId(arrow)}
+            />
+          ))}
         {connecting && <ConnectingArrowView arrow={connecting} />}
       </SvgLayer>
+      {/* <NodeView box={box0} key={box0.id} {...nodeProps}> */}
+      <Node box={box0} key={box0.id} data-nodeid={box0.id} focused={true} />
+      {/* </NodeView> */}
       {boxes
+        .slice(1)
         .filter(box => isVisible(box) && editing !== box.id)
         .map(box => (
-          <NodeView box={box} key={box.id} {...nodeProps}>
-            <Node box={box} key={box.id} data-nodeid={box.id} />
-          </NodeView>
+          // <NodeView box={box} key={box.id} {...nodeProps}>
+          <Node box={box} key={box.id} data-nodeid={box.id} onClick={onClick(box.id)} />
+          // </NodeView>
         ))}
     </>
   );
