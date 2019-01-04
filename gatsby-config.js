@@ -5,9 +5,9 @@
 module.exports = {
   siteMetadata: {
     siteName: `Idea Canvas`,
-    cognitoDomain: process.env.COGNITO_DOMAIN,
-    cognitoUserPoolClientId: process.env.COGNITO_USER_POOL_CLIENT_ID,
-    externalBaseUrl: process.env.EXTERNAL_BASE_URL,
+    cognitoDomain: process.env.COGNITO_DOMAIN || 'xxx',
+    cognitoUserPoolClientId: process.env.COGNITO_USER_POOL_CLIENT_ID || 'xxx',
+    externalBaseUrl: process.env.EXTERNAL_BASE_URL || 'xxx',
   },
   plugins: [
     `gatsby-plugin-styled-components`,
