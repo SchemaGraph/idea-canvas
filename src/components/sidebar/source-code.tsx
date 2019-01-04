@@ -8,6 +8,7 @@ import { applySnapshot } from 'mobx-state-tree';
 import 'codemirror/lib/codemirror.css';
 import 'codemirror/theme/material.css';
 import 'codemirror/mode/javascript/javascript';
+import 'codemirror/addon/display/autorefresh';
 import { IDisposer } from 'mobx-state-tree/dist/utils';
 
 const Container = styled.div`
@@ -32,7 +33,7 @@ class SourceCodeBase extends React.Component<Props, State> {
   };
   public state = {
     skipNext: false,
-    serialized: '{}',
+    serialized: '',
   };
   public componentDidMount() {
     this.initialize();
@@ -65,7 +66,7 @@ class SourceCodeBase extends React.Component<Props, State> {
     if (this.editor && this.containerRef.current) {
       this.editor.setSize(
         '100%',
-        `${this.containerRef.current.clientHeight - 50}px`
+        `${this.containerRef.current.clientHeight}px`
       );
     }
   }
@@ -86,6 +87,7 @@ class SourceCodeBase extends React.Component<Props, State> {
       editor.setSize(`${this.containerRef.current.clientHeight}px`, '100%');
     }
     this.editor = editor;
+    console.log('editorDidmount');
     cb();
   };
   public render() {
@@ -96,8 +98,10 @@ class SourceCodeBase extends React.Component<Props, State> {
           onBeforeChange={this.handleChange}
           options={{
             mode: { name: 'javascript' },
-            lineNumbers: true,
+            lineNumbers: false,
             theme: 'material',
+            scrollbarStyle: 'null',
+            autoRefresh: true,
           }}
           editorDidMount={this.handleEditorMount}
         />

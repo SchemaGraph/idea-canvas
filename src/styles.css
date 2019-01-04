@@ -22,10 +22,10 @@ div[class^="sidebar-right"] .bp3-tab-panel  {
 
 
 .gutter {
-  background-color: #eee;
-
+  background-color: rgba(255, 255, 255, 0.9);
   background-repeat: no-repeat;
   background-position: 50%;
+  flex: 0 0 auto;
 }
 
 .gutter.gutter-horizontal {

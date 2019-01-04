@@ -19,6 +19,7 @@ import { connect } from '../utils';
 import { FunctionComponent, useRef, useEffect } from 'react';
 import useComponentSize from '@rehooks/component-size';
 import { observer } from 'mobx-react-lite';
+import { SidebarLeft } from './sidebar/sidebar-left';
 interface Props {
   store: IStore;
   auth: CognitoAuth;
@@ -48,7 +49,8 @@ const WrapWithPanes: FunctionComponent<{
     return <>{children}</>;
   }
   return (
-    <SplitPane sizes={[100, 0]} minSize={[400, 170]}>
+    <SplitPane sizes={[0, 100, 0]} minSize={[0, 300, 170]} gutterSize={6}>
+      <SidebarLeft/>
       <Mainbar>{children}</Mainbar>
       <Sidebar />
     </SplitPane>

@@ -51,11 +51,6 @@ class SidebarBase extends React.Component<Props> {
         <SidebarDivider />
         <Tabs animate={false} id="sidebar" defaultSelectedTabId={selected}>
           <Tab
-            id="source"
-            title={<Icon icon="code" />}
-            panel={<SourceCode />}
-          />
-          <Tab
             id="properties"
             title={<Icon icon="settings" />}
             panel={
@@ -83,6 +78,7 @@ interface MainbarProps {
 
 const MainbarBase = styled.div`
   flex: ${(p: MainbarProps) => `1 0 ${p.showSidebar ? 'auto' : '100%'}`};
+  width: auto !important; /* we set this to fight the splitter.js setting a width */
   border: 0px solid red;
   overflow: hidden;
   position: relative;
