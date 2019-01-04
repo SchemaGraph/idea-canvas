@@ -89,13 +89,15 @@ const SimulationCanvasBase: FunctionComponent<Props> = ({ store }) => {
           <MarkerArrowDef />
           <MarkerSelectedArrowDef />
         </defs>
-        {arrows.map(arrow => (
-          <FastArrowView
-            arrow={arrow}
-            key={arrow.id}
-            data-linkid={linkId(arrow)}
-          />
-        ))}
+        {arrows
+          .filter(a => isVisible(a.source) && isVisible(a.target))
+          .map(arrow => (
+            <FastArrowView
+              arrow={arrow}
+              key={arrow.id}
+              data-linkid={linkId(arrow)}
+            />
+          ))}
         {connecting && <ConnectingArrowView arrow={connecting} />}
         {/* {values(boxes).map(box => (
           <NodeView box={box} key={box.id} measureWidth measureHeight>
